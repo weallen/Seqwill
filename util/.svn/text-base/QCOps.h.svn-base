@@ -1,0 +1,91 @@
+// Copyright (c) 2005 Broad Institute/Massachusetts Institute of Technology
+
+
+#ifndef _QCOPS_H_
+#define _QCOPS_H_
+
+#include "util/QCMarkup.h"
+//#include "Arachne/assembly/Assembly.h"
+#include "base/SVector.h"
+#include <string>
+
+class QCMarker
+{
+ public:
+  QCMarker();
+
+
+  void AddMark(QCMarkup & m, 
+	       int super,
+	       int from,
+	       int to,
+	       const string & type,
+	       int score,
+	       bool bContigify = true,
+	       const string & name = "");
+
+
+ private:
+  // const Assembly * m_pAssembly;	     
+};
+
+
+
+
+class QCMarkupMerger
+{
+ public:
+  QCMarkupMerger() {
+    m_slack = 0;
+  }
+
+  void SetSlack(int i) {m_slack = i;}
+
+  // Imortant: assumes that in is sorted!!
+  void Merge(QCMarkup & out,
+	     const QCMarkup & in,
+	     const string & exclude = "",
+	     int minLevel = 0);
+
+ private:
+  int m_slack;
+};
+
+class QCMarkupAppendMerger
+{
+ public:
+  QCMarkupAppendMerger() {}
+  
+  void Merge(QCMarkup & out,
+	     const QCMarkup & in,
+	     const string & exclude = "");
+
+};
+
+class QCMarkupFilter
+{
+ public:
+  QCMarkupFilter() {}
+  
+  void AddException(const string & e);
+
+  void Filter(QCMarkup & out,
+	      const QCMarkup & in,
+	      int minLevel);
+
+ private:
+  bool IsException(const string & s);
+
+  svec<string> m_exceptions;
+
+};
+
+
+/*
+void ContigifyMarkup(QCMarkup & out, 
+		     const QCMarkup & in, 
+		     const Assembly & theAssembly);
+*/
+
+#endif //_QCOPS_H_
+

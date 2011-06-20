@@ -1,0 +1,143 @@
+// Summarizes features of an alignment such as SNPs, callable bases, etc 
+
+
+#include "util/QCMarkup.h"
+#include "util/QCMarkupIO.h"
+#include "util/ParseMarkName.h"
+#include "base/CommandLineParser.h"
+#include <fstream>
+#include <iostream>
+#include <iomanip>
+
+using std::ofstream;
+using std::ios;
+
+int main(int argc,char** argv)
+{
+
+  cout << endl;
+
+  commandArg<string> iStringCmmd("-i","input file");
+  commandLineParser P(argc,argv);
+  P.registerArg(iStringCmmd);
+  P.parse();
+  string iString = P.GetStringValueFor(iStringCmmd);
+
+  float baseCount=0;
+  float callable=0;
+  float snpCount=0;
+  float snpL25=0;
+  float snpGeq25=0;
+  int mismatchCount=0;
+  float mismatchL25=0;
+  float mismatchGeq25=0;
+  int insertionCount=0;
+  float insertionL25=0;
+  float insertionGeq25=0;
+  int deletionCount=0;
+  float deletionL25=0;
+  float deletionGeq25=0;
+  int firstbase;
+  int lastbase;
+  int alignedLength;
+  int i;
+  double snpProportion;
+  double snpPercentage;
+  double CsnpProportion;
+  double CsnpPercentage;
+  double lowqualProportion=0.44; // needs to be an input!!!
+
+
+  QCMarkup marks;
+  QCMarkupIO io(marks);
+
+  io.Read(iString);
+ 
+  for (i=0; i<marks.GetNumMarks(); i++) {
+    const QCMark &m = marks.GetMark(i);
+
+    vec<string> tmp1, tmp2;
+    if (m.GetType() == "aligned") {
+      ParseMarkName(tmp1, m.GetName());
+      ParseMarkName(tmp2, m.GetOrdering());
+      firstbase=m.GetStartOnContig();
+      lastbase=m.GetEndOnContig();
+      alignedLength=lastbase-firstbase+1;
+      baseCount=baseCount+alignedLength;
+ } else {
+
+      ParseMarkName(tmp2, m.GetOrdering());
+    
+      if (m.GetType() == "SNP") {
+	 snpCount++;
+	 if (m.GetLevel() < 25) {
+	 snpL25++;
+	 } else {
+	 snpGeq25++;
+	 }
+      } else {
+             if (m.GetType() == "mismatch") {
+                mismatchCount++;
+                if (m.GetLevel() < 25) {
+		mismatchL25++;
+		} else {
+		mismatchGeq25++;
+		}
+             } else {  
+                    if (m.GetType() == "insertion") {
+                       insertionCount++;
+		       if(m.GetLevel () < 25 ) {
+                       insertionL25++;
+		       } else {
+                       insertionGeq25++;
+		       }
+		    } else {
+                           if (m.GetType() == "deletion") {
+                              deletionCount++;
+			      if(m.GetLevel() < 25) {
+                              deletionL25++;
+			      } else {
+			      deletionGeq25++;
+			      }
+			   }
+		    }
+             }  
+      }
+    }
+}
+
+snpProportion = snpCount / baseCount;
+snpPercentage = 100 * snpProportion;
+
+callable = baseCount - lowqualProportion * baseCount - 10 * insertionCount - 10 * deletionCount;
+CsnpProportion = snpCount / callable;
+CsnpPercentage = 100 * CsnpProportion;
+
+
+cout << endl << "------------------------------------------------------------------------------" << endl;
+cout << "Alignment Summary and SNP Analysis" << endl;
+cout << "Alignment file: " << iString << endl;
+cout << "------------------------------------------------------------------------------" << endl << endl;
+cout << "Total bases aligned: ";
+cout << setprecision (10) << baseCount << endl;
+cout << "Callable bases: ";
+cout << setprecision (10) << callable;
+cout << " (excludes positions with q<25 (" << lowqualProportion << ") and approx 10 positions surrounding each indel)" << endl << endl;
+cout << "SNPs: " << snpCount << " (" << snpGeq25 << " with q>=25, " << snpL25 << " with q<25)" << endl;
+cout << "Mismatches: " << mismatchCount << " (" << mismatchGeq25 << " with q>=25, " << mismatchL25 << " with q<25)" <<  endl;
+cout << "Insertions: " << insertionCount << " (" << insertionGeq25 << " with q>=25, " << insertionL25 << " with q<25)" << endl;
+cout << "Deletions: " << deletionCount << " (" << deletionGeq25 << " with q>=25, " << deletionL25 << " with q<25)" << endl << endl;
+cout << "SNP rate: " << endl;
+cout << setprecision (8) << snpProportion;
+cout << " or ";
+cout << setprecision (8) << snpPercentage;
+cout << "% of all aligned bases" << endl;
+cout << setprecision (8) << CsnpProportion;
+cout << " or ";
+cout << setprecision (8) << CsnpPercentage;
+cout << "% of callable bases" << endl << endl;
+cout << "------------------------------------------------------------------------------" << endl;
+
+
+  return 0;
+}

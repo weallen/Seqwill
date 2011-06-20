@@ -1,0 +1,32 @@
+
+
+#include "base/CommandLineParser.h"
+#include "aligns/AlignMasking.h"
+#include <string>
+
+int main(int argc, char** argv)
+{
+  commandArg<string> alignFile("-align_file","alignments file");
+  commandArg<string> alignMaskFile("-mask_file",
+				   "file containing the reference self-alignments to be used to mask the alignments in '-align_file'");
+  commandArg<string> annotFile("-annot_file","output file containing the masked alignments as annotations");
+  
+  commandLineParser clParser(argc,argv);
+  
+  clParser.registerArg(alignFile);
+  clParser.registerArg(alignMaskFile);
+  clParser.registerArg(annotFile);
+
+  clParser.parse();
+
+  string alignfile(clParser.GetStringValueFor(alignFile));
+  string maskfile(clParser.GetStringValueFor(alignMaskFile));
+
+  string annotfile = clParser.GetStringValueFor(annotFile);
+
+  MaskRefRepeats masker(alignfile,maskfile);
+
+  masker.Mask();
+  masker.PrintMaskedAsAnnot(annotfile);
+
+}

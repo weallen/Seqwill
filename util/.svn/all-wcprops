@@ -1,0 +1,185 @@
+K 25
+svn:wc:ra_dav:version-url
+V 25
+/Spines/!svn/ver/688/util
+END
+mutil.h
+K 25
+svn:wc:ra_dav:version-url
+V 33
+/Spines/!svn/ver/392/util/mutil.h
+END
+AlignmentSummary.cc
+K 25
+svn:wc:ra_dav:version-url
+V 45
+/Spines/!svn/ver/603/util/AlignmentSummary.cc
+END
+SysTime.cc
+K 25
+svn:wc:ra_dav:version-url
+V 36
+/Spines/!svn/ver/592/util/SysTime.cc
+END
+SysTime.h
+K 25
+svn:wc:ra_dav:version-url
+V 35
+/Spines/!svn/ver/592/util/SysTime.h
+END
+WriteMaskedAlignments.cc
+K 25
+svn:wc:ra_dav:version-url
+V 50
+/Spines/!svn/ver/618/util/WriteMaskedAlignments.cc
+END
+Dist2Feature.cc
+K 25
+svn:wc:ra_dav:version-url
+V 41
+/Spines/!svn/ver/612/util/Dist2Feature.cc
+END
+PrettyPrintAligns.cc
+K 25
+svn:wc:ra_dav:version-url
+V 46
+/Spines/!svn/ver/592/util/PrettyPrintAligns.cc
+END
+FastaPatternCount.cc
+K 25
+svn:wc:ra_dav:version-url
+V 46
+/Spines/!svn/ver/687/util/FastaPatternCount.cc
+END
+QCMarkupIO.cc
+K 25
+svn:wc:ra_dav:version-url
+V 39
+/Spines/!svn/ver/603/util/QCMarkupIO.cc
+END
+GrabSequenceFromGff.cc
+K 25
+svn:wc:ra_dav:version-url
+V 48
+/Spines/!svn/ver/612/util/GrabSequenceFromGff.cc
+END
+QCMarkupIO.h
+K 25
+svn:wc:ra_dav:version-url
+V 38
+/Spines/!svn/ver/603/util/QCMarkupIO.h
+END
+FastaParser.h
+K 25
+svn:wc:ra_dav:version-url
+V 39
+/Spines/!svn/ver/688/util/FastaParser.h
+END
+PrintMaskedAlignsAno.cc
+K 25
+svn:wc:ra_dav:version-url
+V 49
+/Spines/!svn/ver/592/util/PrintMaskedAlignsAno.cc
+END
+SComm.cc
+K 25
+svn:wc:ra_dav:version-url
+V 34
+/Spines/!svn/ver/557/util/SComm.cc
+END
+ExportCoverageToUCSC.cc
+K 25
+svn:wc:ra_dav:version-url
+V 49
+/Spines/!svn/ver/592/util/ExportCoverageToUCSC.cc
+END
+SComm.h
+K 25
+svn:wc:ra_dav:version-url
+V 33
+/Spines/!svn/ver/557/util/SComm.h
+END
+KillProcesses.cc
+K 25
+svn:wc:ra_dav:version-url
+V 42
+/Spines/!svn/ver/392/util/KillProcesses.cc
+END
+LoadAgpCoords.h
+K 25
+svn:wc:ra_dav:version-url
+V 41
+/Spines/!svn/ver/613/util/LoadAgpCoords.h
+END
+GrabFastaSequence.cc
+K 25
+svn:wc:ra_dav:version-url
+V 46
+/Spines/!svn/ver/592/util/GrabFastaSequence.cc
+END
+QCMarkup.cc
+K 25
+svn:wc:ra_dav:version-url
+V 37
+/Spines/!svn/ver/603/util/QCMarkup.cc
+END
+checkLock.c
+K 25
+svn:wc:ra_dav:version-url
+V 37
+/Spines/!svn/ver/705/util/checkLock.c
+END
+PrintAligningReads.cc
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/Spines/!svn/ver/612/util/PrintAligningReads.cc
+END
+ExportPolyCallsToUCSC.cc
+K 25
+svn:wc:ra_dav:version-url
+V 50
+/Spines/!svn/ver/626/util/ExportPolyCallsToUCSC.cc
+END
+QCMarkup.h
+K 25
+svn:wc:ra_dav:version-url
+V 36
+/Spines/!svn/ver/603/util/QCMarkup.h
+END
+QCOps.cc
+K 25
+svn:wc:ra_dav:version-url
+V 34
+/Spines/!svn/ver/603/util/QCOps.cc
+END
+QCOps.h
+K 25
+svn:wc:ra_dav:version-url
+V 33
+/Spines/!svn/ver/603/util/QCOps.h
+END
+ParseMarkName.h
+K 25
+svn:wc:ra_dav:version-url
+V 41
+/Spines/!svn/ver/603/util/ParseMarkName.h
+END
+FastaQueryByCoords.cc
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/Spines/!svn/ver/592/util/FastaQueryByCoords.cc
+END
+CoordsList2GFF.cc
+K 25
+svn:wc:ra_dav:version-url
+V 43
+/Spines/!svn/ver/612/util/CoordsList2GFF.cc
+END
+mutil.cc
+K 25
+svn:wc:ra_dav:version-url
+V 34
+/Spines/!svn/ver/392/util/mutil.cc
+END

@@ -1,0 +1,59 @@
+K 25
+svn:wc:ra_dav:version-url
+V 25
+/Spines/!svn/ver/680/base
+END
+FileParser.cc
+K 25
+svn:wc:ra_dav:version-url
+V 39
+/Spines/!svn/ver/592/base/FileParser.cc
+END
+EST.h
+K 25
+svn:wc:ra_dav:version-url
+V 31
+/Spines/!svn/ver/615/base/EST.h
+END
+FileParser.h
+K 25
+svn:wc:ra_dav:version-url
+V 38
+/Spines/!svn/ver/700/base/FileParser.h
+END
+StringUtil.cc
+K 25
+svn:wc:ra_dav:version-url
+V 39
+/Spines/!svn/ver/680/base/StringUtil.cc
+END
+CommandLineParser.h
+K 25
+svn:wc:ra_dav:version-url
+V 45
+/Spines/!svn/ver/592/base/CommandLineParser.h
+END
+StringUtil.h
+K 25
+svn:wc:ra_dav:version-url
+V 38
+/Spines/!svn/ver/680/base/StringUtil.h
+END
+SVector.h
+K 25
+svn:wc:ra_dav:version-url
+V 35
+/Spines/!svn/ver/635/base/SVector.h
+END
+ReportManager.h
+K 25
+svn:wc:ra_dav:version-url
+V 41
+/Spines/!svn/ver/469/base/ReportManager.h
+END
+MetaInfoMgr.h
+K 25
+svn:wc:ra_dav:version-url
+V 39
+/Spines/!svn/ver/620/base/MetaInfoMgr.h
+END

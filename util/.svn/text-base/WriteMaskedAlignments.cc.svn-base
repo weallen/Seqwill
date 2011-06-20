@@ -1,0 +1,37 @@
+
+#include "base/CommandLineParser.h"
+#include "base/FileParser.h"
+#include "aligns/AlignMasking.h"
+#include "aligns/AccessAligns.h"
+
+int main(int argc, char** argv)
+{
+
+  commandArg<string> alignFile("-a","alignments in (.acc)");
+  commandArg<string> maskFile("-m","masking file (either .acc or .gff*)");
+  commandArg<string> outFile("-o","masked alignments out (.acc)");
+  commandArg<bool> isGFF("-g","masking file is .gff",false);
+
+  commandLineParser P(argc,argv);
+  P.registerArg(alignFile);
+  P.registerArg(maskFile);
+  P.registerArg(outFile);
+  P.registerArg(isGFF);
+
+  P.parse();
+
+  string align_file=P.GetStringValueFor(alignFile);
+  string mask_file=P.GetStringValueFor(maskFile);
+  string out_file=P.GetStringValueFor(outFile);
+  bool is_gff = P.GetBoolValueFor(isGFF);
+
+  string af(align_file), mf(mask_file);
+  MaskRefRepeats masker(af,mf);
+  if ( is_gff )
+    masker.MaskFromGFF();
+  else
+    masker.Mask();
+  
+  string of(out_file);
+  masker.WriteMasked(of);
+}

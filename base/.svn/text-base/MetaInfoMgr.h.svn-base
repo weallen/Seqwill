@@ -1,0 +1,221 @@
+
+#ifndef METAINFOMGR
+#define METAINFOMGR
+
+
+#include <set>
+#include <map>
+
+#define DYSFUNCT
+
+#ifndef DYSFUNCT
+
+#include "Arachne/ReadMetaInfoBroker.h"
+#include "Arachne/String.h"
+
+class MetaInfoMgr
+{
+public:
+MetaInfoMgr(ReadMetaInfoBroker *metainfo) 
+  : mMetainfo(metainfo) {}
+
+private:
+ReadMetaInfoBroker *mMetainfo;
+
+//typedef pair<String,String> FR_pair;
+
+public:
+
+const ReadMetaInfoBroker * FullAccess() const { return mMetainfo; }
+
+bool IsSameTemplate(String &r1,String &r2)
+{
+  return ( mMetainfo->TemplateId(r1) == mMetainfo->TemplateId(r2) );
+}
+
+
+void PartnersInList(const vec<String> &reads, vec<FR_pair> &partners)
+{
+  partners.clear();
+  
+  for ( int i=0; i<(int) reads.size()-1; ++i )
+  {
+    for ( int j=i+1; j<(int) reads.size(); ++j )
+    {
+      if (IsPartner(reads[i],reads[j]) )
+      {
+	partners.push_back(make_pair(reads[i], reads[j]));
+	break;
+      }
+    }
+  }
+}
+
+
+bool IsResequenceAttempt(String &r1, String &r2)
+{
+  
+  vec<String> template_partners = mMetainfo->TemplatePartners(r1);
+  sort(template_partners.begin(),template_partners.end());
+
+  vec<String>::iterator sIter = find(template_partners.begin(),
+				     template_partners.end(),
+				     r2);
+
+  if ( sIter == template_partners.end() )
+    return false;
+
+  return ( mMetainfo->Direction(r1) == mMetainfo->Direction(r2) );
+}
+
+
+
+bool IsPartner(const String &r1, const String &r2)
+{
+  vec<String> template_partners = mMetainfo->TemplatePartners(r1);
+  sort(template_partners.begin(),template_partners.end());
+
+  vec<String>::iterator sIter = find(template_partners.begin(),
+				     template_partners.end(),
+				     r2);
+
+  if ( sIter == template_partners.end() )
+    return false;
+
+  if ( mMetainfo->Direction(r1) == mMetainfo->Direction(r2) )
+    return false;
+  
+  if ( r1.After(".") != r2.After(".") )
+    return false;
+  
+  return true;
+}
+
+
+String GetPartner(string &r)
+{
+  String s(r);
+  return GetPartner(s);
+
+}
+
+String GetPartner(String &r)
+{
+  String partner("");
+  vec<String> tps = mMetainfo->TemplatePartners(r);
+
+  if ( tps.size() == 1 )
+    return tps[0];
+
+  for ( int i=0; i<(int) tps.size(); ++i )
+  {
+    if ( mMetainfo->Direction(r) == mMetainfo->Direction(tps[i]) )
+      continue;
+  
+    if ( r.After(".") != tps[i].After(".") )
+      continue;
+   
+    partner = tps[i];
+    break;
+  }
+
+  return partner;
+
+}
+
+
+String GetNameFromId(int id) 
+{ 
+  return (mMetainfo->GetField(id,"trace_name")); 
+}
+
+vec<String> GetFromSameTemplate(String &name)
+{ 
+  return (mMetainfo->TemplatePartners(name));
+}
+
+
+
+};
+
+
+
+
+
+#else
+
+#include "base/SVector.h"
+
+class ReadMetaInfoBroker;
+
+
+class MetaInfoMgr
+{
+public:
+MetaInfoMgr(ReadMetaInfoBroker *metainfo) {}
+
+private:
+
+typedef pair<string,string> FR_pair;
+
+public:
+
+const ReadMetaInfoBroker * FullAccess() const 
+{ 
+  return NULL; 
+}
+
+bool IsSameTemplate(string &r1, string &r2)
+{
+  return false;
+}
+
+void PartnersInList(const svec<string> &reads, svec<FR_pair> &partners)
+{
+
+}
+
+
+bool IsResequenceAttempt(string &r1, string &r2)
+{
+  return false;
+}
+
+
+
+bool IsPartner(const string &r1, const string &r2)
+{
+  
+  return true;
+}
+
+
+string GetPartner(string &r)
+{
+  return "";
+  
+}
+
+//string GetPartner(string &r)
+//{
+//  return "";
+//}
+
+
+string GetNameFromId(int id) 
+{ 
+  return ""; 
+}
+
+svec<string> GetFromSameTemplate(string &name)
+{ 
+  svec<string> dummy;
+  return dummy;
+}
+
+
+
+};
+#endif
+
+#endif

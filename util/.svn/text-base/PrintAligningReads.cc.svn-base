@@ -1,0 +1,50 @@
+
+#include "base/CommandLineParser.h"
+
+#include "util/QCMarkup.h"
+#include "util/QCMarkupIO.h"
+
+#include "base/StringUtil.h"
+
+int main(int argc, char** argv)
+{
+
+  commandArg<string> alignFile("-f","alignment file");
+  commandArg<int> scaf("-s","scaffold");
+
+  commandLineParser P(argc,argv);
+  P.registerArg(alignFile);
+  P.registerArg(scaf);
+
+  P.parse();
+
+  string align_file = P.GetStringValueFor(alignFile);
+  int scaf_id = P.GetIntValueFor(scaf);
+
+  QCMarkup aligns;
+  QCMarkupIO details;
+  details.SetMarkup(aligns);
+
+  details.Read(align_file);
+
+  int num = aligns.GetNumSupers();
+  if ( scaf_id >= num )
+  {
+    cout << "only have " << num << " scaffolds" << endl;
+    exit(-1);
+  }
+
+//   vector<String> names;
+  int count = aligns.GetCountForSuper(scaf_id);
+  for ( int j=0; j<count; ++j )
+  {
+    const QCMark & m = aligns.GetMarkForSuper(scaf_id,j);
+
+    if ( m.GetType() != "aligned" )
+      continue;
+
+    //cout << After(m.GetName(), "contig:") << endl;
+    cout << m.GetName() << endl;
+  }
+   
+}

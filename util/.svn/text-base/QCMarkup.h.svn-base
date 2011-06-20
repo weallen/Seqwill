@@ -1,0 +1,155 @@
+// Copyright (c) 2005 Broad Institute/Massachusetts Institute of Technology
+
+
+
+#ifndef _QCMARKUP_H_
+#define _QCMARKUP_H_
+
+using namespace std;
+#include <string>
+#include "base/SVector.h"
+//================================================================
+// Class to hold a single mark
+class QCMark
+{
+ public:
+  QCMark() {
+    Reset();
+  }
+
+  ~QCMark() {}
+
+  void Reset() {
+    m_contig1 = 0;
+    m_contig2 = 0;
+    m_super = 0;
+    m_startContig = 0;
+    m_endContig = 0;
+    m_startSuper = 0;
+    m_endSuper = 0;
+    m_level = 0;
+  }
+
+  bool operator <= (const QCMark & q) const {
+    if (m_super > q.m_super)
+      return false;
+    if (m_super < q.m_super)
+      return true;
+    if (m_startSuper == q.m_startSuper)
+      return (m_type < q.m_type);
+    return (m_startSuper <= q.m_startSuper);    
+  }
+
+  bool operator < (const QCMark & q) const {
+    if (m_super > q.m_super)
+      return false;
+    if (m_super < q.m_super)
+      return true;
+    if (m_startSuper == q.m_startSuper)
+      return (m_type < q.m_type);
+    return (m_startSuper < q.m_startSuper);    
+  }
+
+
+  int GetContig()          const {return m_contig1;}
+  int GetContig2()         const {return m_contig2;}
+  int GetSuper()           const {return m_super;}
+  int GetStartOnContig()   const {return m_startContig;}
+  int GetEndOnContig()     const {return m_endContig;}
+  int GetStartOnSuper()    const {return m_startSuper;}
+  int GetEndOnSuper()      const {return m_endSuper;}
+  int GetLevel()           const {return m_level;}
+  const string & GetType() const {return m_type;}
+  const string & GetName() const {return m_name;}
+  const string & GetOrdering() const {return m_order;}
+  const string & GetLocal() const {return m_local;}
+
+
+  void SetContig(int i)           {m_contig1 = i;}
+  void SetContig2(int i)          {m_contig2 = i;}
+  void SetSuper(int i)            {m_super = i;}
+  void SetStartOnContig(int i)    {m_startContig = i;}
+  void SetEndOnContig(int i)      {m_endContig = i;}
+  void SetStartOnSuper(int i)     {m_startSuper = i;}
+  void SetEndOnSuper(int i)       {m_endSuper = i;}
+  void SetLevel(int i)            {m_level = i;}
+  void SetType(const string & t)  {m_type = t;}
+  void SetName(const string & t)  {m_name = t;}
+  void SetOrdering(const string & t)  {m_order = t;}
+  void SetLocal(const string & t)  {m_local = t;}
+
+
+
+ private:
+  int m_contig1;
+  int m_contig2;
+  int m_super;
+  int m_startContig;
+  int m_endContig;
+  int m_startSuper;
+  int m_endSuper;
+  int m_level;
+  string m_type;
+  string m_name;
+  string m_order;
+  string m_local;
+};
+
+
+
+//================================================================
+// Storage for all marks
+class QCMarkup
+{
+  friend class QCMarkupIO;
+
+ public:
+  QCMarkup();
+  ~QCMarkup();
+
+  void Sort();
+
+  void SetNumSupers(int n);
+  void SetSuperLen(int i, int len)  {
+    m_superLen[i] = len;
+  }
+
+  // Accessors to get to the marks...
+  int GetNumSupers() const {return m_superLen.isize();}
+  int GetSuperLen(int i) const {return m_superLen[i];}
+
+  int GetCountForSuper(int i) const {return m_superMarkStop[i] - m_superMarkStart[i];}
+  const QCMark & GetMarkForSuper(int s, int i) const {return m_allMarks[m_superMarkStart[s] + i];}
+  QCMark & MarkForSuper(int s, int i) {return m_allMarks[m_superMarkStart[s] + i];}
+
+  int GetNumMarks() const {return m_allMarks.isize();}
+  const QCMark & GetMark(int i) const {return m_allMarks[i];}
+  QCMark & Mark(int i) {return m_allMarks[i];}
+
+  // Important: you'll have to call Sort before using it...
+  void AddMark(const QCMark & m);
+
+  void SetSuperNames(const svec<string> & s);
+
+  const string & GetSuperName(int i) const;
+
+
+ private:
+  svec<QCMark> m_allMarks;
+  svec<int> m_superLen;
+  svec<int> m_superMarkStart;
+  svec<int> m_superMarkStop;
+  svec<string> m_superNames;
+};
+
+
+
+
+
+
+
+
+
+
+#endif //_QCMARKUP_H_
+

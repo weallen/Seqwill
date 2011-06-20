@@ -1,0 +1,326 @@
+
+#include <string>
+#include <typeinfo>
+#include <sstream>
+#include <iostream>
+
+#include <map>
+#include <set>
+
+#include "base/StringUtil.h"
+
+using namespace std;
+
+template<typename argType> 
+class commandArg 
+{
+
+public:
+
+commandArg() {}
+
+commandArg(string name, string descrip) 
+  : mName(name), mDesc(descrip),  mHasDefault(false), mHasValue(false) {}
+
+commandArg(string name,string descrip,argType T) 
+  : mName(name), mDesc(descrip), mValue(T),  mHasDefault(true), mHasValue(true) {}
+
+void SetValue(argType &T) { mValue = T; mHasValue=true; } 
+
+void SetDefault(argType &T) { mValue = T; mHasDefault = true; }
+void SetDescription(string d) { mDesc = d; }
+
+bool HasDefault() { return mHasDefault; }
+bool HasValue() { return mHasValue; }
+
+argType GetValue() { return mValue; }
+string GetName() { return mName; }
+string GetDescription() { return mDesc; }
+
+friend bool operator< (const commandArg<argType> &lhs, 
+		       const commandArg<argType> &rhs)
+{
+  if ( lhs.GetName() < rhs.GetName() )
+    return true;
+
+  return false;
+}
+
+string GetType() 
+{
+  string type = typeid(*this).name();
+  if ( type.find("Ib") != string::npos )
+    return "bool";
+  else if ( type.find("Ii") != string::npos )
+    return "int";
+  else if ( type.find("Id") != string::npos )
+    return "double";
+  else if ( type.find("ISs") != string::npos )
+    return "string";
+  else
+    return "unknown type";
+}
+
+
+private:
+
+string mName, mDesc;
+argType mValue;
+bool mHasDefault, mHasValue;
+
+};
+
+
+class commandLineParser 
+{
+
+public:
+
+commandLineParser(int argc, char** argv, const string & description = "") 
+  : mArgc(argc), mArgv(argv), mDesc(description) {}
+
+ void SetDescription(const string & s) {
+   mDesc = s;
+ } 
+
+private:
+ int mArgc;
+ char** mArgv;
+ stringstream mHelp; 
+ string mDesc;
+
+map<string,string> mNameVal;
+set<string> mArgNames;
+public:
+
+
+template<typename T>
+void registerArg(commandArg<T> &arg)
+{
+  if ( mHelp.str().empty() )
+    mHelp << "\n";
+  mHelp << string(arg.GetName() 
+		  + "<" 
+		  + arg.GetType() 
+		  + "> : " 
+		  + arg.GetDescription() );
+  if ( arg.HasDefault() )
+  {
+    mHelp << " (def=";
+    ostringstream o;
+    o << arg.GetValue() ;
+    mHelp << o.str() << ")";
+  }
+  mHelp << "\n" << ends;
+
+  mArgNames.insert(arg.GetName());
+  
+}
+
+
+bool parse()
+{ 
+  if ( mArgc == 1 )
+  {
+    showHelp();
+    exit(0);
+  }
+
+  if ( requestHelp() )
+  {
+    showHelp();
+    exit(0);
+  }
+
+  if ( mArgNames.empty() )
+  {
+    showHelp();
+    exit(0);
+  }
+ 
+  int i(1);
+  while ( i<mArgc )
+  {
+//   for ( int i=1; i<mArgc; ++i )
+//   {
+
+
+    string n(mArgv[i]);//, v(mArgv[i+1]);
+    string v("");
+    if ( i<mArgc-1)
+      v=string(mArgv[i+1]);
+    
+    set<string>::iterator sIter = mArgNames.find(n);
+    if ( sIter == mArgNames.end() )
+    {
+      if (n == "-print-command-line") {
+	cout << "----------------------- Welcome to Spines -------------------------------" << endl;
+	cout << "This module was invoked via:" << endl;
+	for (int k=0; k<mArgc; k++) {
+	  cout << mArgv[k] << " ";
+	}
+	cout << endl;
+	cout << "----------------------- Welcome to Spines -------------------------------" << endl << endl;
+	if ( mArgc == 2 ) {
+	  showHelp();
+	  exit(0);	  
+	}
+	i++;
+	continue;
+      } else {
+
+	cout << "\nInvalid command-line arg: " << n << endl;
+	showHelp();
+	exit(0);
+      }
+    }
+
+    string targ("-");
+    if ( ContainsAt(n,targ,0) && !ContainsAt(v,targ,0) )
+    {
+      mNameVal.insert(make_pair(n,v));
+      i+=2;
+    }
+    else if ( ContainsAt(n,targ,0) && ContainsAt(v,targ,0) )
+    {
+      v="";
+      mNameVal.insert(make_pair(n,v));
+      i+=1;
+    }
+    else
+    {
+      i+=1;
+    }
+  }
+  return true;
+}
+
+template<typename T>
+string GetStringValueFor(commandArg<T> &keyArg)
+{
+  string key(keyArg.GetName());
+  map<string,string>::iterator mIter = mNameVal.find(key);
+  if ( mIter == mNameVal.end() )
+  {
+    if ( keyArg.GetType() == "string" )
+    {
+      if ( !keyArg.HasDefault() )
+      {
+	cout << "need to specify " << key << endl;
+	exit(-1);
+      }
+    }
+    return (string(""));
+  }
+
+  return (mIter->second);
+
+}
+
+
+double GetDoubleValueFor(commandArg<double> &keyArg)
+{
+  string key(keyArg.GetName());
+  string val = GetStringValueFor(keyArg);
+
+  if ( val.empty() )
+  {
+    if (!keyArg.HasDefault() )
+    {
+      cout << "need to specify " << key << endl;
+      exit(-1);
+    }
+    else
+      return ( keyArg.GetValue() );
+  }
+  else
+  {
+//     if ( !val.IsDouble() )
+//     {
+//       cout << "invalid: " << key <<" "<< val << endl;
+//       exit(-1);
+//     }
+//     else
+    return (atof(val.c_str()));
+
+  } 
+}
+
+int GetIntValueFor(commandArg<int> &keyArg)
+{
+  string key(keyArg.GetName());
+  string val = GetStringValueFor(keyArg);
+  if ( val.empty() )
+  {
+    if (!keyArg.HasDefault() )
+    {
+      cout << "need to specify " << key << endl;
+      exit(-1);
+    }
+    else
+      return ( keyArg.GetValue() );
+  }
+  else
+  {
+//     if ( !val.IsInt() )
+//     {
+//       cout << "invalid: " << key <<" "<< val << endl;
+//       exit(-1);
+//     }
+//     else
+    return (atoi(val.c_str()));
+
+  } 
+}
+
+bool GetBoolValueFor(commandArg<bool> &keyArg)
+{
+  string key(keyArg.GetName());
+  map<string,string>::iterator mIter = mNameVal.find(key);
+  if ( mIter == mNameVal.end() )
+  {
+    if ( keyArg.HasDefault() )
+    {
+      return keyArg.GetValue();
+    }
+    else
+    {
+      cout << "nned to specify " << key << endl;
+      exit(-1);
+    }
+  }
+  else
+    return true;
+}
+
+
+bool requestHelp()
+{
+  for ( int i=1; i<mArgc; ++i )
+  {
+    string this_arg(mArgv[i]);
+    if ( this_arg == "-h" )
+      return true;
+  }
+
+  return false;
+}
+
+void showHelp()
+{
+  cout << endl << mArgv[0] << ": ";
+  if (mDesc != "")
+    cout << mDesc << endl << endl;
+  else
+    cout << "a module in the code base 'Spines'." << endl << endl;
+  cout << "\nAvailable arguments:" << endl;
+  cout << mHelp.str() << endl;
+}
+
+
+
+ 
+
+
+};
+

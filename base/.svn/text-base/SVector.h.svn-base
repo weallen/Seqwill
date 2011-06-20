@@ -1,0 +1,90 @@
+#ifndef SVECTOR_H_
+#define SVECTOR_H_
+
+using namespace std;
+
+#include <vector>
+#include <iterator>
+#include <assert.h>
+
+
+template <class T> 
+class svec : public vector<T> 
+{
+ public:
+
+  int isize() const {return (int)vector<T>::size();}
+
+  const T & operator[] (int i) const {
+#ifndef NDEBUG
+    assert(i<isize());
+    assert(i>=0);
+#endif
+    return vector<T>::operator[](i);
+  }
+
+  T & operator[] (int i) {
+#ifndef NDEBUG
+    assert(i<isize());
+    assert(i>=0);
+#endif
+    return vector<T>::operator[](i);
+  }
+
+
+
+};
+
+
+template <class T> 
+class vec : public svec<T> 
+{
+};
+
+template<class T> 
+void Sort(svec<T>& v)
+{
+  sort(v.begin(), v.end());
+}
+
+
+template<class T> 
+void UniqueSort(svec<T>& v)
+{
+  sort(v.begin(), v.end());
+
+  int i;
+  int k = 0;
+  for (i=0; i<v.isize(); i++) {
+    if (v[k] < v[i]) {
+      v[k] = v[i];
+      k++;
+    }    
+  }
+}
+
+template<class T> 
+int BinSearch(svec<T> & v, const T & item) 
+{
+  typename svec<T>::iterator iter;    
+  typename svec<T>::iterator begin = v.begin();
+  typename svec<T>::iterator end = v.end();
+  iter = lower_bound(begin, end, item);
+  int pos = distance(begin, iter);
+  
+  if (pos < 0)
+    return -1;
+
+  if (v[pos] < item || item < v[pos])
+    return -1;
+
+  return pos;
+
+}
+
+
+
+
+#endif //SVECTOR_H_
+
+
