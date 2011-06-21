@@ -1,0 +1,17 @@
+Metadata-Version: 1.0
+Name: genomedata
+Version: 1.2.2
+Summary: tools for accessing large amounts of genomic data
+Home-page: http://noble.gs.washington.edu/proj/genomedata/
+Author: Michael Hoffman
+Author-email: mmh1@washington.edu
+License: UNKNOWN
+Download-URL: http://noble.gs.washington.edu/proj/genomedata/genomedata-1.2.2.tar.gz
+Description: Genomedata is a format for efficient storage of multiple tracks of
+        numeric data anchored to a genome. The format allows fast random
+        access to hundreds of gigabytes of data, while retaining a small disk
+        space footprint. We have also developed utilities to load data into
+        this format.
+Platform: UNKNOWN
+Classifier: Natural Language :: English
+Classifier: Programming Language :: Python

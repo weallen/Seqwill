@@ -1,0 +1,95 @@
+1.2.2:
+
+* genomedata-load: will now support track filenames with "=" in the names
+* genomedata-load: now supports UNIX glob wildcards as arguments to -s
+* genomedata-load-data: allow other delimiters besides space for
+  variableStep and fixedStep, allow wiggle_0 track specification
+* genomedata-load-data, genomedata-load: remove unused --chunk-size option
+* genomedata-close-data: fix bug where chunk_starts, chunk_ends not
+  written for supercontigs with zero present data
+* installation: move from path.py to forked-path
+* docs: fixed small errors
+* various: removed exclamation marks from error messages. It's not *that* exciting.
+* some portability improvements
+* tests: improve unit test interface
+
+1.2.1:
+
+* Fixed an installation bug where HDF5 installations later in
+  LIBRARY_PATH might override those specified first, leading to
+  linking errors during build.
+
+1.2.0:
+* Added support for adding additional tracks using genomedata-open-data and
+  Genome.add_track_continuous().
+* Added support for creating Genomedata archives without any tracks.
+* Made chromosome.start and chromosome.end be based upon sequence instead
+  of supercontigs.
+* Made iter(chromosome) and chromosome.itercontinuous() yield supercontigs
+  sorted by start index (instead of dictionary order).
+* Fixed pointer dereference bug that could cause segfault in
+  genomedata-load-data.
+* Improved installation script robustness and clarity.
+
+1.1.1:
+* Fixed format string warnings on Mac OS X
+* Included Gnulib for Mac OS X support
+* Updated docs to reflect OS X support
+
+1.1.0:
+* Fixed format warning on 32-bit systems
+* Fixed Ubuntu format string warnings (switched fprintf to fputs)
+* Fixed bug that caused segmentation fault when accessing
+  tracknames_continuous before data when Genome was not used as a
+  context manager.
+* Created a uniform interface for loading Genomedata archives, whether they
+  are a directory or a single file (untested). This includes calling improving
+  the handling of non-context-manager Genome objects by requiring a call
+  to Genome.close() when finished.
+* Added an option to genomedata-load-seq and genomedata-load
+  to specify the Genomedata archive implementation (directory/file). 
+  Default is directory if number of sequences is at least 100.
+* Added support for replacing data in Genomedata tracks.
+* General documentation improvements
+
+1.0.1:
+* Fixed OSX bug that caused installer to crash on sys.stdin.flush
+* Clarified write-once behavior in documentation
+* Added textinput to installation requirements
+
+1.0.0:
+* added test module with basic unit tests
+* improved documentation, examples
+* added verbose flags
+* compiled default types in __init__.py
+* added _load_data.py wrapper for genomedata_load_data.c
+
+0.1.6:
+
+* extend documentation, including examples
+* extended API with: chromosome[start:end], chromosome.seq[start:end],
+  and chromosome.supercontigs[start:end]
+* added reasonable repr and str return values for Genome, Chromosome, 
+  and Supercontig
+
+0.1.5:
+
+* add documentation
+* change ".h5" suffix to ".genomedata"
+
+0.1.4:
+
+* strip out seq_counts, seq_total_counts, etc. from metadata (big
+  speed increase for save-metadata)
+
+0.1.3:
+
+* add genomedata-report
+* export genomedata-load-seq script
+* _load_data now supports BED, bedGraph input
+* added slice support to genomedata.Chromosome
+* added genomedata.Supercontig.project()
+* Genome.__iter__() now iterates only through files ending in .h5
+* add Genome.sums, Genomes.sums_squares, Genome.num_datapoints
+* fix bug where use of context manager doesn't actually result in closing all open files
+* fix bug in save metadata that causes some regions with data to be ignored

@@ -1,0 +1,4 @@
+numpy
+forked-path
+tables>2.0.4,<2.2a0
+textinput
