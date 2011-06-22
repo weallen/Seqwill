@@ -4,11 +4,11 @@
 
 // Utilities based on an open source library...
 
-using namespace std;
-
 #include "util/mutil.h"
 #include <stdlib.h>
 #include <iostream>
+
+using namespace std;
 
 #define PAGE_SIZE 131072
 

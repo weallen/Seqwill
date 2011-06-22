@@ -26,14 +26,13 @@ int Chromosome::Close() {
   return ret;
 }
 
-// TODO Make not crash...
 int Chromosome::WriteSeq(const string& seq) 
 {
   hid_t root, attrspace, startAttr, endAttr, dset, dspace;
   hsize_t dims; 
   int start, end;
 
-  root = H5Dopen(m_h5file, "/");
+  root = H5Gopen(m_h5file, "/");
   attrspace = H5Screate(H5S_SCALAR);
   start = 0;
   end = seq.size();
@@ -84,23 +83,22 @@ int Chromosome::GetLength()
     H5Aread(attr, H5T_NATIVE_INT, &m_len);
     H5Aclose(attr);
   }
-
   return m_len;
 }
 
 // TODO Finish get track names
 svec<string> Chromosome::GetTrackNames() {
-  hid_t attr, dspace, dtype;
+  hid_t attr, dspace, dtype, root;
   hsize_t dsize, cell_size, num_cells;
   char* attr_data;
   if (m_tracknames.size() == 0) {
-    root = H5Gopen(m_h5file, "/", H5P_DEFAULT);
+    root = H5Gopen(m_h5file, "/");
     assert(root >= 0);
     attr = H5Aopen_name(root, "tracknames");
     assert(attr >= 0);
     dspace = H5Aget_space(attr);
     assert(dspace >= 0);
-    assert(H5Sget_simple_extent_dims(dspace, num_cols, NULL) == 1);
+    assert(H5Sget_simple_extent_dims(dspace, &num_cells, NULL) == 1);
     assert(H5Sclose(dspace) >= 0);
   }
 }

@@ -48,20 +48,24 @@ TEST_F(ChromosomeTest, OpenCloseTest) {
 
 TEST_F(ChromosomeTest, ReadWriteSeqTest) {
   Chromosome c("testchr", "testdata");
+  c.Open();
   string s("GATTATACCCTTATATATCTATATATACTATA");
   ASSERT_GE(c.WriteSeq(s), 1);
   string s2;
   ASSERT_GE(c.ReadSeq(&s), 1);
   ASSERT_EQ(s2, s);
+  c.Close();
 }
 
 TEST_F(ChromosomeTest, SeqLenTest) {
   Chromosome c("testchr", "testdata");
+  c.Open();
   string s("GATTATACCCTTATATATCTATATATACTATA");
   ASSERT_EQ(c.GetLength(), 0);
   c.WriteSeq(s);
   ASSERT_EQ(c.GetLength(), 32);
   ASSERT_EQ(c.GetLength(), 32);
+  c.Close();
 }
 
 TEST_F(ChromosomeTest, ReadWriteTrackTest) {

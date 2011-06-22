@@ -1,11 +1,11 @@
 #ifndef ERRORHANDLING_H_
 #define ERRORHANDLING_H_
 
-using namespace std;
-
 #include <string>
 #include <iostream>
 #include <stdio.h>
+
+using namespace std;
 
 class SException
 {

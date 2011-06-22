@@ -28,6 +28,10 @@ inline string Stringify(int x)
   return (out.str());
 }
 
+inline int StringToInt(string __s) 
+{
+  return atoi(__s.c_str());
+}
 
 int Tokenize( const string &a_string,
 	      vector<char> &separators,

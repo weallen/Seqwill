@@ -23,53 +23,43 @@
 
 #define SUPERCONTIG_LEN 100000
 
-using namespace std;
 using namespace boost::numeric;
 
 class Genome
 {
-  public:
-    Genome() {}
-
-    Genome(const char* dirname) 
-      : m_dirname(dirname)
-      , m_data_dir(NULL)
-      , m_isopen(false)
-    {}
-
-    Genome(const string& dirname) 
-      : m_dirname(dirname) 
-      , m_data_dir(NULL)
-      , m_isopen(false)
-    {}
-
-
-    virtual ~Genome() { 
-      Close();
-      for (map<string, Chromosome*>::iterator i = m_open_chrs.begin();
-        i != m_open_chrs.end(); ++i) {
-        delete (*i).second;
-      }
+ public:
+  Genome()
+    : m_dirname("")
+    , m_data_dir(NULL)
+    , m_isopen(false) {}
+  
+  virtual ~Genome() { 
+    Close();
+    for (map<string, Chromosome*>::iterator i = m_open_chrs.begin();
+	 i != m_open_chrs.end(); ++i) {
+      delete (*i).second;
     }
+  }
 
-    void Open();   
+    void Open(const char* dirname);   
+    void Open(const std::string& dirname);
     void Close();
     bool IsOpen() { return m_isopen; }
 
     // Sequence stuff
-
-    void LoadSeq(const string& seqname);
+    void LoadSeq(const std::string& seqname);
 
     // Chromosome stuff
-    svec<string> GetAllChromosomeNames();
-    bool HasChromosome(const string& chrname);
-    int GetChromosome(const string& chrname, Chromosome* chrout);  
+    std::vector<string> GetAllChromosomeNames();
+    bool HasChromosome(const std::string& chrname);
+    Chromosome* GetChromosome(const std::string& chrname);  
 
+    std::vector<Chromosome*> GetChromosomes() { return m_chrs; }
     // Track stuff
     svec<string> GetAllTrackNames() {
       if (!m_isopen) {
         Open();
-      }      
+      }            
     }
 
   private: 
@@ -80,8 +70,8 @@ class Genome
     bool m_isopen;
 
     svec<string> m_chrnames;
-    map<string, Chromosome*> m_open_chrs;
-
+    std::map<std::string, Chromosome*> m_open_chrs;
+    std::vector<Chromosome*> m_chrs;
     svec<string> m_tracknames;
 };
 

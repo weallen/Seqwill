@@ -5,7 +5,9 @@ if(COMMAND cmake_policy)
   cmake_policy(SET CMP0003 NEW)
 endif(COMMAND cmake_policy)
 
+set(CMAKE_C_COMPILER "/usr/local/bin/clang")
 
+set(CMAKE_CXX_COMPILER "/usr/local/bin/clang++")
 project (mediphmm)
 
 #set(CMAKE_CXX_FLAGS "-Wall -Wshadow")
@@ -15,6 +17,7 @@ project (mediphmm)
 set(EXECUTABLE_OUTPUT_PATH bin)
 
 include_directories(".")
+include_directories("/usr/local/include/bamtools")
 
 # include Google Test
 set(gtest_SOURCE_DIR "~/src/googletest-read-only")
@@ -24,7 +27,7 @@ link_directories("${gtest_SOURCE_DIR}")
 # libraries
 add_library(util util/SComm.cc util/SysTime.cc util/mutil.cc base/ErrorHandling.cc base/FileParser.cc base/StringUtil.cc) 
 
-add_library(analysis analysis/Genome.cc analysis/Track.cc analysis/Chromosome.cc)
+add_library(analysis analysis/Genome.cc analysis/Track.cc analysis/Chromosome.cc analysis/Bam.cc)
 target_link_libraries(analysis hdf5_cpp hdf5 bamtools util)
 
 # binaries

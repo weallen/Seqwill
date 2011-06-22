@@ -4,8 +4,15 @@
 // GENOME
 //
 
-void Genome::Open() 
+void Genome::Open(const char* dirname) 
+{
+  std::string s(fname);
+  Open(s);
+}
+
+void Genome::Open(const std::string& dirname) 
 { 
+  m_dirname = dirname;
   if (!m_isopen) {
     m_data_dir = opendir(m_dirname.c_str());
     if (m_data_dir == NULL) {
@@ -82,7 +89,9 @@ bool Genome::HasChromosome(const string& chrname) {
   return false;
 }
 
-int Genome::GetChromosome(const string& chrname, Chromosome* chrout) {
+Chromosome* Genome::GetChromosome(const std::string& chrname) 
+{
+  Chromosome* chrout;
   if (!HasChromosome(chrname)) {
     return -1;
   }
@@ -92,6 +101,6 @@ int Genome::GetChromosome(const string& chrname, Chromosome* chrout) {
     m_open_chrs[chrname] = chr;
   }
   chrout = m_open_chrs[chrname];
-  return 1;
+  return chrout;
 }
 
