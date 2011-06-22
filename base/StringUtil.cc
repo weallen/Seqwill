@@ -1,6 +1,56 @@
 
 #include "base/StringUtil.h"
 
+int ExactPatternMatch(string orig, string pattern) {
+    string::size_type pos = orig.find(pattern);
+    if (pos == orig.npos) {
+        return 0;
+    }
+    else {
+        return 1;
+    }
+}
+
+int IsWhitespace(char c) {
+    return (c == ' ' or c == '\t' or c == '\n' or c == '\r');
+}
+
+int IsSpace(char c) {
+    return (c == ' ' or c == '\t');
+}
+
+int ToWords(string &orig, vector<string> &words) {
+    int curWordStart, curWordEnd;
+    curWordStart = 0;
+    while(curWordStart < orig.size()) {
+        while (curWordStart < orig.size() and IsSpace(orig[curWordStart])) { 
+            curWordStart++; 
+        }
+        curWordEnd = curWordStart;
+        while (curWordEnd < orig.size() and !IsSpace(orig[curWordEnd])) { 
+            curWordEnd++;
+        }
+        string word;
+        if (curWordEnd != curWordStart) {
+            word.assign(orig, curWordStart, curWordEnd - curWordStart);                     words.push_back(word);
+        }
+        curWordStart = curWordEnd;
+    }
+}
+
+
+int AssignUntilFirstSpace(char *orig, int origLength, string &result) {
+    int i;
+    for (i = 0; i < origLength; i++ ){
+        if (orig[i] == ' ' or orig[i] == '\t' or orig[i] == '\n' or orig[i] == '\r') {
+            break;
+        }
+    }
+    result.assign(orig, i);
+    return i;
+}
+
+
 int PositionAfter(string& in, string& to_find, int startSearchAt)
 {
   int max_pos = in.size() - to_find.size();

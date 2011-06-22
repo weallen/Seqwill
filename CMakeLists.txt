@@ -5,9 +5,9 @@ if(COMMAND cmake_policy)
   cmake_policy(SET CMP0003 NEW)
 endif(COMMAND cmake_policy)
 
-set(CMAKE_C_COMPILER "/usr/local/bin/clang")
+set(CMAKE_C_COMPILER "clang")
 
-set(CMAKE_CXX_COMPILER "/usr/local/bin/clang++")
+set(CMAKE_CXX_COMPILER "clang++")
 project (mediphmm)
 
 #set(CMAKE_CXX_FLAGS "-Wall -Wshadow")
