@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 2.6)
 if(COMMAND cmake_policy)
   cmake_policy(SET CMP0003 NEW)
 endif(COMMAND cmake_policy)
@@ -36,12 +36,8 @@ set(HDF5_SRCS hdf5/BufferedHDF2DArray.h
         hdf5/HDFConfig.h
         hdf5/HDFWriteBuffer.h
 
-        hdf5/HDFGenomeFile.h
-        hdf5/HDFGenomeTrackData.h
-        hdf5/HDFGenomeReader.h
-        hdf5/HDFGenomeWriter.h
-        hdf5/HDFGenomeChrGroup.h
-        hdf5/HDFGenomeRootGroup.h
+        hdf5/HDFTrackReader.h
+        hdf5/HDFTrackWriter.h
 
         hdf5/HDFBasReader.h
         hdf5/HDFBasWriter.h

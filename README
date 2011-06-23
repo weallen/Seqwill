@@ -1,1 +1,33 @@
+
+== DESIGN NOTES ==
+=== BAM LOADING ===
+Done using the BamTools library.
+
+=== PARALLELIZATION ==
+Will be done using Intel's Thread Building Block library. 
+
+=== HDF5 ===
+There are two likely kinds of data access patterns for the data stored in the HDF5 files:
+1. Iteration:
+    Loop over each chromosome, and load some subset of the tracks on each chromosome.
+    E.g. use in an HMM.
+2. Random access: 
+    Load some subset of the tracks on some slice of some chromosome (less than the entire chromosome).
+    May also be looping over the chormosomes, and looping over subsets of the chromosome; in which case, may make sense to load the whole chromosome?
+    E.g. use when comparing specific subsets.
+Same holds for seq data.
+
+Structure of the HDF5 files:
+
+/ Attr: TrackNames, ChrNames
+    /chr
+        /chr1
+            data -- 2D array -- cols are base positions, rows are tracks
+    /seq
+        chr1 -- 1D array, cols are base positions
+        ...
+        chrX
+
+== COPYRIGHT NOTES ==
+
 Most files in the HDF5 directory are from the Pacific Biosciences SMRTanalysis software, and so are (C) Pacific Biosciences 2010.
