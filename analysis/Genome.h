@@ -20,23 +20,22 @@
 #include "base/SVector.h"
 #include "analysis/Track.h"
 #include "analysis/Chromosome.h"
+#include "hdf5/HDFFile.h"
 
 #define SUPERCONTIG_LEN 100000
-
-using namespace boost::numeric;
 
 class Genome
 {
  public:
   Genome()
-    : m_dirname("")
-    , m_data_dir(NULL)
-    , m_isopen(false) {}
+    : dirname_("")
+    , data_dir_(NULL)
+    , isopen_(false) {}
   
   virtual ~Genome() { 
     Close();
-    for (map<string, Chromosome*>::iterator i = m_open_chrs.begin();
-	 i != m_open_chrs.end(); ++i) {
+    for (map<string, Chromosome*>::iterator i = open_chrs_.begin();
+	 i != open_chrs_.end(); ++i) {
       delete (*i).second;
     }
   }
@@ -44,7 +43,7 @@ class Genome
     void Open(const char* dirname);   
     void Open(const std::string& dirname);
     void Close();
-    bool IsOpen() { return m_isopen; }
+    bool IsOpen() { return isopen_; }
 
     // Sequence stuff
     void LoadSeq(const std::string& seqname);
@@ -54,25 +53,27 @@ class Genome
     bool HasChromosome(const std::string& chrname);
     Chromosome* GetChromosome(const std::string& chrname);  
 
-    std::vector<Chromosome*> GetChromosomes() { return m_chrs; }
+    std::vector<Chromosome*> GetChromosomes() { return chrs_; }
+    
     // Track stuff
     svec<string> GetAllTrackNames() {
-      if (!m_isopen) {
-        Open();
-      }            
+      if (!isopen_) {
+        Open(dirname_);
+      }
+      return tracknames_;
     }
 
   private: 
     void LoadTrackNames();
 
-    string m_dirname;
-    DIR* m_data_dir;
-    bool m_isopen;
+    string dirname_;
+    DIR* data_dir_;
+    bool isopen_;
 
-    svec<string> m_chrnames;
-    std::map<std::string, Chromosome*> m_open_chrs;
-    std::vector<Chromosome*> m_chrs;
-    svec<string> m_tracknames;
+    svec<string> chrnames_;
+    std::map<std::string, Chromosome*> open_chrs_;
+    std::vector<Chromosome*> chrs_;
+    svec<string> tracknames_;
 };
 
 #endif

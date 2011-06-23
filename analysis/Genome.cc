@@ -6,44 +6,44 @@
 
 void Genome::Open(const char* dirname) 
 {
-  std::string s(fname);
+  std::string s(dirname);
   Open(s);
 }
 
 void Genome::Open(const std::string& dirname) 
 { 
-  m_dirname = dirname;
-  if (!m_isopen) {
-    m_data_dir = opendir(m_dirname.c_str());
-    if (m_data_dir == NULL) {
-      mkdir(m_dirname.c_str(), S_IRWXU); 
-      m_data_dir = opendir(m_dirname.c_str());
+  dirname_ = dirname;
+  if (!isopen_) {
+    data_dir_ = opendir(dirname_.c_str());
+    if (data_dir_ == NULL) {
+      mkdir(dirname_.c_str(), S_IRWXU); 
+      data_dir_ = opendir(dirname_.c_str());
     } else {
       struct dirent* dirconts; 
-      while((dirconts = readdir(m_data_dir))) {
+      while((dirconts = readdir(data_dir_))) {
         string s(dirconts->d_name);
         string extension(".h5");
         if (Contains(s, extension)) {
           // take all but last 3 chars: e.g. "chr1.h5" -> "chr1"
-          m_chrnames.push_back(s.substr(0, s.size() - 3));
+          chrnames_.push_back(s.substr(0, s.size() - 3));
         }
       }
     }
-    m_isopen = true;
+    isopen_ = true;
   }
 }
 
 void Genome::Close() 
 {
-  if (m_isopen) {
-    for (map<string, Chromosome*>::iterator i = m_open_chrs.begin();
-      i != m_open_chrs.end(); ++i) {
+  if (isopen_) {
+    for (std::map<std::string, Chromosome*>::iterator i = open_chrs_.begin();
+      i != open_chrs_.end(); ++i) {
       (*i).second->Close();
     }
 
-    if (m_data_dir != NULL)
-      closedir(m_data_dir);
-    m_isopen = false;
+    if (data_dir_ != NULL)
+      closedir(data_dir_);
+    isopen_ = false;
   }
 }
 
@@ -66,23 +66,23 @@ void Genome::LoadSeq(const string& seqname)
       currseq.append(line);
     }
   }
-  Chromosome chr(chrname, m_dirname);
+  Chromosome chr(chrname, dirname_);
   chr.WriteSeq(currseq);
-  m_chrnames.push_back(chrname);
+  chrnames_.push_back(chrname);
 }
 
 // Chromosome stuff
 svec<string> Genome::GetAllChromosomeNames() 
 {
-  if (!m_isopen) {
+  if (!isopen_) {
     Open();
   }
-  return m_chrnames;
+  return chrnames_;
 }
 
 bool Genome::HasChromosome(const string& chrname) {
-  for (svec<string>::iterator i = m_chrnames.begin(); 
-      i != m_chrnames.end(); ++i) {
+  for (svec<string>::iterator i = chrnames_.begin(); 
+      i != chrnames_.end(); ++i) {
     if (chrname == *i) 
       return true;
   }
@@ -95,12 +95,12 @@ Chromosome* Genome::GetChromosome(const std::string& chrname)
   if (!HasChromosome(chrname)) {
     return -1;
   }
-  if (m_open_chrs.find(chrname) == m_open_chrs.end()) {
-    Chromosome* chr = new Chromosome(chrname, m_dirname);
+  if (open_chrs_.find(chrname) == open_chrs_.end()) {
+    Chromosome* chr = new Chromosome(chrname, dirname_);
     chr->Open();
-    m_open_chrs[chrname] = chr;
+    open_chrs_[chrname] = chr;
   }
-  chrout = m_open_chrs[chrname];
+  chrout = open_chrs_[chrname];
   return chrout;
 }
 

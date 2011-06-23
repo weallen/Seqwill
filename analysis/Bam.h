@@ -12,6 +12,7 @@
 
 #include "analysis/Genome.h"
 #include "base/StringUtil.h"
+#include "hdf5/HDFFile.h"
 
 enum Stand {
   FWD = 0,
@@ -67,7 +68,7 @@ class HitTable
   }   
 
   // member vars
-  std::map<>
+
 };
 
 class BamLoader

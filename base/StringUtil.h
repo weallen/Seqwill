@@ -17,6 +17,8 @@
 #ifndef STRINGUTIL_H
 #define STRINGUTIL_H
 
+#include <stdio.h>
+#include <stdlib.h>
 #include <string>
 #include <iostream>
 #include <sstream>

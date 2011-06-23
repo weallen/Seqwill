@@ -32,7 +32,8 @@ int ToWords(string &orig, vector<string> &words) {
         }
         string word;
         if (curWordEnd != curWordStart) {
-            word.assign(orig, curWordStart, curWordEnd - curWordStart);                     words.push_back(word);
+            word.assign(orig, curWordStart, curWordEnd - curWordStart);
+            words.push_back(word);
         }
         curWordStart = curWordEnd;
     }
