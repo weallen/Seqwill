@@ -126,8 +126,8 @@ class HDFPlsWriter {
 		hdfFileName = _hdfFileName;
 		platformId  = _platformId;
 		outFile.Create(hdfFileName);
-		rootGroup.Initialize(*outFile.hdfFile, "/");
-		rootGroup.AddGruop("PulseData");
+    rootGroup.Initialize(*outFile.hdfFile, "/");
+    rootGroup.AddGruop("PulseData");
 		rootGroup.AddGroup("PulseData/BaesCalls");
 		rootGroup.AddGroup("PulseData/BaseCalls/ZMW"); 
 		rootGroup.AddGroup("ScanData/RunInfo"); 

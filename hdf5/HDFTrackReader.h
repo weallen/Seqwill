@@ -10,6 +10,9 @@
 #include "hdf5/HDFAtom.h"
 #include "hdf5/HDFFile.h"
 
+#include "data/TrackData.h"
+#include "data/ChrData.h"
+
 /* Use BufferedHDFArray to read
  * contiguous blocks of data from each track
  * in parallel.
@@ -18,10 +21,15 @@
  *
  */
 
+
 class HDFTrackReader
 {
 public:
-  HDFTrackReader() {}
+  HDFTrackReader()
+    : curr_chr_(0)
+    , ntracks_(0)
+    {}
+
   virtual ~HDFTrackReader() {}
 
   int Init(const std::vector<std::string>& genomefilename) {
@@ -43,12 +51,27 @@ public:
     genome_file.close();
   }
 
+
+  void ReadChrData(ChrData* chrdata) {
+    track_names_.Read(chrdata->tracknames);
+    chr_names_.Read(chrdata->chrnames);
+    chr_lens_.Read(chrdata->chrlens);
+  }
+
+  // Reads data into TrackData initialized with chr, tracknames, start, and end
+  void ReadTrackData(TrackData* td) {
+
+  }
+
 private:
   HDFFile genome_file_;
-  HDFChrReader chr_reader_;
+  std::vector<HDFGroup> chr_groups_;
+  BufferedHDF2DArray<float> trackdata_;
   HDFAtom<std::vector<std::string> > track_names_;
   HDFAtom<std::vector<std::string> > chr_names_;
+  HDFAtom<std::vector<int> > chr_lens_;
   int ntracks_;
+  int curr_chr_;
 
 };
 #endif

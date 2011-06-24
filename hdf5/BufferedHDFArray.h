@@ -22,10 +22,10 @@
 #include "hdf5/HDFData.h"
 #include "hdf5/HDFGroup.h"
 #include "hdf5/HDFWriteBuffer.h"
+#include "base/DNASequence.h"
 #include <assert.h>
 #include <iostream>
-#include <DNASequence.h>
-#include <FASTQSequence.h>
+
 using namespace std;
 using namespace H5;
 

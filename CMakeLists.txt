@@ -66,9 +66,40 @@ set(HDF5_SRCS hdf5/BufferedHDF2DArray.h
         hdf5/HDFSMRTSequenceReader.h
         hdf5/HDFZMWReader.h
         hdf5/PlatformId.h)
+        
+set(UTIL_SRCS util/SComm.h
+    util/SComm.cc 
+    util/SysTime.h
+    util/SysTime.cc 
+    util/mutil.h
+    util/mutil.cc
+    util/FastaParser.h)
+
+set(BASE_SRCS base/BEDelement.h
+    base/CommandLineParser.h
+    base/ErrorHandling.h
+    base/ErrorHandling.cc 
+    base/EST.h
+    base/FileParser.h
+    base/FileParser.cc
+    base/GFF.h
+    base/Interval.h
+    base/RandomStuff.h
+    base/ReportManager.h
+    base/StringUtil.h
+    base/StringUtil.cc
+    base/SVector.h
+    base/DNASequence.h
+    base/Types.h
+    base/NucConversion.h)
+
+set(DATA_SRCS data/TrackData.h
+    data/ChrData.h)
 
 # libraries
-add_library(util ${HDF5_SRCS} util/SComm.cc util/SysTime.cc util/mutil.cc base/ErrorHandling.cc base/FileParser.cc base/StringUtil.cc)
+add_library(util ${HDF5_SRCS} ${UTIL_SRCS} ${BASE_SRCS} ${DATA_SRCS})
+target_link_libraries(util hdf5_cpp hdf5 tbb)
+
 add_library(analysis analysis/Genome.cc analysis/Chromosome.cc analysis/Bam.cc)
 target_link_libraries(analysis hdf5_cpp hdf5 bamtools util)
 

@@ -20,8 +20,7 @@ Same holds for seq data.
 Structure of the HDF5 files:
 
 / Attr: TrackNames, ChrNames
-    /chr
-        /chr1
+    /chr1
             data -- 2D array -- cols are base positions, rows are tracks
     /seq
         chr1 -- 1D array, cols are base positions
