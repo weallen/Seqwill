@@ -18,6 +18,7 @@ include_directories(".")
 include_directories("/usr/local/include/bamtools")
 include_directories("/usr/local/include")
 include_directories("/usr/include")
+include_directories("/usr/local/include/eigen3")
 
 # include Google Test
 set(gtest_SOURCE_DIR "~/src/googletest-read-only")
@@ -94,11 +95,19 @@ set(BASE_SRCS base/BEDelement.h
     base/NucConversion.h)
 
 set(DATA_SRCS data/TrackData.h
-    data/ChrData.h)
+    data/ChrData.h
+    data/SeqData.h)
+
+set(ANALYSIS_SRCS analysis/Genome.cc 
+    analysis/Genome.h
+    analysis/Track.h
+    analysis/Track.cc
+    analysis/GenomeSeq.h
+    analysis/GenomeSeq.cc)
 
 # libraries
-add_library(util ${HDF5_SRCS} ${UTIL_SRCS} ${BASE_SRCS} ${DATA_SRCS})
-target_link_libraries(util hdf5_cpp hdf5 tbb)
+add_library(util ${HDF5_SRCS} ${UTIL_SRCS} ${BASE_SRCS} ${DATA_SRCS} ${ANALYSIS_SRCS})
+target_link_libraries(util hdf5_cpp hdf5 tbb bamtools)
 
 add_library(analysis analysis/Genome.cc analysis/Chromosome.cc analysis/Bam.cc)
 target_link_libraries(analysis hdf5_cpp hdf5 bamtools util)

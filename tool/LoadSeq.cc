@@ -26,7 +26,7 @@ int main(int argc, char** argv) {
   string genomeFasta = P.GetStringValueFor(iGenomeFasta);
   string dataPath = P.GetStringValueFor(oDataPath);
   cout << "Reading genome fasta directory " << genomeFasta << "..." << endl;
-  Genome genome(dataPath);
+  GenomeMgr genome(dataPath);
 
   struct stat filestat;
   DIR* fastaDir;
@@ -44,7 +44,7 @@ int main(int argc, char** argv) {
     string extension = ".fa";
     if (Contains(fname, extension)) {
       cout << "Processing " << fname << endl; 
-      genome.LoadSeq(genomeFasta + "/" + fname);
+      genome.LoadChrSeq(genomeFasta + "/" + fname);
     }
   }
 

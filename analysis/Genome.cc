@@ -1,59 +1,44 @@
 #include "analysis/Genome.h"
 
+int LoadGenomeMgr(const std::string& fname, GenomeMgr g)
+{
+}
+
 //
-// GENOME
+// GENOMEMGR
 //
 
-void Genome::Open(const char* dirname) 
+void GenomeMgr::Open(const char* dirname)
 {
   std::string s(dirname);
   Open(s);
 }
 
-void Genome::Open(const std::string& dirname) 
+void GenomeMgr::Open(const std::string& dirname)
 { 
-  dirname_ = dirname;
-  if (!isopen_) {
-    data_dir_ = opendir(dirname_.c_str());
-    if (data_dir_ == NULL) {
-      mkdir(dirname_.c_str(), S_IRWXU); 
-      data_dir_ = opendir(dirname_.c_str());
-    } else {
-      struct dirent* dirconts; 
-      while((dirconts = readdir(data_dir_))) {
-        string s(dirconts->d_name);
-        string extension(".h5");
-        if (Contains(s, extension)) {
-          // take all but last 3 chars: e.g. "chr1.h5" -> "chr1"
-          chrnames_.push_back(s.substr(0, s.size() - 3));
-        }
-      }
-    }
-    isopen_ = true;
-  }
 }
 
-void Genome::Close() 
+void GenomeMgr::Close()
 {
-  if (isopen_) {
-    for (std::map<std::string, Chromosome*>::iterator i = open_chrs_.begin();
-      i != open_chrs_.end(); ++i) {
-      (*i).second->Close();
-    }
-
-    if (data_dir_ != NULL)
-      closedir(data_dir_);
-    isopen_ = false;
-  }
+  Flush();
 }
 
-
-void Genome::LoadSeq(const string& seqname) 
+// Deallocate everything
+void GenomeMgr::Flush()
 {
+}
+
+void GenomeMgr::LoadChrSeq(const string& seqname)
+{
+  track_reader_.Close();
   // parse file
   string currseq;
   FlatFileParser fastaparse;
   string line;
+  HDFTrackWriter writer;
+
+  writer.Open(filename_);
+
   fastaparse.Open(seqname);
   // count number of lines in fasta
   int i = 0;
@@ -66,13 +51,13 @@ void Genome::LoadSeq(const string& seqname)
       currseq.append(line);
     }
   }
-  Chromosome chr(chrname, dirname_);
-  chr.WriteSeq(currseq);
   chrnames_.push_back(chrname);
+  writer.WriteChrSeq(chrname, currseq);
+  writer.Close();
 }
 
 // Chromosome stuff
-svec<string> Genome::GetAllChromosomeNames() 
+std::vector<string> GenomeMgr::GetChrNames()
 {
   if (!isopen_) {
     Open();
@@ -80,7 +65,7 @@ svec<string> Genome::GetAllChromosomeNames()
   return chrnames_;
 }
 
-bool Genome::HasChromosome(const string& chrname) {
+bool GenomeMgr::HasChromosome(const string& chrname) {
   for (svec<string>::iterator i = chrnames_.begin(); 
       i != chrnames_.end(); ++i) {
     if (chrname == *i) 
@@ -89,18 +74,14 @@ bool Genome::HasChromosome(const string& chrname) {
   return false;
 }
 
-Chromosome* Genome::GetChromosome(const std::string& chrname) 
+TrackPtr GenomeMgr::GetChromosome(const std::string& chrname, const std::string& trackname)
 {
-  Chromosome* chrout;
-  if (!HasChromosome(chrname)) {
-    return -1;
-  }
-  if (open_chrs_.find(chrname) == open_chrs_.end()) {
-    Chromosome* chr = new Chromosome(chrname, dirname_);
-    chr->Open();
-    open_chrs_[chrname] = chr;
-  }
-  chrout = open_chrs_[chrname];
-  return chrout;
+  TrackPtr track(new Track(trackname, chrname, 0, chrlens_[chrname]));
+  TrackData td;
+  track_reader_.GetChromosome();
 }
 
+TrackPtr GenomeMgr::GetChrRegion(const std::string& chrname, int start, int end, const std::string& trackname)
+{
+
+}

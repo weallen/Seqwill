@@ -6,6 +6,8 @@
 #include <vector>
 #include <map>
 
+#include <boost/scoped_ptr.hpp>
+
 #include "hdf5/HDFGroup.h"
 #include "hdf5/HDFFile.h"
 #include "hdf5/HDFAtom.h"
@@ -16,6 +18,9 @@
 #include "base/DNASequence.h"
 
 #include "data/TrackData.h"
+
+typedef boost::scoped_ptr<BufferedHDF2DArray> Buffered2DArrayPtr;
+typedef boost::scoped_ptr<BufferedHDFArray> BufferedArrayPtr;
 
 class HDFTrackWriter
 {
@@ -43,84 +48,104 @@ class HDFTrackWriter
     track_names_.Write(empty_string);
   }
 
-  void Open(std::string& outfilename) {
+  void Open(std::string& outfilename)
+  {
     outfilename_ = outfilename;
     outfile_.Create(outfilename_);
     root_group_.Initialize(*outfile_.hdfFile, "/");
 
   }
 
-  void Close() {
+  void Close()
+  {
     Flush();
     outfile_.Close();
   }
 
 
-  int WriteChrSeq(const std::string& chr, const DNASequence& seq) {
-
+  int WriteChrSeq(const std::string& chr, const DNASequence& seq)
+  {
     // Create a sequence array with the seq
-    BufferedHDFArray<unsigned char> seq_array;
-    seq_array.Initialize(&seq_group_.group, chr, seq.length);
-    chr_to_seq_[chr] = seq_array;
+    BufferedArrayPtr arr(new BufferedHDFArray<unsigned char>());
+    arr->Initialize(&seq_group_.group, chr, seq.length);
+    chr_to_seq_[chr] = arr;
     // Create a chromosome array
     AddChrName(chr);
     AddChrLen(seq.length);
+    arr->Write((const char*)seq.seq, seq.length);
+
+    // Add new group for track data
+    HDFGroup chrgrp;
+    chrgrp.Create(chr_group_, chr);
+    chr_track_groups_[chr] = chrgrp;
     return 1;
   }
 
-  void AddTrack(const std::string& trackname) {
-    AddTrackName(trackname);
-    std::vector<std::string> chrnames;
-    chr_names_.Read(chrnames);
-    // go through each chromosome file and add a row
-    for (std::vector<std::string>::const_iterator it = chrnames.begin();
-         it != chrnames.end(); ++it) {
-   //   chr_to_trackdata_[*it].
-    }
-  }
 
   // Have to AddTrack before can WriteTrackData to it
-  int WriteTrackData(const TrackData& td) {
+  int WriteTrackData(const TrackData& td)
+  {
     std::vector<std::string> tracknames;
     track_names_.Read(tracknames);
     if (std::count(tracknames.begin(), tracknames.end(),td.track_name) == 0) {
-      return 0;
+      AddTrack(td.track_name);
     }
+
 
     return 1;
   }
 
-  void Flush() {
+  void Flush()
+  {
     for (std::map<std::string, BufferedHDF2DArray<float> >::iterator it = chr_to_trackdata_.begin();
          it != chr_to_trackdata_.end(); ++it) {
       (*it).second->Flush();
     }
   }
 
-  private:
-  void AddTrackName(const std::string& name) {
+private:
+  void AddTrack(const std::string& trackname)
+  {
+    AddTrackName(trackname);
+    std::vector<std::string> chrnames;
+    chr_names_.Read(chrnames);
+    // go through each chromosome group and add a new track dataset
+    for (int i=0; i < chrnames.size(); ++i) {
+      arr = chr_to_trackdata_[chrnames[i]];
+    }
+
+  }
+
+  void AddTrackName(const std::string& name)
+  {
     std::vector<std::string> tracknames;
     track_names_.Read(tracknames);
     tracknames.push_back(name);
     track_names_.Write(tracknames);
   }
 
-  void AddChrName(const std::string& name) {
+  void AddChrName(const std::string& name)
+  {
     std::vector<std::string> chrnames;
     chr_names_.Read(chrnames);
     chrnames.push_back(chrnames);
     chr_names_.Write(chrnames);
   }
 
-  void AddChrLen(int len) {
+  void AddChrLen(int len)
+  {
     std::string s = Stringify(len);
     std::vector<std::string> chrlens;
     chr_lens_.Read(chrlens);
     chrlens.push_back(s);
     chr_lens_.Write(chrlens);
   }
-  std::map<std::string, BufferedHDFArray<unsigned char> > chr_to_seq_;
-  std::map<std::string, BufferedHDF2DArray<float> > chr_to_trackdata_;
+
+  std::map<std::string, BufferedArrayPtr> chr_to_seq_;
+  std::map<std::string, BufferedArrayPtr> chr_to_trackdata_;
+  std::map<std::string, HDFGroup> chr_track_groups_;
+  std::map<std::string, int> chr_to_len_;
+
   HDFFile outfile_;
   HDFAtom<std::vector<std::string> > track_names_;
   HDFAtom<std::vector<std::string> > chr_lens_;

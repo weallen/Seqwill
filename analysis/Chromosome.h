@@ -8,7 +8,7 @@
 #include <iostream>
 #include <string>
 
-#include <boost/numeric/ublas/vector.hpp>
+#include <boost/shared_ptr.hpp>
 
 //#include <H5Cpp.h>
 #include <hdf5.h>
@@ -18,8 +18,6 @@
 #include "base/SVector.h"
 #include "analysis/Track.h"
 
-using namespace std;
-using namespace boost::numeric;
 
 class Chromosome
 {
@@ -33,12 +31,7 @@ class Chromosome
 
     virtual ~Chromosome() { }
 
-    void Open();
-    int Close();
-
-    bool IsOpen() { return m_isopen; }
-
-    const string& GetName() { return m_chrname; }
+    const std::string& GetName() { return m_chrname; }
     int WriteSeq(const string& seq);
     int ReadSeq(string* seq);
 
@@ -55,7 +48,6 @@ class Chromosome
     string m_chrname;
     int m_len;
     hid_t m_h5file;
-    svec<string> m_tracknames;
 };
 
 #endif

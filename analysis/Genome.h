@@ -11,7 +11,7 @@
 #include <vector>
 #include <map>
 
-#include <boost/numeric/ublas/vector.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include <hdf5.h>
 
@@ -20,60 +20,54 @@
 #include "base/SVector.h"
 #include "analysis/Track.h"
 #include "analysis/Chromosome.h"
-#include "hdf5/HDFFile.h"
+#include "hdf5/HDFTrackReader.h"
+#include "hdf5/HDFTrackWriter.h"
 
 #define SUPERCONTIG_LEN 100000
 
-class Genome
+typedef boost::shared_ptr<GenomeMgr> GenomeMgrPtr;
+
+int LoadGenomeMgr(const std::string& fname, GenomeMgr g);
+
+class GenomeMgr
 {
- public:
-  Genome()
-    : dirname_("")
-    , data_dir_(NULL)
-    , isopen_(false) {}
-  
-  virtual ~Genome() { 
+public:
+  GenomeMgr() {}
+
+  virtual ~GenomeMgr() {
     Close();
-    for (map<string, Chromosome*>::iterator i = open_chrs_.begin();
-	 i != open_chrs_.end(); ++i) {
-      delete (*i).second;
-    }
   }
 
-    void Open(const char* dirname);   
-    void Open(const std::string& dirname);
-    void Close();
-    bool IsOpen() { return isopen_; }
+  void Open(const char* fname);
+  void Open(const std::string& fname);
+  void Close();
+  bool IsOpen() { return isopen_; }
+  void Flush();
 
-    // Sequence stuff
-    void LoadSeq(const std::string& seqname);
+  // Sequence stuff
+  void LoadChrSeq(const std::string& seqname);
 
-    // Chromosome stuff
-    std::vector<string> GetAllChromosomeNames();
-    bool HasChromosome(const std::string& chrname);
-    Chromosome* GetChromosome(const std::string& chrname);  
+  // Track stuff
+  std::vector<string> GetChrNames();
+  bool HasChromosome(const std::string& chrname);
+  TrackPtr GetChromosome(const std::string& chrname, const std::string& trackname);
+  TrackPtr GetChrRegion(const std::string& chrname, int start, int end, const std::string& trackname);
 
-    std::vector<Chromosome*> GetChromosomes() { return chrs_; }
-    
-    // Track stuff
-    svec<string> GetAllTrackNames() {
-      if (!isopen_) {
-        Open(dirname_);
-      }
-      return tracknames_;
-    }
+  void LoadTrackData(const std::string& tdfile);
 
-  private: 
-    void LoadTrackNames();
+  // Track stuff
+  std::vector<string> GetTrackNames();
 
-    string dirname_;
-    DIR* data_dir_;
-    bool isopen_;
+private:
+  void LoadTrackNames();
 
-    svec<string> chrnames_;
-    std::map<std::string, Chromosome*> open_chrs_;
-    std::vector<Chromosome*> chrs_;
-    svec<string> tracknames_;
+  string filename_;
+  bool isopen_;
+
+  HDFTrackReader track_reader_;
+  std::vector<string> chrnames_;
+  std::map<std::string, int> chrlens_;
+  std::vector<string> tracknames_;
 };
 
 #endif

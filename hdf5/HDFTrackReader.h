@@ -12,6 +12,7 @@
 
 #include "data/TrackData.h"
 #include "data/ChrData.h"
+#include "data/SeqData.h"
 
 /* Use BufferedHDFArray to read
  * contiguous blocks of data from each track
@@ -47,22 +48,43 @@ public:
     }
   }
 
+  void Open() {
+    try {
+        genome_file_.Open(genomefilename.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
+    } catch (Exception& e) {
+      std::cout << e.getDetailMsg() << std::endl;
+      return 0;
+    }
+  }
+
   void Close() {
     genome_file.close();
   }
 
 
-  void ReadChrData(ChrData* chrdata) {
+  void ReadChrData(const std::string& chrname, ChrData* chrdata)
+  {
     track_names_.Read(chrdata->tracknames);
     chr_names_.Read(chrdata->chrnames);
     chr_lens_.Read(chrdata->chrlens);
   }
 
-  // Reads data into TrackData initialized with chr, tracknames, start, and end
-  void ReadTrackData(TrackData* td) {
+  void ReadChrSeq(const std::string& chrname, SeqData* sd)
+  {
+    sd->chr_name = chrname;
+    ChrData cr;
+    GetChrData(chrname, &cr);
 
   }
 
+  void ReadChrTrack(const std::string& chrname, const std::string& trackname, TrackData* td)
+  {
+  }
+
+  void ReadChrRegionTrack(const std::string& trackname, const std::string& chrname,
+                         int start, int end, TrackData* td)
+  {
+  }
 private:
   HDFFile genome_file_;
   std::vector<HDFGroup> chr_groups_;

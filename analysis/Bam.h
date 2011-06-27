@@ -80,13 +80,13 @@ class BamLoader
   virtual ~BamLoader();
 
   // creates index, inits data structures
-  void Init(Genome* g, const std::string& fname);
+  void Init(GenomeMgr* g, const std::string& fname);
 
   void Close();
   
   void ReadBamFile();
   
-  Genome* genome() { return genome_; }
+  GenomeMgr* genome() { return genome_; }
   
  private:
   std::map<std::string, int> GetRefSeqInfo();
@@ -98,7 +98,7 @@ class BamLoader
   std::map<std::string, std::vector<BamRead> > chrs_;
   BamTools::BamReader reader_;  
   std::map<std::string, int> chrlens_;
-  Genome* genome_;
+  GenomeMgr* genome_;
 };
 
 

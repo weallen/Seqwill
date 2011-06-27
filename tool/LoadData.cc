@@ -24,7 +24,7 @@ int main(int argc, char** argv) {
   string dataPath = P.GetStringValueFor(iDataPath);
   string trackPath = P.GetStringValueFor(tTrack);
 
-  Genome g(dataPath);
+  GenomeMgr g(dataPath);
 
   cout << "Reading bam file" << trackPath << "..." << endl;
   
