@@ -13,41 +13,36 @@
 //#include <H5Cpp.h>
 #include <hdf5.h>
 
+#include "base/DNASequence.h"
 #include "base/StringUtil.h"
 #include "base/FileParser.h"
 #include "base/SVector.h"
-#include "analysis/Track.h"
+#include "io/TrackWriter.h"
 
+typedef boost::shared_ptr<Chromosome> ChromosomePtr;
+
+int SaveChrFromFASTA(const std::string& fname, const std::string& seqfname);
+int LoadChr(const std::string& fname, const std::string& chrname, Chromosome& chr);
 
 class Chromosome
 {
-  public:
-    Chromosome(const string& chrname, const string& dirname)
-      : m_dirname(dirname)
-      , m_isopen(false)
-      , m_chrname(chrname)
-      , m_len(-1)
-    { }
+public:
+  Chromosome() {}
 
-    virtual ~Chromosome() { }
+  Chromosome(const std::string& chrname)
+    : name_(chrname)
+  { }
 
-    const std::string& GetName() { return m_chrname; }
-    int WriteSeq(const string& seq);
-    int ReadSeq(string* seq);
+  virtual ~Chromosome() { }
 
-    int GetLength();
+  const std::string& GetName() { return name_; }
 
-    svec<string> GetTrackNames();
-    int WriteTrack(const string& name, const ublas::vector<float>& v);
-    ublas::vector<float> ReadTrack(const string& name);
-    void DeleteTrack(const string& name);
-    
-  private:
-    string m_dirname;
-    bool m_isopen;
-    string m_chrname;
-    int m_len;
-    hid_t m_h5file;
+  int GetLength() { return len_; }
+
+private:
+  std::string name_;
+  int len_;
+  DNASequencePtr seq_;
 };
 
 #endif

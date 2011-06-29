@@ -20,10 +20,14 @@
 #include <fstream>
 #include <string>
 #include <string.h>
+#include <boost/shared_ptr.hpp>
+
 #include "base/NucConversion.h"
 using namespace std;
 #include <iostream>
 #include "base/Types.h"
+
+typedef boost::shared_ptr<DNASequence> DNASequencePtr;
 
 typedef u_int32_t DNALength;
 typedef unsigned char Nucleotide;

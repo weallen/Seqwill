@@ -34,7 +34,7 @@ class ChromosomeTest : public ::testing::Test {
   
     string m_hdf5_dir;
     string m_fasta_dir;
-    GenomeMgr m_genome;
+    TrackReader m_genome;
 };
 
 TEST_F(ChromosomeTest, OpenCloseTest) {

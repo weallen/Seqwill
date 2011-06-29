@@ -26,7 +26,7 @@ int main(int argc, char** argv) {
   string genomeFasta = P.GetStringValueFor(iGenomeFasta);
   string dataPath = P.GetStringValueFor(oDataPath);
   cout << "Reading genome fasta directory " << genomeFasta << "..." << endl;
-  GenomeMgr genome(dataPath);
+  TrackReader genome(dataPath);
 
   struct stat filestat;
   DIR* fastaDir;

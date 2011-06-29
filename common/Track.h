@@ -7,32 +7,8 @@
 #include <Eigen/Core>
 #include <Eigen/Array>
 
-#include "base/Interval.h"
 #include "data/TrackData.h"
 
-
-typedef boost::shared_ptr<Track> TrackPtr;
-
-template<typename DataT>
-class TrackSet
-{
-public:
-  TrackSet() {}
-  virtual ~TrackSet() {}
-
-  void AddTrack(const TrackPtr& track)
-  {
-    tracks_[track.name] = track;
-    track_names_.push_back(track.name);
-  }
-
-  const TrackPtr& GetTrack(const std::string& tname) { return tracks_[tname]; }
-  std::vector<std::string> GetTrackNames() { return track_names_; }
-
-private:
-  std::map<std::string, TrackPtr> tracks_;
-  std::vector<std::string> track_names_;
-};
 
 // Set of tracks attached to one genomic interval
 template<typename DataT>
@@ -40,6 +16,7 @@ class Track
 {
 public:
 
+  typedef boost::shared_ptr<Track<DataT> > Ptr;
   typedef std::vector<DataT, Eigen::aligned_allocator<float> > VectorType;
   Track() {}
   Track(const TrackData<DataT>& td)

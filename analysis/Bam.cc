@@ -5,7 +5,7 @@ void BamLoader::Close()
   reader_.Close();
 }
 
-void BamLoader::Init(GenomeMgr* g, const std::string& fname)
+void BamLoader::Init(TrackReader* g, const std::string& fname)
 {
   genome_ = g;
   extend_ = 0;

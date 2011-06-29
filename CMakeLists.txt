@@ -25,6 +25,14 @@ set(gtest_SOURCE_DIR "~/src/googletest-read-only")
 include_directories("${gtest_SOURCE_DIR}/include" ${gtest_SOURCE_DIR})
 link_directories("${gtest_SOURCE_DIR}")
 
+set(COMMON_SRCS common/Track.h
+    common/Track.cc)
+
+set(IO_SRCS io/TrackReader.h
+    io/TrackReader.cc
+    io/TrackWriter.h
+    io/TrackWriter.cc)
+
 set(HDF5_SRCS hdf5/BufferedHDF2DArray.h
         hdf5/BufferedHDFArray.h
         hdf5/HDFArray.h
@@ -100,13 +108,11 @@ set(DATA_SRCS data/TrackData.h
 
 set(ANALYSIS_SRCS analysis/Genome.cc 
     analysis/Genome.h
-    analysis/Track.h
-    analysis/Track.cc
     analysis/GenomeSeq.h
     analysis/GenomeSeq.cc)
 
 # libraries
-add_library(util ${HDF5_SRCS} ${UTIL_SRCS} ${BASE_SRCS} ${DATA_SRCS} ${ANALYSIS_SRCS})
+add_library(util ${COMMON_SRCS} ${IO_SRCS} ${HDF5_SRCS} ${UTIL_SRCS} ${BASE_SRCS} ${DATA_SRCS} ${ANALYSIS_SRCS})
 target_link_libraries(util hdf5_cpp hdf5 tbb bamtools)
 
 add_library(analysis analysis/Genome.cc analysis/Chromosome.cc analysis/Bam.cc)

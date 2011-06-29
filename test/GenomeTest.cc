@@ -18,7 +18,7 @@ class GenomeTest : public ::testing::Test {
     GenomeTest() {  
       m_hdf5_dir = "data"; 
       m_fasta_dir = "/media/Storage/user/data/genomedata/fasta/";
-      m_genome = GenomeMgr("data");
+      m_genome = TrackReader("data");
     }
 
     virtual ~GenomeTest() {
@@ -32,7 +32,7 @@ class GenomeTest : public ::testing::Test {
   
     string m_hdf5_dir;
     string m_fasta_dir;
-    GenomeMgr m_genome;
+    TrackReader m_genome;
 };
 TEST_F(GenomeTest, OpenCloseTest) {
   ASSERT_FALSE(m_genome.IsOpen());
