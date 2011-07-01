@@ -112,23 +112,21 @@ set(ANALYSIS_SRCS analysis/Genome.cc
     analysis/GenomeSeq.cc)
 
 # libraries
-add_library(util ${COMMON_SRCS} ${IO_SRCS} ${HDF5_SRCS} ${UTIL_SRCS} ${BASE_SRCS} ${DATA_SRCS} ${ANALYSIS_SRCS})
-target_link_libraries(util hdf5_cpp hdf5 tbb bamtools)
-
-add_library(analysis analysis/Genome.cc analysis/Chromosome.cc analysis/Bam.cc)
-target_link_libraries(analysis hdf5_cpp hdf5 bamtools util)
+add_library(util ${COMMON_SRCS} ${IO_SRCS} ${HDF5_SRCS} ${UTIL_SRCS} ${BASE_SRCS} ${DATA_SRCS})# ${ANALYSIS_SRCS})
+target_link_libraries(util hdf5_cpp hdf5 bamtools)
 
 # binaries
-add_executable(LoadSeq tool/LoadSeq.cc)
-add_executable(LoadData tool/LoadData.cc)
-target_link_libraries(LoadSeq util analysis)
-target_link_libraries(LoadData util analysis)
+#add_executable(LoadSeq tool/LoadSeq.cc)
+#add_executable(LoadData tool/LoadData.cc)
+#target_link_libraries(LoadSeq util analysis)
+#target_link_libraries(LoadData util analysis)
 
 # testing
 function(cxx_test name)
   add_executable(${name} "test/${name}.cc")
-  target_link_libraries(${name} analysis util gtest)
+  target_link_libraries(${name} util gtest)
 endfunction()
 
-cxx_test(GenomeTest)
-cxx_test(ChromosomeTest)
+#cxx_test(GenomeTest)
+#cxx_test(ChromosomeTest)
+cxx_test(HDFTrackTest)

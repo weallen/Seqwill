@@ -22,36 +22,44 @@ template <typename TypeT>
 class HDFTrackReader
 {
 public:
-
-  typedef boost::scoped_ptr<BufferedHDFArray<TypeT> > BufferedArrayPtr;
-
   HDFTrackReader() {}
 
   virtual ~HDFTrackReader() {}
 
-  int Open(const std::vector<std::string>& genomefilename) {
+  int Open(const std::string& filename) {
+    filename_ = filename;
     std::vector<std::string> subtracknames;
 
     try {
-        file_.Open(genomefilename.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
+        file_.Create(filename);
     } catch (Exception& e) {
       std::cout << e.getDetailMsg() << std::endl;
       return -1;
     }
-    if (subtrack_names_.Initialize(genome_file_, 'Subtracks') == 0) {
+    root_group_.Initialize(*file_.hdfFile, "/");
+    if (subtrack_names_.Initialize(root_group_, "Subtracks") == 0) {
       return -1;
     }
     subtrack_names_.Read(subtracknames);
     for (std::vector<std::string>::iterator i = subtracknames.begin();
          i != subtracknames.end(); ++i) {
-      BufferedArrayPtr arr(new BufferedHDFArray());
-      arr->Initialize(root_group_.group, *i);
+      BufferedHDFArray<TypeT>* arr = new BufferedHDFArray<TypeT>();
+      arr->Initialize(&root_group_.group, *i);
       name_to_subtracks_[*i] = arr;
     }
   }
 
   void Close() {
-    genome_file_.close();
+    file_.Close();
+    root_group_.Close();
+    std::vector<std::string> sn;
+    subtrack_names_.Read(sn);
+    for (std::vector<std::string>::iterator i = sn.begin(); i != sn.end(); ++i) {
+      name_to_subtracks_[*i]->Close();
+      delete name_to_subtracks_[*i];
+    }
+    subtrack_names_.Close();
+    metadata_.Close();
   }
 
   std::string GetMetadata()
@@ -74,7 +82,7 @@ public:
     std::vector<std::string> subtracknames = GetSubtrackNames();
     HDFAtom<int> currlen_atom;
     int currlen;
-    BufferedArrayPtr currarr;
+    BufferedHDFArray<TypeT>* currarr;
 
     for (std::vector<std::string>::iterator i = subtracknames.begin();
          i != subtracknames.end(); ++i) {
@@ -91,11 +99,9 @@ public:
     int tlen = end - start;
     HDFAtom<int> subtracklen_atom;
     int subtracklen;
-    BufferedArrayPtr arr;
+    BufferedHDFArray<TypeT>* arr;
 
-    int subtracklen;
-
-    if (name_to_subtracks_.find(trackname) == std::end) {
+    if (name_to_subtracks_.count(trackname) == 0) {
       return -1;
     }
     arr = name_to_subtracks_[trackname];
@@ -109,16 +115,15 @@ public:
     td->track_name = trackname;
     td->start = start;
     td->end = end;
-    delete[] temparr;
   }
 
   int ReadSubtrack(const std::string& trackname, TrackData<TypeT>* td)
   {
-    BufferedArrayPtr arr;
+    BufferedHDFArray<TypeT>* arr;
     HDFAtom<int> subtracklen_atom;
     int subtracklen;
 
-    if (name_to_subtracks_.find(trackname) == std::end) {
+    if (name_to_subtracks_.count(trackname) == 0) {
       return -1;
     }
     arr = name_to_subtracks_[trackname];
@@ -131,11 +136,11 @@ public:
 private:
 
   HDFFile file_;
-  std::string outfilename_;
+  std::string filename_;
 
   HDFGroup root_group_;
   HDFAtom<std::string> metadata_;
-  std::map<std::string, BufferedArrayPtr> name_to_subtracks_;
+  std::map<std::string, BufferedHDFArray<TypeT>* > name_to_subtracks_;
   HDFAtom<std::vector<std::string> > subtrack_names_;
 };
 #endif

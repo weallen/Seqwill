@@ -18,6 +18,7 @@
 
 #include <H5Cpp.h>
 #include "hdf5/HDFAttributable.h"
+#include "base/Types.h"
 #include "base/StringUtil.h"
 #include <vector>
 #include <iostream>

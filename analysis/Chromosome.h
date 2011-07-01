@@ -19,10 +19,11 @@
 #include "base/SVector.h"
 #include "io/TrackWriter.h"
 
-typedef boost::shared_ptr<Chromosome> ChromosomePtr;
+
+class Chromosome;
 
 int SaveChrFromFASTA(const std::string& fname, const std::string& seqfname);
-int LoadChr(const std::string& fname, const std::string& chrname, Chromosome& chr);
+int LoadChr(const std::string& fname, const std::string& chrname, Chromosome* chr);
 
 class Chromosome
 {

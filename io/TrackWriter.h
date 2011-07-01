@@ -21,8 +21,8 @@
 #include "hdf5/HDFTrackReader.h"
 #include "hdf5/HDFTrackWriter.h"
 
-template <typename TypeT>
-int SaveTrack(const std::string& fname, Track<TypeT>* track);
+template <typename T>
+int SaveTrack(const std::string& fname, Track<T>* track);
 
 template <typename DataT>
 class TrackWriter
@@ -37,11 +37,10 @@ public:
   void Open(const char* fname);
   void Open(const std::string& fname);
 
+  void Close();
 
+  void WriteSubTrack(const std::string& tname, DataT* data);
 
  // Sequence stuff
-  void LoadChrSeq(const std::string& seqname);
-
-  void LoadTrackData(const std::string& tdfile);
 };
 #endif

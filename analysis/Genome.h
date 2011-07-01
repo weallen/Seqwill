@@ -33,10 +33,11 @@ public:
   void SetChrFile(const std::string& fname) { chr_file_ = fname; }
 
 
-  int GetChrSeq(const std::string& chrname, ChromosomePtr& chr);
+  int GetChrSeq(const std::string& chrname, Chromosome* chr);
+
 private:
 
-  std::map<std::string, ChromosomePtr> open_chrs_;
+  std::map<std::string, Chromosome*> open_chrs_;
   std::string chr_file_;
 };
 

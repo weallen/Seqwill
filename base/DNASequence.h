@@ -27,6 +27,8 @@ using namespace std;
 #include <iostream>
 #include "base/Types.h"
 
+class DNASequence;
+
 typedef boost::shared_ptr<DNASequence> DNASequencePtr;
 
 typedef u_int32_t DNALength;

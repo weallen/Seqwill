@@ -17,9 +17,9 @@
 #define DATA_HDF_HDF_ATOM_H_
 
 #include "H5Cpp.h"
-#include "data/hdf/HDFConfig.h"
-#include "data/hdf/HDFGroup.h"
-#include "data/hdf/HDFData.h"
+#include "hdf5/HDFConfig.h"
+#include "hdf5/HDFGroup.h"
+#include "hdf5/HDFData.h"
 #include <assert.h>
 #include <iostream>
 #include <string>

@@ -17,7 +17,7 @@
 #include "base/StringUtil.h"
 #include "base/FileParser.h"
 #include "base/SVector.h"
-#include "analysis/Track.h"
+#include "common/Track.h"
 #include "hdf5/HDFTrackReader.h"
 #include "hdf5/HDFTrackWriter.h"
 
@@ -26,10 +26,11 @@ int LoadTrack(const std::string& fname, Track<TypeT>* track);
 
 // A trackfile can store multiple subtracks
 // For example, in genomic data these subtracks would correspond to individual chromosomes
-template <typename DataT>
+template<typename T>
 class TrackReader
 {
 public:
+
   TrackReader() {}
 
   virtual ~TrackReader() {
@@ -48,9 +49,10 @@ public:
   std::string GetTrackName();
 
   // Caller is responsible for allocating and deallocating memory for tracks.
-  int ReadSubTrack(const std::string& subtrackname, TrackPtr track);
+  int ReadSubTrack(const std::string& subtrackname, Track<T>* track);
+
   // Return -1 on error, 1 on success
-  int ReadSubTrackRegion(const std::string& subtrackname, int start, int end, TrackPtr track);
+  int ReadSubTrackRegion(const std::string& subtrackname, int start, int end, Track<T>* track);
 
 
 
@@ -60,7 +62,7 @@ private:
   string filename_;
   bool isopen_;
 
-  HDFTrackReader track_reader_;
+  HDFTrackReader<T> track_reader_;
   std::vector<string> chrnames_;
   std::map<std::string, int> chrlens_;
   std::vector<string> tracknames_;

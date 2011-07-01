@@ -4,7 +4,7 @@ int SaveChrFromFASTA(const std::string& fname, const std::string& seqfname)
 {
 }
 
-int LoadChr(const std::string& fname, const std::string& chrname, Chromosome& chr)
+int LoadChr(const std::string& fname, const std::string& chrname, Chromosome* chr)
 {
 }
 
@@ -34,6 +34,4 @@ void SaveChrSeqFromFASTA(const std::string& fname, const std::string& seqfname)
   }
   writer.WriteSubTrack(chrname, (const char*) currseq.c_str());
   writer.Close();
-
-  return 1;
 }

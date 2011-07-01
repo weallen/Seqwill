@@ -5,17 +5,18 @@
 #include <algorithm>
 #include <boost/shared_ptr.hpp>
 #include <Eigen/Core>
-#include <Eigen/Array>
 
 #include "data/TrackData.h"
 
+template<typename DataT> class Track;
 
 // Set of tracks attached to one genomic interval
-template<typename DataT>
+template<typename DataType>
 class Track
 {
 public:
 
+  typedef DataType DataT;
   typedef boost::shared_ptr<Track<DataT> > Ptr;
   typedef std::vector<DataT, Eigen::aligned_allocator<float> > VectorType;
   Track() {}
@@ -45,10 +46,10 @@ public:
   }
 
   // Iterator
-  inline operator[](size_t pos) { return data[pos]; }
+  inline DataT operator[](size_t pos) { return data[pos]; }
   inline size_t size() { return (data.size()); }
-  inline VectorType::iterator begin() { return data.begin(); }
-  inline VectorType::iterator end() { return data.end(); }
+ // inline VectorType::iterator begin() { return data.begin(); }
+  //inline VectorType::iterator end() { return data.end(); }
 
   int start;
   int end;
