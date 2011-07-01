@@ -89,6 +89,12 @@ class BufferedHDFArray : public HDFData, public HDFWriteBuffer<T> {
 		this->InitializeBuffer(pBufferSize);
 	}
 
+  void Write(const std::vector<T>& data) {
+    T *a = new T[data.size()];
+    std::copy(data.begin(), data.end(), a);
+    Write(a, data.size());
+    delete[] a;
+  }
 
 	void Write(const T *data, int dataLength) {
 		// Fill the buffer with data. When there is overflow, write

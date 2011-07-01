@@ -14,7 +14,7 @@ class TrackData
 public:
 
   std::string track_name;
-  std::vector<DataT> track;
+  DataT* track;
 
   std::string chr_name;
   int start;

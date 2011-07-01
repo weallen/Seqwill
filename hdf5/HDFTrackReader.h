@@ -5,7 +5,9 @@
 #include <string>
 #include <vector>
 
-#include "hdf5/BufferedHDF2DArray.h"
+#include <boost/scoped_ptr.hpp>
+
+#include "hdf5/BufferedHDFArray.h"
 #include "hdf5/HDFGroup.h"
 #include "hdf5/HDFAtom.h"
 #include "hdf5/HDFFile.h"
@@ -14,86 +16,126 @@
 #include "data/ChrData.h"
 #include "data/SeqData.h"
 
-/* Use BufferedHDFArray to read
- * contiguous blocks of data from each track
- * in parallel.
- *
- * Load a chromosome at a time.
- *
- */
 
 
+template <typename TypeT>
 class HDFTrackReader
 {
 public:
-  HDFTrackReader()
-    : curr_chr_(0)
-    , ntracks_(0)
-    {}
+
+  typedef boost::scoped_ptr<BufferedHDFArray<TypeT> > BufferedArrayPtr;
+
+  HDFTrackReader() {}
 
   virtual ~HDFTrackReader() {}
 
-  int Init(const std::vector<std::string>& genomefilename) {
-    try {
-        genome_file_.Open(genomefilename.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
-    } catch (Exception& e) {
-      std::cout << e.getDetailMsg() << std::endl;
-      return 0;
-    }
-    if (track_names_.Initialize(genome_file_, 'TrackNames') == 0) {
-      return 0;
-    }
-    if (chr_names_.Initialize(genome_file_, 'ChrNames') == 0) {
-      return 0;
-    }
-  }
+  int Open(const std::vector<std::string>& genomefilename) {
+    std::vector<std::string> subtracknames;
 
-  void Open() {
     try {
-        genome_file_.Open(genomefilename.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
+        file_.Open(genomefilename.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
     } catch (Exception& e) {
       std::cout << e.getDetailMsg() << std::endl;
-      return 0;
+      return -1;
+    }
+    if (subtrack_names_.Initialize(genome_file_, 'Subtracks') == 0) {
+      return -1;
+    }
+    subtrack_names_.Read(subtracknames);
+    for (std::vector<std::string>::iterator i = subtracknames.begin();
+         i != subtracknames.end(); ++i) {
+      BufferedArrayPtr arr(new BufferedHDFArray());
+      arr->Initialize(root_group_.group, *i);
+      name_to_subtracks_[*i] = arr;
     }
   }
 
   void Close() {
-    genome_file.close();
+    genome_file_.close();
   }
 
-
-  void ReadChrData(const std::string& chrname, ChrData* chrdata)
+  std::string GetMetadata()
   {
-    track_names_.Read(chrdata->tracknames);
-    chr_names_.Read(chrdata->chrnames);
-    chr_lens_.Read(chrdata->chrlens);
+    std::string mdata;
+    metadata_.Read(mdata);
+    return mdata;
   }
 
-  void ReadChrSeq(const std::string& chrname, SeqData* sd)
+  std::vector<std::string> GetSubtrackNames()
   {
-    sd->chr_name = chrname;
-    ChrData cr;
-    GetChrData(chrname, &cr);
-
+    std::vector<std::string> subtracknames;
+    subtrack_names_.Read(subtracknames);
+    return subtracknames;
   }
 
-  void ReadChrTrack(const std::string& chrname, const std::string& trackname, TrackData* td)
+  std::vector<int> GetSubtrackLengths()
   {
+    std::vector<int> subtracklens;
+    std::vector<std::string> subtracknames = GetSubtrackNames();
+    HDFAtom<int> currlen_atom;
+    int currlen;
+    BufferedArrayPtr currarr;
+
+    for (std::vector<std::string>::iterator i = subtracknames.begin();
+         i != subtracknames.end(); ++i) {
+      currarr = name_to_subtracks_[*i];
+      currlen_atom.Initialize(*currarr, "Length");
+      currlen_atom.Read(currlen);
+      subtracklens.push_back(currlen);
+    }
+    return subtracklens;
   }
 
-  void ReadChrRegionTrack(const std::string& trackname, const std::string& chrname,
-                         int start, int end, TrackData* td)
+  int ReadSubtrackRegion(const std::string& trackname, int start, int end, TrackData<TypeT>* td)
   {
+    int tlen = end - start;
+    HDFAtom<int> subtracklen_atom;
+    int subtracklen;
+    BufferedArrayPtr arr;
+
+    int subtracklen;
+
+    if (name_to_subtracks_.find(trackname) == std::end) {
+      return -1;
+    }
+    arr = name_to_subtracks_[trackname];
+    subtracklen_atom.Initialize(*arr, "Length");
+    subtracklen_atom.Read(subtracklen);
+    if (end > subtracklen) {
+      return -1;
+    }
+    td->track = new TypeT[tlen];
+    arr->Read(start, end, td->track);
+    td->track_name = trackname;
+    td->start = start;
+    td->end = end;
+    delete[] temparr;
   }
+
+  int ReadSubtrack(const std::string& trackname, TrackData<TypeT>* td)
+  {
+    BufferedArrayPtr arr;
+    HDFAtom<int> subtracklen_atom;
+    int subtracklen;
+
+    if (name_to_subtracks_.find(trackname) == std::end) {
+      return -1;
+    }
+    arr = name_to_subtracks_[trackname];
+    subtracklen_atom.Initialize(*arr, "Length");
+    subtracklen_atom.Read(subtracklen);
+
+    return ReadSubtrackRegion(trackname, 0, subtracklen, td);
+  }
+
 private:
-  HDFFile genome_file_;
-  std::vector<HDFGroup> chr_groups_;
-  BufferedHDF2DArray<float> trackdata_;
-  HDFAtom<std::vector<std::string> > track_names_;
-  HDFAtom<std::vector<std::string> > chr_names_;
-  HDFAtom<std::vector<int> > chr_lens_;
-  int ntracks_;
-  int curr_chr_;
 
+  HDFFile file_;
+  std::string outfilename_;
+
+  HDFGroup root_group_;
+  HDFAtom<std::string> metadata_;
+  std::map<std::string, BufferedArrayPtr> name_to_subtracks_;
+  HDFAtom<std::vector<std::string> > subtrack_names_;
 };
 #endif

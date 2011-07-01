@@ -19,41 +19,45 @@
 
 #include "data/TrackData.h"
 
-typedef boost::scoped_ptr<BufferedHDF2DArray> Buffered2DArrayPtr;
-typedef boost::scoped_ptr<BufferedHDFArray> BufferedArrayPtr;
 
+// TRACKFILE :
+//
+//
+template <typename TypeT>
 class HDFTrackWriter
 {
-  public:
+public:
+
+  typedef boost::scoped_ptr<BufferedHDFArray<TypeT> > BufferedArrayPtr;
 
   void Create(std::string& outfilename) {
+    std::vector<std::string> empty_string;
+    std::string s;
+
     outfilename_ = outfilename;
     outfile_.Create(outfilename_);
     root_group_.Initialize(*outfile_.hdfFile, "/");
-    root_group_.AddGroup("chr");
-    root_group_.AddGroup("seq");
-
-    chr_group_.Initialize(root_group_.group, "chr");
-    seq_group_.Initialize(root_group_.group, "seq");
-
-    std::vector<std::string> empty_string;
-    chr_lens_.Create(root_group_, "ChrLens");
-    chr_lens_.Initialize(root_group_, "ChrLens");
-    chr_lens_.Write(empty_string);
-    chr_names_.Create(root_group_, "ChrNames");
-    chr_names_.Initialize(root_group_, "ChrNames");
-    chr_names_.Write(empty_string);
-    track_names_.Create(root_group_, "TrackNames");
-    track_names_.Initialize(root_group_, "TrackNames");
-    track_names_.Write(empty_string);
+    metadata_.Create(root_group_.group, "Metadata");
+    metadata_.Write(s);
+    subtrack_names_.Create(root_group_.group, "Subtracks");
+    subtrack_names_.Write(empty_string);
   }
 
   void Open(std::string& outfilename)
   {
+    std::vector<std::string> subtracknames;
+
     outfilename_ = outfilename;
     outfile_.Create(outfilename_);
     root_group_.Initialize(*outfile_.hdfFile, "/");
-
+    subtrack_names_.Initialize(root_group_.group, "Subtracks");
+    metadata_.Initialize(root_group_.group, "Metadata");
+    subtrack_names_.Read(subtracknames);
+    for (std::vector<std::string>::iterator i = subtracknames.begin();
+         i != subtracknames.end(); ++i) {
+      BufferedArrayPtr currtrack(new BufferedHDFArray<TypeT>());
+      name_to_subtracks_[*i] =currtrack->Initialize(root_group_.group, *i);
+    }
   }
 
   void Close()
@@ -62,98 +66,104 @@ class HDFTrackWriter
     outfile_.Close();
   }
 
-
-  int WriteChrSeq(const std::string& chr, const DNASequence& seq)
+  int WriteSubTrackData(int start, int end, const TrackData<TypeT>& td)
   {
-    // Create a sequence array with the seq
-    BufferedArrayPtr arr(new BufferedHDFArray<unsigned char>());
-    arr->Initialize(&seq_group_.group, chr, seq.length);
-    chr_to_seq_[chr] = arr;
-    // Create a chromosome array
-    AddChrName(chr);
-    AddChrLen(seq.length);
-    arr->Write((const char*)seq.seq, seq.length);
+    BufferedArrayPtr arr;
+    std::vector<TypeT> dset;
+    int tdlen = end - start;
 
-    // Add new group for track data
-    HDFGroup chrgrp;
-    chrgrp.Create(chr_group_, chr);
-    chr_track_groups_[chr] = chrgrp;
+    if (name_to_subtracks_.find(td.track_name) == std::end) {
+      return WriteSubTrackData(td);
+    }
+    if ((td.end - td.start) != (end - start)) {
+      return -1;
+    }
+    arr = name_to_subtracks_[td.track_name];
+    arr->ReadDataset(dset);
+    std::copy(td.track, td.track + tdlen, dset[td.start]);
+    arr->Write(dset);
     return 1;
   }
 
-
   // Have to AddTrack before can WriteTrackData to it
-  int WriteTrackData(const TrackData& td)
+  int WriteSubTrackData(const TrackData<TypeT>& td)
   {
     std::vector<std::string> tracknames;
-    track_names_.Read(tracknames);
+    BufferedArrayPtr arr(new BufferedHDFArray<TypeT>());
+    HDFAtom<int> subtracklen_atom;
+    int tdlen = td.end - td.start;
+    int subtracklen;
+    HDFAtom<std::string> currtrackname_atom;
+
+    subtrack_names_.Read(tracknames);
     if (std::count(tracknames.begin(), tracknames.end(),td.track_name) == 0) {
-      AddTrack(td.track_name);
+      AddSubTrackName(td.track_name);
+      arr->Initialize(&root_group_.group, td.track_name, td.end - td.start);
+      subtracklen_atom.Create(*arr, "Length");
+      subtracklen_atom.Write(td.end - td.start);
+      currtrackname_atom.Initialize(*arr, "Name");
+      currtrackname_atom.Write(td.track_name);
+      name_to_subtracks_[td.track_name] = arr;
+    } else {
+      arr = name_to_subtracks_[td.track_name];
+      subtracklen_atom.Initialize(*arr, "Length");
+      subtracklen_atom.Read(subtracklen);
+      if (subtracklen != tdlen) {
+        return -1;
+      } else {
+        arr->Write(td.track, tdlen);
+      }
     }
-
-
     return 1;
   }
 
   void Flush()
   {
-    for (std::map<std::string, BufferedHDF2DArray<float> >::iterator it = chr_to_trackdata_.begin();
-         it != chr_to_trackdata_.end(); ++it) {
-      (*it).second->Flush();
+    for (std::map<std::string, BufferedArrayPtr<TypeT> >::iterator it = subtracks_.begin();
+         it != subtracks_.end(); ++it) {
+        it->second->Flush();
     }
+  }
+
+  // Store metadata in protobuf serialized format
+  void AddMetadata(const std::string& data)
+  {
+    metadata_.Write(data);
+  }
+
+  const std::string GetMetadata()
+  {
+    std::string mdata;
+
+    metadata_.Read(mdata);
+    return mdata;
+  }
+
+  const std::vector<std::string> GetSubtrackNames()
+  {
+    std::vector<std::string> subtracknames;
+    subtrack_names_.Read(subtracknames);
+    return subtracknames;
   }
 
 private:
-  void AddTrack(const std::string& trackname)
-  {
-    AddTrackName(trackname);
-    std::vector<std::string> chrnames;
-    chr_names_.Read(chrnames);
-    // go through each chromosome group and add a new track dataset
-    for (int i=0; i < chrnames.size(); ++i) {
-      arr = chr_to_trackdata_[chrnames[i]];
-    }
 
-  }
-
-  void AddTrackName(const std::string& name)
+  void AddSubTrackName(const std::string& name)
   {
     std::vector<std::string> tracknames;
-    track_names_.Read(tracknames);
+    subtrack_names_.Read(tracknames);
     tracknames.push_back(name);
-    track_names_.Write(tracknames);
+    subtrack_names_.Write(tracknames);
   }
 
-  void AddChrName(const std::string& name)
-  {
-    std::vector<std::string> chrnames;
-    chr_names_.Read(chrnames);
-    chrnames.push_back(chrnames);
-    chr_names_.Write(chrnames);
-  }
-
-  void AddChrLen(int len)
-  {
-    std::string s = Stringify(len);
-    std::vector<std::string> chrlens;
-    chr_lens_.Read(chrlens);
-    chrlens.push_back(s);
-    chr_lens_.Write(chrlens);
-  }
-
-  std::map<std::string, BufferedArrayPtr> chr_to_seq_;
-  std::map<std::string, BufferedArrayPtr> chr_to_trackdata_;
-  std::map<std::string, HDFGroup> chr_track_groups_;
-  std::map<std::string, int> chr_to_len_;
 
   HDFFile outfile_;
-  HDFAtom<std::vector<std::string> > track_names_;
-  HDFAtom<std::vector<std::string> > chr_lens_;
-  HDFAtom<std::vector<std::string> > chr_names_;
   std::string outfilename_;
+
   HDFGroup root_group_;
-  HDFGroup chr_group_;
-  HDFGroup seq_group_;
+  HDFAtom<std::string> metadata_;
+  std::map<std::string, BufferedArrayPtr> name_to_subtracks_;
+  HDFAtom<std::vector<std::string> > subtrack_names_;
 };
 
 #endif

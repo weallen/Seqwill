@@ -267,5 +267,4 @@ void HDFAtom<vector<string> >::Read(vector<string> &values) {
 
 }
 
-
 #endif
