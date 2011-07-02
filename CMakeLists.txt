@@ -8,7 +8,7 @@ endif(COMMAND cmake_policy)
 #set(CMAKE_CXX_COMPILER "clang++")
 project(Seqwill)
 
-#set(CMAKE_CXX_FLAGS "-Wall -Wshadow")
+set(CMAKE_CXX_FLAGS "-g")
 #set(cxx_exception_flags "-fexceptions")
 #set(cxx_no_exception_flags "-fnoexceptions")
 

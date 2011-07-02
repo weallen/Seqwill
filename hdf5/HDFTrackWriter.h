@@ -6,6 +6,7 @@
 #include <vector>
 #include <map>
 
+#include <sys/stat.h>
 
 #include "hdf5/HDFGroup.h"
 #include "hdf5/HDFFile.h"
@@ -27,24 +28,6 @@ class HDFTrackWriter
 {
 public:
 
-  void Create(const char* outfilename) {
-    std::string s(outfilename);
-    Create(s);
-  }
-
-  void Create(std::string& outfilename) {
-    std::vector<std::string> empty_string;
-    std::string s;
-
-    outfilename_ = outfilename;
-    outfile_.Create(outfilename_);
-    root_group_.Initialize(*outfile_.hdfFile, "/");
-    metadata_.Create(root_group_.group, "Metadata");
-    metadata_.Write(s);
-    subtrack_names_.Create(root_group_.group, "Subtracks");
-    subtrack_names_.Write(empty_string);
-  }
-
   int Open(const char* outfilename)
   {
     std::string s(outfilename);
@@ -55,15 +38,25 @@ public:
   {
     std::vector<std::string> subtracknames;
     outfilename_ = outfilename;
+    struct stat fstat;
+    if (stat(outfilename.c_str(), &fstat) != 0) {
+      Create(outfilename);
+    }
     try {
       outfile_.Create(outfilename);
     } catch (Exception& e) {
       std::cout << e.getDetailMsg() << std::endl;
       return -1;
     }
-    root_group_.Initialize(*outfile_.hdfFile, "/");
-    subtrack_names_.Initialize(root_group_.group, "Subtracks");
-    metadata_.Initialize(root_group_.group, "Metadata");
+    if (root_group_.Initialize(*outfile_.hdfFile, "/") == 0) {
+      return -1;
+    }
+    if (subtrack_names_.Initialize(root_group_, "Subtracks") == 0) {
+      return -1;
+    }
+    if (metadata_.Initialize(root_group_, "Metadata") == 0) {
+      return -1;
+    }
     subtrack_names_.Read(subtracknames);
     for (std::vector<std::string>::iterator i = subtracknames.begin();
          i != subtracknames.end(); ++i) {
@@ -165,6 +158,19 @@ public:
   }
 
 private:
+  void Create(std::string& outfilename) {
+    try {
+      outfilename_ = outfilename;
+      outfile_.Create(outfilename_);
+      root_group_.Initialize(*outfile_.hdfFile, "/");
+      metadata_.Create(root_group_.group, "Metadata", " ");
+      subtrack_names_.Create(root_group_.group, "Subtracks");
+    } catch (Exception& e) {
+      std::cerr << e.getDetailMsg() << std::endl;
+      std::cerr << "GOT HERE" << std::endl;
+    }
+    Close();
+  }
 
   void AddSubTrackName(const std::string& name)
   {

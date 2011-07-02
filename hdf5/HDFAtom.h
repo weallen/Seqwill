@@ -112,7 +112,12 @@ class HDFAtom : public HDFData {
 //
 
 template<>
-void HDFAtom<string>::Create(H5Object &object, string atomName) {
+void HDFAtom<std::vector<std::string> >::Create(H5Object &object, const std::string& atomName) {
+
+}
+
+template<>
+void HDFAtom<std::string>::Create(H5Object &object, string atomName) {
 	StrType strType(0, H5T_VARIABLE);
 	hsize_t defaultDims[] = {1};
 	DataSpace defaultDataSpace(1, defaultDims);

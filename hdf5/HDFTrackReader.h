@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <sys/stat.h>
 
 #include <boost/scoped_ptr.hpp>
 
@@ -29,7 +30,10 @@ public:
   int Open(const std::string& filename) {
     filename_ = filename;
     std::vector<std::string> subtracknames;
-
+    struct stat finfo;
+    if (stat(filename.c_str(), &finfo) != 0) {
+      return -1;
+    }
     try {
         file_.Create(filename);
     } catch (Exception& e) {
