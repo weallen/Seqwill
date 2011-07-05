@@ -6,7 +6,7 @@
 #include <vector>
 #include <sys/stat.h>
 
-#include <boost/scoped_ptr.hpp>
+#include <boost/intrusive_ptr.hpp>
 
 #include "hdf5/BufferedHDFArray.h"
 #include "hdf5/HDFGroup.h"
@@ -23,6 +23,7 @@ template <typename TypeT>
 class HDFTrackReader
 {
 public:
+  typedef boost::intrusive_ptr<HDFTrackReader> Ptr;  
   HDFTrackReader() {}
 
   virtual ~HDFTrackReader() {}
