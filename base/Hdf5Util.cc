@@ -7,7 +7,7 @@ bool ReadAttribute(hid_t loc, const std::string& attr_name, std::string* value)
   H5T_class_t type_class;
 
   if (H5Aexists(loc, attr_name.c_str()) < 1) {
-    ERRORLOG << "Couldn't find attribute " + attr_name;
+    ERRORLOG("Couldn't find attribute " + attr_name);
     return false;
   }
   H5AOpen attr(loc, attr_name.c_str(), H5P_DEFAULT);
@@ -15,19 +15,19 @@ bool ReadAttribute(hid_t loc, const std::string& attr_name, std::string* value)
   H5AGetType attr_type(attr);
 
   if (H5Aget_info(attr, &attr_info) != 1) {
-    ERRORLOG << "Bad attribute info for attribute " + attr_name;
+    ERRORLOG("Bad attribute info for attribute " + attr_name);
     return false;
   } else {
       str_len = attr_info.data_size;
   }
   type_class = H5Tget_class(attr_type);
   if (type_class != H5T_STRING) {
-      ERRORLOG << "Wrong attribute type for attribute " + attr_name;
+      ERRORLOG("Wrong attribute type for attribute " + attr_name);
       return false;
   }
   std::vector<char> temp_str(str_len + 1);
   if (H5Aread(attr, H5T_C_S1, &temp_str[0]) < ) {
-    ERRORLOG << "Couldn't read attribute " + attr_name;
+    ERRORLOG("Couldn't read attribute " + attr_name);
     return false;
   }
   value = &(std::string(&temp_str[0]));
@@ -40,29 +40,29 @@ bool ReadAttribute(hid_t loc, const std::string& attr_name,
   H5T_class_t type_class;
 
   if (H5Aexists(loc, attr_name.c_str()) < 1) {
-    ERRORLOG << "Couldn't find attribute " + attr_name;
+    ERRORLOG("Couldn't find attribute " + attr_name);
     return false;
   }
   H5AOpen attr(loc, attr_name.c_str(), H5P_DEFAULT);
   H5AGetSpace attr_space(attr);
   H5AGetType attr_type(attr);
   if (H5Sget_simple_extent_ndims(attr_space) != 1) {
-    ERRORLOG << "Bad attribute rank for attribute " + attr_name;
+    ERRORLOG("Bad attribute rank for attribute " + attr_name);
     return false;
   }
   hsize_t dims[1];
   H5Sget_simple_extent_dims(attr_space, dims, NULL);
   if (dims[0] != attr_size) {
-      ERRORLOG << "Wrong attribute size for attribute " + attr_name;
+      ERRORLOG("Wrong attribute size for attribute " + attr_name);
       return false;
   }
   type_class = H5Tget_class(attr_type);
   if (type_class != H5T_INTEGER) {
-      ERRORLOG << "Wrong attribute type for attribute " + attr_name;
+      ERRORLOG("Wrong attribute type for attribute " + attr_name);
       return false;
   }
   if (H5Aread(attr, H5T_NATIVE_INT, value) < ) {
-    ERRORLOG << "Couldn't read attribute " + attr_name;
+    ERRORLOG("Couldn't read attribute " + attr_name);
     return false;
   }
   return true;
@@ -74,29 +74,29 @@ bool ReadAttribute(hid_t loc, const std::string& attr_name,
   H5T_class_t type_class;
 
   if (H5Aexists(loc, attr_name.c_str()) < 1) {
-    ERRORLOG << "Couldn't find attribute " + attr_name;
+    ERRORLOG("Couldn't find attribute " + attr_name);
     return false;
   }
   H5AOpen attr(loc, attr_name.c_str(), H5P_DEFAULT);
   H5AGetSpace attr_space(attr);
   H5AGetType attr_type(attr);
   if (H5Sget_simple_extent_ndims(attr_space) != 1) {
-    ERRORLOG << "Bad attribute rank for attribute " + attr_name;
+    ERRORLOG("Bad attribute rank for attribute " + attr_name);
     return false;
   }
   hsize_t dims[1];
   H5Sget_simple_extent_dims(attr_space, dims, NULL);
   if (dims[0] != attr_size) {
-      ERRORLOG << "Wrong attribute size for attribute " + attr_name;
+      ERRORLOG("Wrong attribute size for attribute " + attr_name);
       return false;
   }
   type_class = H5Tget_class(attr_type);
   if (type_class != H5T_FLOAT) {
-      ERRORLOG << "Wrong attribute type for attribute " + attr_name;
+      ERRORLOG("Wrong attribute type for attribute " + attr_name);
       return false;
   }
   if (H5Aread(attr, H5T_NATIVE_FLOAT, value) < ) {
-    ERRORLOG << "Couldn't read attribute " + attr_name;
+    ERRORLOG("Couldn't read attribute " + attr_name);
     return false;
   }
   return true;
@@ -126,11 +126,11 @@ bool WriteAttribute(hid_t loc, const std::string& attr_name,
   }
 
   if (attr == -1) {
-    ERRORLOG << "Couldn't create attribute " + attr_name;
+    ERRORLOG("Couldn't create attribute " + attr_name);
     success = false;
   }
   if (success && (H5Awrite(attr, attr_type, value.c_str()) == -1)) {
-    ERRORLOG << "error writing attribute: " attr_name;
+    ERRORLOG("error writing attribute: " attr_name);
     success = false;
   }
 
@@ -159,13 +159,13 @@ bool WriteAttribute(hid_t loc, const std::string& attr_name,
                    attr_space, H5P_DEfAULT, H5P_DEFAULT);
 
   if (attr < 0) {
-    ERRORLOG << "Couldn't create attribute " + attr_name;
+    ERRORLOG("Couldn't create attribute " + attr_name);
     H5Aclose(attr);
     H5Sclose(attr_space);
     return false;
   }
   if (H5Awrite(attr, H5T_NATIVE_INT, &value) < 0) {
-    ERRORLOG << "error writing attribute: " attr_name;
+    ERRORLOG("error writing attribute: " attr_name);
     H5Aclose(attr);
     H5Sclose(attr_space);
     return false;
@@ -195,13 +195,13 @@ bool WriteAttribute(hid_t loc, const std::string& attr_name,
                    attr_space, H5P_DEfAULT, H5P_DEFAULT);
 
   if (attr < 0) {
-    ERRORLOG << "Couldn't create attribute " + attr_name;
+    ERRORLOG( "Couldn't create attribute " + attr_name);
     H5Aclose(attr);
     H5Sclose(attr_space);
     return false;
   }
   if (H5Awrite(attr, H5T_NATIVE_INT, &value) < 0) {
-    ERRORLOG << "error writing attribute: " attr_name;
+    ERRORLOG("error writing attribute: " attr_name);
     H5Aclose(attr);
     H5Sclose(attr_space);
     return false;

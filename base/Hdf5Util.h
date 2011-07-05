@@ -47,7 +47,7 @@ public:
   {
     id_ = H5Gopen(loc, name.c_str(), H5P_DEFAULT);
     if (id_ < 0) {
-        ERRORLOG << "Couldn't open attribute " + name;
+        ERRORLOG("Couldn't open attribute " + name);
     }
   }
 
@@ -65,7 +65,7 @@ public:
   {
     id_ = H5Gcreate(loc, name.c_str());
     if (id_ < 0) {
-        ERRORLOG << "Couldn't create group " + name;
+        ERRORLOG("Couldn't create group " + name);
     }
   }
 
@@ -84,7 +84,7 @@ public:
   {
     id_ = H5Aopen_name(loc, name.c_str());
     if (id_ < 0) {
-        ERRORLOG << "Couldn't open attribute" + name;
+        ERRORLOG("Couldn't open attribute" + name);
     }
   }
 
@@ -103,7 +103,7 @@ public:
   {
     id_ = H5Aopen_idx(loc, idx);
     if (id_ < 0) {
-      ERRORLOG << "Could open attributed with index " + idx;
+      ERRORLOG("Could open attributed with index " + idx);
     }
   }
 
@@ -122,7 +122,7 @@ public:
   {
     id_ = H5Aget_space(attrid);
     if (id < 0) {
-      ERRORLOG << "Couldn't get attr space";
+      ERRORLOG("Couldn't get attr space");
     }
   }
 
@@ -141,7 +141,7 @@ public:
   {
     id_ = H5Aget_space(attrid);
     if (id_ < 0) {
-      ERRORLOG << "Couldn't get attr space";
+      ERRORLOG("Couldn't get attr space");
     }
   }
 
@@ -231,5 +231,4 @@ public:
 
 
 // DATASPACE STUFF
-class H5S
 #endif
