@@ -1,8 +1,9 @@
 #ifndef HDF5UTIL_H_
 #define HDF5UTIL_H_
 #include <string>
-
 #include <hdf5.h>
+
+#include "base/Log.h"
 
 bool ReadAttribute(hid_t loc, const std::string& attr_name, std::string* value);
 bool ReadAttribute(hid_t loc, const std::string& attr_name, 
@@ -46,7 +47,7 @@ public:
   {
     id_ = H5Gopen(loc, name.c_str(), H5P_DEFAULT);
     if (id_ < 0) {
-        std::cerr << "Couldn't open attribute " + name;
+        ERRORLOG << "Couldn't open attribute " + name;
     }
   }
 
@@ -64,7 +65,7 @@ public:
   {
     id_ = H5Gcreate(loc, name.c_str());
     if (id_ < 0) {
-        std::cerr << "Couldn't create group " + name;
+        ERRORLOG << "Couldn't create group " + name;
     }
   }
 
@@ -83,7 +84,7 @@ public:
   {
     id_ = H5Aopen_name(loc, name.c_str());
     if (id_ < 0) {
-        std::cerr << "Couldn't open attribute" + name;
+        ERRORLOG << "Couldn't open attribute" + name;
     }
   }
 
@@ -102,7 +103,7 @@ public:
   {
     id_ = H5Aopen_idx(loc, idx);
     if (id_ < 0) {
-      std::cerr << "Could open attributed with index " + idx;
+      ERRORLOG << "Could open attributed with index " + idx;
     }
   }
 
@@ -121,7 +122,7 @@ public:
   {
     id_ = H5Aget_space(attrid);
     if (id < 0) {
-      std::cerr << "Couldn't get attr space";
+      ERRORLOG << "Couldn't get attr space";
     }
   }
 
@@ -140,7 +141,7 @@ public:
   {
     id_ = H5Aget_space(attrid);
     if (id_ < 0) {
-      std::cerr << "Couldn't get attr space";
+      ERRORLOG << "Couldn't get attr space";
     }
   }
 
