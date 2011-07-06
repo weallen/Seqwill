@@ -20,36 +20,38 @@
 #include <fstream>
 #include <string>
 #include <string.h>
-#include <boost/shared_ptr.hpp>
+#include <boost/intrusive_ptr.hpp>
 
 #include "base/NucConversion.h"
 using namespace std;
 #include <iostream>
 #include "base/Types.h"
+#include "common/Track.h"
+#include "base/RefCount.h"
 
 class DNASequence;
 
-typedef boost::shared_ptr<DNASequence> DNASequencePtr;
 
 typedef u_int32_t DNALength;
 typedef unsigned char Nucleotide;
 
-class DNASequence {
+class DNASequence : public RefBase {
  public:
+
+  typedef boost::intrusive_ptr<DNASequence> Ptr;
+
   DNALength length;
-  Nucleotide *seq;
+  std::vector<Nucleotide> seq;
 	bool deleteOnExit;
 	DNALength size() {
 		return length;
 	}
 	typedef Nucleotide T_Block;
 	DNASequence &Copy(const DNASequence &rhs) {
-		if (length != 0) {
-			assert(seq != NULL);
-			delete[] seq;
-		}
-		seq = new Nucleotide [rhs.length];
-		memcpy(seq, rhs.seq, rhs.length);
+    if (length != 0) {
+      seq.clear();
+    }
+    std::vector<Nucleotide> seq(rhs.seq);
 		length = rhs.length;
 		deleteOnExit = true;
 		return *this;
@@ -71,7 +73,6 @@ class DNASequence {
 
 	int bitsPerNuc;
 	DNASequence() {
-		seq = NULL;
 		length = 0;
 		bitsPerNuc = 8;
 		deleteOnExit = false;
@@ -90,33 +91,19 @@ class DNASequence {
 				curLineLength = length - curPos;
 			}
 			string line;
-			line.assign((char*) &seq[curPos], curLineLength);
+      line.assign((char*) &seq[curPos], curLineLength);
 			out << line << std::endl;
 			curPos += curLineLength;
 		}
 	}
 
-	void Allocate(DNALength plength) {
-		if (seq != NULL) {
-			delete[] seq;
-		}
-		seq = new Nucleotide [plength];
+  void Allocate(DNALength plength) {
+    seq.clear();
+    seq.resize(plength);
 		length = plength;
 		deleteOnExit = true;
 	}
 
-	void ReferenceSubstring(DNASequence &rhs, int pos=0, int substrLength=0) {
-		//
-		// This makes a reference therefore it should not be deleted.
-		//
-		if (substrLength == 0) {
-			substrLength = rhs.length - pos;
-		}
-		assert(pos + substrLength <= rhs.length);
-		seq = &rhs.seq[pos];
-		length = substrLength;
-		deleteOnExit = false;
-	}
 
 	void MakeRC(DNASequence &rc) {
 		rc.Allocate(length);
@@ -164,21 +151,25 @@ class DNASequence {
 			bitsPerNuc = 8;
 		}
 	}
-		
-	void Assign(DNASequence &ref, DNALength start=0, DNALength plength=0) {
-		if (seq != NULL) {
-			delete[] seq;
-		}
+
+  void Assign(const Track<unsigned char>& ref) {
+    Resize(ref.size());
+    seq.assign(ref.cbegin(), ref.cend());
+    length = ref.size();
+    deleteOnExit = true;
+  }
+
+  void Assign(const DNASequence &ref, DNALength start=0, DNALength plength=0) {
 		if (plength) {
-			length = plength;
-			seq = new Nucleotide[length];
-			memcpy(seq, &ref.seq[start], length);
+      length = plength;
+      std::vector<Nucleotide> seq(plength);
+      seq.assign(ref.seq.begin() + start, ref.seq.begin() + start + plength);
 		}
 		else if (start) {
-			length = ref.length - start;
-			seq = new Nucleotide[length];
-			memcpy(seq, &ref.seq[start], length);
-		}
+      length = ref.length - start;
+      std::vector<Nucleotide> seq(length);
+      seq.assign(ref.seq.begin() + start, ref.seq.begin() + start + length);
+    }
 		else {
 			this->Copy(ref);
 		}
@@ -198,7 +189,7 @@ class DNASequence {
 			seq[i] = AllToUpper[seq[i]];
 		}
 	}
-
+/*
 	void Concatenate(const Nucleotide *moreSeq, DNALength moreSeqLength) {
 		DNALength prevLength = length;
 		length += moreSeqLength;
@@ -226,10 +217,14 @@ class DNASequence {
 	void Concatenate(DNASequence &seq) {
 		Concatenate(seq.seq, seq.length);
 	}
-
-	int Compare(DNALength pos, DNASequence &rhs, DNALength rhsPos, DNALength length) {
-		return memcmp(&seq[pos], &rhs.seq[rhsPos], length);
-	}
+*/
+  int Compare(DNALength pos, DNASequence &rhs, DNALength rhsPos, DNALength length)
+  {
+    if (std::equal(seq.begin() + pos, seq.begin() + length, rhs.seq.begin() + rhsPos)) {
+      return 1;
+    }
+    return 0;
+  }
 
 	int LessThanEqual(DNALength pos, DNASequence &rhs, DNALength rhsPos, DNALength length) {
 		int res = Compare(pos, rhs, rhsPos, length);
@@ -267,23 +262,19 @@ class DNASequence {
 
 	void Free() {
 		if (deleteOnExit == false) { return; }
-		if (seq != NULL) {
-			delete[] seq;
-			seq = NULL;
 			length = 0;
-		}
-	}
-	void Resize(DNALength newLength) {
-		if (seq != NULL) {
-			delete[] seq;
-		}
-		seq = new  Nucleotide[newLength];
+  }
+
+  void Resize(DNALength newLength) {
+    seq.clear();
+    seq.resize(newLength);
 		length = newLength;
 		deleteOnExit = true;
-	}
+  }
+
 	DNALength GetSeqStorage() {
 		return length;
-	}
+  }
 };
 
 template<typename T>
@@ -291,8 +282,9 @@ DNALength ResizeSequence(T &dnaseq, DNALength newLength) {
 	assert(newLength > 0);
 	if (dnaseq.seq != NULL) {
 		delete[] dnaseq.seq;
-	}
-	dnaseq.seq = new Nucleotide[newLength];
+  }
+  std::vector<Nucleotide> tempseq(newLength);
+  dnaseq.seq = tempseq;
 	dnaseq.length = newLength;
 	dnaseq.deleteOnExit = true;
 	return newLength;

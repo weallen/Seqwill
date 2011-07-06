@@ -20,33 +20,55 @@
 #include "base/RefCount.h"
 #include "io/TrackIO.h"
 #include "common/Track.h"
-
+#include "base/Common.h"
 
 class Chromosome : public RefBase
 {
 public:
   typedef boost::intrusive_ptr<Chromosome> Ptr;
+  typedef typename Track<char>::Ptr CharTrackPtr;
 
-  Chromosome() {}
+  Chromosome() {
+   Init();
+  }
 
   Chromosome(const std::string& chrname)
     : name_(chrname)
-  { }
+  {
+    Init();
+  }
 
-  virtual ~Chromosome() { }
+  virtual ~Chromosome() {
+  }
 
-  const std::string& GetName() { return name_; }
+  void Init() {
+    data_ = DNASequence::Ptr(new DNASequence);
+  }
 
-  int GetLength() { return len_; }
+  std::string name() const { return name_; }
+  int length() { return data_->size(); }
+
+  DNASequence::Ptr data() { return data_; }
+
+  void set_data(const Track<unsigned char>& data)
+  {
+    data_->Allocate(data.size());
+    data_->Assign(data);
+  }
+
+  void set_name(const std::string& name) { name_ = name; }
 
 private:
+  DISALLOW_COPY_AND_ASSIGN(Chromosome)
+
   std::string name_;
-  int len_;
-  DNASequencePtr seq_;
+  DNASequence::Ptr data_;
 };
 
-void SaveChrFromFASTA(const std::string& outname, const std::string& seqname,
+bool SaveChrFromFASTA(const std::string& outname, const std::string& seqname,
                          const std::string& genome_name);
-int LoadChr(const std::string& fname, const std::string& chrname, Chromosome::Ptr chr);
+
+bool LoadChr(const std::string& fname, const std::string& genome_name,
+            const std::string& chrname, Chromosome::Ptr chr);
 
 #endif

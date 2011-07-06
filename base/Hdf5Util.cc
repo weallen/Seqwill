@@ -10,9 +10,9 @@ bool ReadAttribute(hid_t loc, const std::string& attr_name, std::string* value)
     ERRORLOG("Couldn't find attribute " + attr_name);
     return false;
   }
-  H5AOpen attr(loc, attr_name);
-  H5AGetSpace attr_space(attr);
-  H5AGetType attr_type(attr);
+  ScopedH5AOpen attr(loc, attr_name);
+  ScopedH5AGetSpace attr_space(attr);
+  ScopedH5AGetType attr_type(attr);
 
   if (H5Aget_info(attr, &attr_info) != 1) {
     ERRORLOG("Bad attribute info for attribute " + attr_name);
@@ -43,20 +43,20 @@ bool ReadAttribute(hid_t loc, const std::string& attr_name,
     ERRORLOG("Couldn't find attribute " + attr_name);
     return false;
   }
-  H5AOpen attr(loc, attr_name);
-  H5AGetSpace attr_space(attr);
-  H5AGetType attr_type(attr);
-  if (H5Sget_simple_extent_ndims(attr_space) != 1) {
+  ScopedH5AOpen attr(loc, attr_name);
+  ScopedH5AGetSpace attr_space(attr);
+  ScopedH5AGetType attr_type(attr);
+  if (H5Sget_simple_extent_ndims(attr_space.id()) != 1) {
     ERRORLOG("Bad attribute rank for attribute " + attr_name);
     return false;
   }
   hsize_t dims[1];
-  H5Sget_simple_extent_dims(attr_space, dims, NULL);
+  H5Sget_simple_extent_dims(attr_space.id(), dims, NULL);
   if (dims[0] != attr_size) {
       ERRORLOG("Wrong attribute size for attribute " + attr_name);
       return false;
   }
-  type_class = H5Tget_class(attr_type);
+  type_class = H5Tget_class(attr_type.id());
   if (type_class != H5T_INTEGER) {
       ERRORLOG("Wrong attribute type for attribute " + attr_name);
       return false;
@@ -77,9 +77,9 @@ bool ReadAttribute(hid_t loc, const std::string& attr_name,
     ERRORLOG("Couldn't find attribute " + attr_name);
     return false;
   }
-  H5AOpen attr(loc, attr_name);
-  H5AGetSpace attr_space(attr);
-  H5AGetType attr_type(attr);
+  ScopedH5AOpen attr(loc, attr_name);
+  ScopedH5AGetSpace attr_space(attr);
+  ScopedH5AGetType attr_type(attr);
   if (H5Sget_simple_extent_ndims(attr_space) != 1) {
     ERRORLOG("Bad attribute rank for attribute " + attr_name);
     return false;

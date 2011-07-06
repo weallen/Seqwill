@@ -10,6 +10,7 @@
 enum DataTypeEnum {
     kFloatType,
     kCharType,
+    kUCharType,
     kPlusMinusStrandType,
     kUnknownType
 };
@@ -76,4 +77,23 @@ template<>
 inline int DataTypeTraits<char>::H5Bits() {
     return 8;
 }
+
+// UChar trait
+template<>
+inline std::string DataTypeTraits<unsigned char>::Name() {
+    return std::string("unsigned char");
+}
+template<>
+inline DataTypeEnum DataTypeTraits<unsigned char>::TypeEnum() {
+    return kUCharType;
+}
+template<>
+inline hid_t DataTypeTraits<unsigned char>::H5Type() {
+    return H5T_NATIVE_UCHAR;
+}
+template<>
+inline int DataTypeTraits<unsigned char>::H5Bits() {
+    return 4;
+}
+
 #endif

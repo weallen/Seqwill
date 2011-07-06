@@ -32,32 +32,20 @@ class HDFTrackTest : public ::testing::Test {
   
 
 };
-TEST_F(HDFTrackTest, ChromosomeTest) {
-  SaveChrFromFASTA("/tmp/out.h5", "/media/Storage/user/data/genomedata/fasta/chr1.fa", "mm9");
+TEST_F(HDFTrackTest, ChromosomeSaveTest) {
+  ASSERT_TRUE(SaveChrFromFASTA("/tmp/out.h5", "/media/Storage/user/data/genomedata/fasta/chr1.fa", "mm9"));
 }
 
-TEST_F(HDFTrackTest, WriterCreateTest) {
-
-}
-
-TEST_F(HDFTrackTest, WriteWriteTrackTest) {
-
-}
-
-TEST_F(HDFTrackTest, WriterGetTrackNamesTest) {
+TEST_F(HDFTrackTest, ChromosomeLoadTest) {
+  Chromosome::Ptr chr(new Chromosome);
+  ASSERT_TRUE(LoadChr("/tmp/out.h5", "mm9", "chr1", chr));
+  ASSERT_FALSE(LoadChr("/tmp/out.h5", "mm9", "chr2", chr));
+  DNASequence::Ptr data = chr->data();
+  ASSERT_EQ(data->GetNuc(1), 'N');
 
 }
 
-TEST_F(HDFTrackTest, ReaderGetTrackNamesTest) {
-//  ASSERT_EQ(
-}
-
-TEST_F(HDFTrackTest, ReaderGetTrackLensTest) {
- // ASSERT_EQ(subtracklens.size(), 3);
- // ASSERT_EQ(subtracklens[0], 100);
-}
-
-} // namespace
+}//Namespace
 int main(int argc, char** argv) {
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();

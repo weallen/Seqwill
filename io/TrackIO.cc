@@ -1,4 +1,20 @@
 #include "io/TrackIO.h"
+bool TrackIO::HasTrack(const std::string& trackname) const {
+  std::vector<std::string> tracknames = GetTrackNames();
+  if (std::find(tracknames.begin(), tracknames.end(), trackname) != tracknames.end()) {
+    return true;
+  }
+  return false;
+}
+
+bool TrackIO::HasSubTrack(const std::string& trackname,
+                          const std::string& subtrackname) const {
+  std::vector<std::string> tracknames = GetSubTrackNames(trackname);
+  if(std::find(tracknames.begin(), tracknames.end(), subtrackname) != tracknames.end()) {
+    return true;
+  }
+  return false;
+}
 
 bool TrackIO::Create(const char* fname)
 {
@@ -55,7 +71,7 @@ std::vector<std::string>
 TrackIO::GetSubTrackNames(const std::string& trackname) const
 {
   std::vector<std::string> subtracknames;
-  H5GOpen trackgroup(h5file_, trackname);
+  ScopedH5GOpen trackgroup(h5file_, trackname);
   hsize_t idx;
   H5G_info_t group_info;
   char* name;

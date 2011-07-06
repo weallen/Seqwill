@@ -45,6 +45,8 @@ public:
   // General Track stuff
   std::vector<std::string> GetSubTrackNames(const std::string& subtrackname) const;
   std::vector<std::string> GetTrackNames() const;
+  bool HasSubTrack(const std::string& trackname, const std::string& subtrackname) const;
+  bool HasTrack(const std::string& trackname) const;
 
   // Write Stuff
   template <typename T>
@@ -57,7 +59,8 @@ public:
   bool ReadSubTrack(const std::string& fname,
                     const std::string& trackname,
                     const std::string& subtrackname,
-                    typename Track<T>::Ptr subtrack); 
+                    typename Track<T>::Ptr subtrack);
+
 private:
   bool Create(const char* fname);
   bool Create(const std::string& fname);
@@ -85,7 +88,7 @@ bool TrackIO::WriteSubTrack(const std::string& fname,
   hid_t track_group;
   hid_t root_group;
   std::vector<std::string> tracknames;
-  H5SCreate data_space(H5S_SIMPLE);
+  ScopedH5SCreate data_space(H5S_SIMPLE);
   hid_t dcpl;
 
   if (!Open(fname)) {
@@ -199,6 +202,13 @@ TrackIO::ReadSubTrack(const std::string& fname,
   if (track_group < 0) {
     ERRORLOG("Can't open track group " + trackname);
     H5Gclose(root_group);
+    return false;
+  }
+  // CHeck if dataset exists before trying to open
+  if (!HasSubTrack(trackname, subtrackname)) {
+    WARNLOG("Can't find subtrack " + subtrackname);
+    H5Gclose(root_group);
+    H5Gclose(track_group);
     return false;
   }
   dataset = H5Dopen2(track_group, subtrackname.c_str(), H5P_DEFAULT);
