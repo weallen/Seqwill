@@ -1,22 +1,10 @@
 #ifndef HDF5UTIL_H_
 #define HDF5UTIL_H_
 #include <string>
+#include <vector>
 #include <hdf5.h>
 
 #include "base/Log.h"
-
-bool ReadAttribute(hid_t loc, const std::string& attr_name, std::string* value);
-bool ReadAttribute(hid_t loc, const std::string& attr_name, 
-                   unsigned int attr_size, int* value);
-bool ReadAttribute(hid_t loc, const std::string& attr_name, 
-                   unsigned int attr_size, float* value);
-
-bool WriteAttribute(hid_t loc, const std::string& attr_name,
-                    const std::string& value);
-bool WriteAttribute(hid_t loc, const std::string& attr_name, 
-                    unsigned int attr_size, int value);
-bool WriteAttribute(hid_t loc, const std::string& attr_name,
-                    unsigned int attr_size, flaot value);
 
 class H5Base
 {
@@ -45,7 +33,7 @@ public:
 
   H5GOpen(hid_t loc, const std::string& name) 
   {
-    id_ = H5Gopen(loc, name.c_str(), H5P_DEFAULT);
+    id_ = H5Gopen2(loc, name.c_str(), H5P_DEFAULT);
     if (id_ < 0) {
         ERRORLOG("Couldn't open attribute " + name);
     }
@@ -63,7 +51,7 @@ class H5GCreate : public H5Base
 public:
   H5GCreate(hid_t loc, const std::string& name) 
   {
-    id_ = H5Gcreate(loc, name.c_str());
+    id_ = H5Gcreate2(loc, name.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     if (id_ < 0) {
         ERRORLOG("Couldn't create group " + name);
     }
@@ -121,7 +109,7 @@ public:
   H5AGetSpace(hid_t attrid) 
   {
     id_ = H5Aget_space(attrid);
-    if (id < 0) {
+    if (id_ < 0) {
       ERRORLOG("Couldn't get attr space");
     }
   }
@@ -156,11 +144,6 @@ public:
 
 // DATASET STUFF
 
-class H5DCreate : public H5Base
-{
-public:
-
-};
 
 class H5DOpen : public H5Base
 {
@@ -168,7 +151,7 @@ public:
   H5DOpen() : H5Base() {}
   H5DOpen(hid_t parent_loc, const std::string& name, hid_t dopl_id)
   {
-    id_ = H5Dopen(parent_loc, name.c_str(), dopl_id);
+    id_ = H5Dopen2(parent_loc, name.c_str(), dopl_id);
   }
   ~H5DOpen() 
   {
@@ -185,7 +168,7 @@ public:
             hid_t dtype_id, hid_t space_id, hid_t lcpl_id,
             hid_t dcpl_id, hid_t dapl_id)
   {
-    id_ = H5Dcreate(parent, name.c_str(), dtype_id, space_id, lcpl_id,
+    id_ = H5Dcreate2(parent, name.c_str(), dtype_id, space_id, lcpl_id,
                     dcpl_id, dapl_id);
   }
 
@@ -217,11 +200,11 @@ class H5DGetType : public H5Base
 {
 public:
     H5DGetType() : H5Base() {}
-    H5DGetSpace(hid_t dsetid) 
+    H5DGetType(hid_t dsetid)
     { 
       id_ = H5Dget_type(dsetid);
     }
-    ~H5DGetSpace()
+    ~H5DGetType()
     {
       if (id_ >= 0) {
         H5Tclose(id_);
@@ -231,4 +214,33 @@ public:
 
 
 // DATASPACE STUFF
+class H5SCreate : public H5Base
+{
+public:
+  H5SCreate() : H5Base() {}
+  H5SCreate(H5S_class_t c)
+  {
+    id_ = H5Screate(c);
+  }
+
+  ~H5SCreate()
+  {
+    if (id_ >= 0) {
+      H5Sclose(id_);
+    }
+  }
+};
+
+bool ReadAttribute(hid_t loc, const std::string& attr_name, std::string* value);
+bool ReadAttribute(hid_t loc, const std::string& attr_name,
+                   unsigned int attr_size, int* value);
+bool ReadAttribute(hid_t loc, const std::string& attr_name,
+                   unsigned int attr_size, float* value);
+
+bool WriteAttribute(hid_t loc, const std::string& attr_name,
+                    const std::string& value);
+bool WriteAttribute(hid_t loc, const std::string& attr_name,
+                    unsigned int attr_size, int value);
+bool WriteAttribute(hid_t loc, const std::string& attr_name,
+                    unsigned int attr_size, float value);
 #endif

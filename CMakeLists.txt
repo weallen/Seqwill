@@ -28,54 +28,11 @@ link_directories("${gtest_SOURCE_DIR}")
 set(COMMON_SRCS common/Track.h
     common/Track.cc)
 
-set(IO_SRCS io/TrackReader.h
-    io/TrackReader.cc
-    io/TrackWriter.h
-    io/TrackWriter.cc)
-
-set(HDF5_SRCS hdf5/BufferedHDF2DArray.h
-        hdf5/BufferedHDFArray.h
-        hdf5/HDFArray.h
-        hdf5/HDFAtom.h
-        hdf5/HDFAttributable.h
-        hdf5/HDFData.h
-        hdf5/HDFFile.h
-        hdf5/HDFGroup.h
-        hdf5/HDFCommonFG.h
-        hdf5/HDFConfig.h
-        hdf5/HDFWriteBuffer.h
-
-        hdf5/HDFTrackReader.h
-        hdf5/HDFTrackWriter.h
-
-        hdf5/HDFBasReader.h
-        hdf5/HDFBasWriter.h
-        hdf5/HDFCCSReader.h
-
-        hdf5/HDFCmpData.h
-        hdf5/HDFCmpExperimentGroup.h
-        hdf5/HDFCmpFile.h
-        hdf5/HDFCmpReader.h
-        hdf5/HDFCmpRefAlignmentGroup.h
-        hdf5/HDFCmpRootGroup.h
-        hdf5/HDFCmpWriter.h
-
-        hdf5/HDFMovieInfoGroup.h
-
-        hdf5/HDFPlsReader.h
-        hdf5/HDFPlsWriter.h
-        hdf5/HDFPulseDataFile.h
-
-        hdf5/HDFRefGroupGroup.h
-        hdf5/HDFRefInfoGroup.h
-        hdf5/HDFRegionTableReader.h
-        hdf5/HDFRegionTableWriter.h
-
-        hdf5/HDFScanDataReader.h
-        hdf5/HDFSMRTSequenceReader.h
-        hdf5/HDFZMWReader.h
-        hdf5/PlatformId.h)
-        
+set(IO_SRCS 
+    io/TrackIO.cc
+    io/TrackIO.h
+    io/Traits.h)
+ 
 set(UTIL_SRCS util/SComm.h
     util/SComm.cc 
     util/SysTime.h
@@ -99,8 +56,14 @@ set(BASE_SRCS base/BEDelement.h
     base/StringUtil.cc
     base/SVector.h
     base/DNASequence.h
+    base/Common.h
     base/Types.h
-    base/NucConversion.h)
+    base/NucConversion.h
+    base/Hdf5Util.h
+    base/Hdf5Util.cc
+    base/RefCount.h
+    base/Log.h
+    base/Log.cc)
 
 set(DATA_SRCS data/TrackData.h
     data/ChrData.h

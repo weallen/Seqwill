@@ -7,25 +7,6 @@
 #include <hdf5.h>
 #include "base/Log.h"
 
-#define MAKE_DATA_TYPE_TRAIT(__Typename, __TypeEnum, __H5Type, __NumBits)  \
-    template<>                                                  \
-    inline std::string DataTypeTraits<__Typename>::Name() {     \
-        return std::string("__Typename");                       \
-    }                                                           \
-    template<>                                                  \
-    inline DataTypeEnum DataTypeTraits<__Typename>::TypeEnum() {\
-        return __TypeEnum;                                      \
-    }                                                           \
-    template<>                                                  \
-    inline hid_t DataTypeTraits<__Typename>::H5Type() {         \
-        return __H5Type;                                        \
-    }                                                           \
-    template<>                                                  \
-    inline int DataTypeTraits<__TypeName>>::H5Bits() {          \
-        return __NumBits;                                       \
-    }
-
-
 enum DataTypeEnum {
     kFloatType,
     kCharType,
@@ -54,12 +35,45 @@ struct DataTypeTraits {
   }
 
   static int H5Bits() {
-    assert(false && "Unsupported type"):
+    assert(false && "Unsupported type");
     ERRORLOG("Unsupported type");
     return -1;
   }
 };
 
-MAKE_DATA_TYPE_TRAIT(float, kFloatType, H5T_NATIVE_FLOAT, 32)
-MAKE_DATA_TYPE_TRAIT(char, kCharType, H5T_NATIVE_CHAR, 8)
+// Float trait
+template<>
+inline std::string DataTypeTraits<float>::Name() {
+    return std::string("float");
+}
+template<>
+inline DataTypeEnum DataTypeTraits<float>::TypeEnum() {
+    return kFloatType;
+}
+template<>
+inline hid_t DataTypeTraits<float>::H5Type() {
+    return H5T_NATIVE_FLOAT;
+}
+template<>
+inline int DataTypeTraits<float>::H5Bits() {
+    return 32;
+}
+
+// Char trait
+template<>
+inline std::string DataTypeTraits<char>::Name() {
+    return std::string("char");
+}
+template<>
+inline DataTypeEnum DataTypeTraits<char>::TypeEnum() {
+    return kCharType;
+}
+template<>
+inline hid_t DataTypeTraits<char>::H5Type() {
+    return H5T_NATIVE_CHAR;
+}
+template<>
+inline int DataTypeTraits<char>::H5Bits() {
+    return 8;
+}
 #endif

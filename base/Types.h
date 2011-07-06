@@ -30,22 +30,4 @@ typedef u_int32_t UInt;
 typedef u_int8_t  Byte;
 typedef u_int16_t HalfWord;
 
-struct EIGEN_ALIGN16 PlusMinusStrand {
-  float plus;
-  float minus;
-
-  inline PlusMinusStrand() 
-  {
-    plus = 0.0f;
-    minus = 0.0f;
-  }
-
-  inline PlusMinusStrand(float _plus, float _minus) 
-  {
-    plus = _plus;
-    minus = _minus;
-  }
-
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-};
 #endif

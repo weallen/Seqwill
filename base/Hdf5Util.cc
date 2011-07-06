@@ -10,7 +10,7 @@ bool ReadAttribute(hid_t loc, const std::string& attr_name, std::string* value)
     ERRORLOG("Couldn't find attribute " + attr_name);
     return false;
   }
-  H5AOpen attr(loc, attr_name.c_str(), H5P_DEFAULT);
+  H5AOpen attr(loc, attr_name);
   H5AGetSpace attr_space(attr);
   H5AGetType attr_type(attr);
 
@@ -26,7 +26,7 @@ bool ReadAttribute(hid_t loc, const std::string& attr_name, std::string* value)
       return false;
   }
   std::vector<char> temp_str(str_len + 1);
-  if (H5Aread(attr, H5T_C_S1, &temp_str[0]) < ) {
+  if (H5Aread(attr, H5T_C_S1, &temp_str[0]) < 0) {
     ERRORLOG("Couldn't read attribute " + attr_name);
     return false;
   }
@@ -43,7 +43,7 @@ bool ReadAttribute(hid_t loc, const std::string& attr_name,
     ERRORLOG("Couldn't find attribute " + attr_name);
     return false;
   }
-  H5AOpen attr(loc, attr_name.c_str(), H5P_DEFAULT);
+  H5AOpen attr(loc, attr_name);
   H5AGetSpace attr_space(attr);
   H5AGetType attr_type(attr);
   if (H5Sget_simple_extent_ndims(attr_space) != 1) {
@@ -61,7 +61,7 @@ bool ReadAttribute(hid_t loc, const std::string& attr_name,
       ERRORLOG("Wrong attribute type for attribute " + attr_name);
       return false;
   }
-  if (H5Aread(attr, H5T_NATIVE_INT, value) < ) {
+  if (H5Aread(attr, H5T_NATIVE_INT, value) < 0) {
     ERRORLOG("Couldn't read attribute " + attr_name);
     return false;
   }
@@ -77,7 +77,7 @@ bool ReadAttribute(hid_t loc, const std::string& attr_name,
     ERRORLOG("Couldn't find attribute " + attr_name);
     return false;
   }
-  H5AOpen attr(loc, attr_name.c_str(), H5P_DEFAULT);
+  H5AOpen attr(loc, attr_name);
   H5AGetSpace attr_space(attr);
   H5AGetType attr_type(attr);
   if (H5Sget_simple_extent_ndims(attr_space) != 1) {
@@ -95,7 +95,7 @@ bool ReadAttribute(hid_t loc, const std::string& attr_name,
       ERRORLOG("Wrong attribute type for attribute " + attr_name);
       return false;
   }
-  if (H5Aread(attr, H5T_NATIVE_FLOAT, value) < ) {
+  if (H5Aread(attr, H5T_NATIVE_FLOAT, value) < 0) {
     ERRORLOG("Couldn't read attribute " + attr_name);
     return false;
   }
@@ -121,7 +121,7 @@ bool WriteAttribute(hid_t loc, const std::string& attr_name,
   }
   if (success) {
     H5Tset_strpad(attr_type, H5T_STR_NULLTERM);
-    attr = H5Acreate(loc, attr_name.c_str(), attr_type, 
+    attr = H5Acreate2(loc, attr_name.c_str(), attr_type,
                     attr_space, H5P_DEFAULT, H5P_DEFAULT);
   }
 
@@ -130,7 +130,7 @@ bool WriteAttribute(hid_t loc, const std::string& attr_name,
     success = false;
   }
   if (success && (H5Awrite(attr, attr_type, value.c_str()) == -1)) {
-    ERRORLOG("error writing attribute: " attr_name);
+    ERRORLOG("error writing attribute: " + attr_name);
     success = false;
   }
 
@@ -155,8 +155,8 @@ bool WriteAttribute(hid_t loc, const std::string& attr_name,
    return false;
   if (H5Sset_extent_simple(attr_space, 1, dims, NULL) < 0)
     return false;
-  attr = H5Acreate(loc, attr_name.c_str(), H5T_NATIVE_INT,
-                   attr_space, H5P_DEfAULT, H5P_DEFAULT);
+  attr = H5Acreate2(loc, attr_name.c_str(), H5T_NATIVE_INT,
+                   attr_space, H5P_DEFAULT, H5P_DEFAULT);
 
   if (attr < 0) {
     ERRORLOG("Couldn't create attribute " + attr_name);
@@ -165,7 +165,7 @@ bool WriteAttribute(hid_t loc, const std::string& attr_name,
     return false;
   }
   if (H5Awrite(attr, H5T_NATIVE_INT, &value) < 0) {
-    ERRORLOG("error writing attribute: " attr_name);
+    ERRORLOG("error writing attribute: " + attr_name);
     H5Aclose(attr);
     H5Sclose(attr_space);
     return false;
@@ -191,8 +191,8 @@ bool WriteAttribute(hid_t loc, const std::string& attr_name,
    return false;
   if (H5Sset_extent_simple(attr_space, 1, dims, NULL) < 0)
     return false;
-  attr = H5Acreate(loc, attr_name.c_str(), H5T_NATIVE_FLOAT,
-                   attr_space, H5P_DEfAULT, H5P_DEFAULT);
+  attr = H5Acreate2(loc, attr_name.c_str(), H5T_NATIVE_FLOAT,
+                   attr_space, H5P_DEFAULT, H5P_DEFAULT);
 
   if (attr < 0) {
     ERRORLOG( "Couldn't create attribute " + attr_name);
@@ -201,7 +201,7 @@ bool WriteAttribute(hid_t loc, const std::string& attr_name,
     return false;
   }
   if (H5Awrite(attr, H5T_NATIVE_INT, &value) < 0) {
-    ERRORLOG("error writing attribute: " attr_name);
+    ERRORLOG("error writing attribute: " + attr_name);
     H5Aclose(attr);
     H5Sclose(attr_space);
     return false;

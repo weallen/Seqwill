@@ -5,9 +5,10 @@
 #include <algorithm>
 #include <boost/intrusive_ptr.hpp>
 #include <Eigen/Core>
+#include <Eigen/StdVector>
 
 #include "data/TrackData.h"
-#include "base/RefBase.h"
+#include "base/RefCount.h"
 #include "base/Common.h"
 #include "common/TrackMetadata.h"
 
@@ -21,7 +22,9 @@ public:
 
   typedef DataType DataT;
   typedef boost::intrusive_ptr<Track<DataT> > Ptr;
-  typedef std::vector<DataT> VectorType;
+  typedef std::vector<DataT, Eigen::aligned_allocator<DataT> > VectorType;
+  typedef typename VectorType::iterator iterator;
+  typedef typename VectorType::const_iterator const_iterator;
 
   Track() : RefBase() {}
 
@@ -37,17 +40,15 @@ public:
       SizeChanged();
   }
 
-  void SetData(const VectorType& td)
-  {
-    data_.assign(td.begin(), td.end());
-  }
-
   // Iterator
   inline DataT operator[](size_t pos) { return data_[pos]; }
   inline size_t size() { return (data_.size()); }
-  inline VectorType::iterator begin() { return data_.begin(); }
+  inline iterator begin() { return data_.begin(); }
   // TODO Add interval iterator
-  inline VectorType::iterator end() { return data_.end(); }
+  inline iterator end() { return data_.end(); }
+  inline const_iterator cbegin() const { return (data_.begin()); }
+  inline const_iterator cend() const { return (data_.end()); }
+  inline size_t size() const { return (data_.size()); }
 
   void Clear(const DataT& val) 
   { std::fill(data_.begin(), data_.end(), val); }
@@ -59,7 +60,6 @@ public:
   int start() const { return start_; }
   int stop() const { return stop_; }
   const std::string& name() const { return name_; }
-  const VectorType& data() const { return data_; }
   const TrackMetadata& metadata() const { return metadata_; }
 
   void set_extends(int start, int stop) 
@@ -70,6 +70,7 @@ public:
 
 private:
   DISALLOW_COPY_AND_ASSIGN(Track)
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   void SizeChanged()
   {
@@ -84,6 +85,7 @@ private:
   std::string chr_;
   VectorType data_;
   TrackMetadata metadata_;
+
 };
 
 template <typename DataT>

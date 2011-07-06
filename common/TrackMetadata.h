@@ -62,7 +62,7 @@ public:
 
   void SetStrMetadata(const std::string& name, const std::string& val)
   {
-    str_metadata[name] = val; 
+    str_metadata_[name] = val;
   }
 
   
