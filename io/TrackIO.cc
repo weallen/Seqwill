@@ -12,6 +12,7 @@ bool TrackIO::Create(const std::string& fname)
     ERRORLOG("Couldn't create file " + fname);
     return false;
   }
+  isopen_ = true;
   return true;
 }
 
@@ -22,9 +23,6 @@ bool TrackIO::Open(const char* dirname)
 
 bool TrackIO::Open(const std::string& dirname)
 {
-  if (isopen_) {
-    Close();
-  }
   filename_ = dirname;
   bool success = true;
   struct stat s;
@@ -32,13 +30,15 @@ bool TrackIO::Open(const std::string& dirname)
     if (H5Fis_hdf5(dirname.c_str())) {
       h5file_ = H5Fopen(dirname.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
       if (h5file_ < 0)
-        success = false;
+        return false;
     } else {
-        success = false;
+      DEBUGLOG("File " + dirname + " is not an HDF5 file");
+      return false;
     }
     isopen_ = true;
   } else {
-    return Create(dirname);
+    ERRORLOG("File " + dirname + " does not exist.");
+    return false;
   }
   return true;
 }
@@ -68,9 +68,11 @@ TrackIO::GetSubTrackNames(const std::string& trackname) const
  for (hsize_t i = 0; i < group_info.nlinks; ++i) {
     // Have to call once with null name to get size
     size = H5Lget_name_by_idx(trackgroup.id(), ".", H5_INDEX_NAME, H5_ITER_NATIVE, i, NULL, NULL, H5P_DEFAULT);
-    H5Lget_name_by_idx(trackgroup.id(), ".", H5_INDEX_NAME, H5_ITER_NATIVE, i, name, size, H5P_DEFAULT);
+    name = new char[size+1];
+    H5Lget_name_by_idx(trackgroup.id(), ".", H5_INDEX_NAME, H5_ITER_NATIVE, i, name, size+1, H5P_DEFAULT);
     std::string temp(name);
     subtracknames.push_back(temp);
+    delete name;
   }
  return subtracknames;
 }
@@ -92,9 +94,11 @@ TrackIO::GetTrackNames() const
  for (hsize_t i = 0; i < group_info.nlinks; ++i) {
     // Have to call once with null name to get size
     size = H5Lget_name_by_idx(root_group, ".", H5_INDEX_NAME, H5_ITER_NATIVE, i, NULL, NULL, H5P_DEFAULT);
-    H5Lget_name_by_idx(root_group, ".", H5_INDEX_NAME, H5_ITER_NATIVE, i, name, size, H5P_DEFAULT);
+    name = new char[size+1];
+    H5Lget_name_by_idx(root_group, ".", H5_INDEX_NAME, H5_ITER_NATIVE, i, name, size+1, H5P_DEFAULT);
     std::string temp(name);
     tracknames.push_back(temp);
+    delete name;
   }
  H5Gclose(root_group);
  return tracknames;

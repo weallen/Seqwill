@@ -22,7 +22,6 @@ void SaveChrFromFASTA(const std::string& outname, const std::string& seqname,
   DEBUGLOG("Saving chr " + seqname + " for " + genome_name);
 
 
-  trackio->Open(outname);
   fastaparse.Open(seqname);
 
   // count number of lines in fasta
@@ -39,5 +38,5 @@ void SaveChrFromFASTA(const std::string& outname, const std::string& seqname,
   track->set_name(chrname);
   track->set_extends(0, currseq.length());
   std::copy(currseq.begin(), currseq.end(), track->begin());
-  trackio->WriteSubTrack<char>(chrname, track);
+  trackio->WriteSubTrack<char>(outname, chrname, track);
 }

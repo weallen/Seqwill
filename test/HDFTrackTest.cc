@@ -33,10 +33,11 @@ class HDFTrackTest : public ::testing::Test {
 
 };
 TEST_F(HDFTrackTest, ChromosomeTest) {
-  SaveChrFromFASTA("out.h5", "/media/Storage/user/data/genomedata/fasta/chr1.fa", "mm9");
+  SaveChrFromFASTA("/tmp/out.h5", "/media/Storage/user/data/genomedata/fasta/chr1.fa", "mm9");
 }
 
 TEST_F(HDFTrackTest, WriterCreateTest) {
+
 }
 
 TEST_F(HDFTrackTest, WriteWriteTrackTest) {

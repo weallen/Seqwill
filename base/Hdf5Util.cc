@@ -121,8 +121,13 @@ bool WriteAttribute(hid_t loc, const std::string& attr_name,
   }
   if (success) {
     H5Tset_strpad(attr_type, H5T_STR_NULLTERM);
-    attr = H5Acreate2(loc, attr_name.c_str(), attr_type,
-                    attr_space, H5P_DEFAULT, H5P_DEFAULT);
+    if (H5Aexists_by_name(loc, ".", attr_name.c_str(), H5P_DEFAULT) == 0) {
+      attr = H5Acreate2(loc, attr_name.c_str(), attr_type,
+                        attr_space, H5P_DEFAULT, H5P_DEFAULT);
+
+    } else {
+      attr = H5Aopen_by_name(loc, ".", attr_name.c_str(), H5P_DEFAULT, H5P_DEFAULT);
+    }
   }
 
   if (attr == -1) {
@@ -155,9 +160,12 @@ bool WriteAttribute(hid_t loc, const std::string& attr_name,
    return false;
   if (H5Sset_extent_simple(attr_space, 1, dims, NULL) < 0)
     return false;
-  attr = H5Acreate2(loc, attr_name.c_str(), H5T_NATIVE_INT,
-                   attr_space, H5P_DEFAULT, H5P_DEFAULT);
-
+  if (H5Aexists_by_name(loc, ".", attr_name.c_str(), H5P_DEFAULT) == 0) {
+    attr = H5Acreate2(loc, attr_name.c_str(), H5T_NATIVE_INT,
+                      attr_space, H5P_DEFAULT, H5P_DEFAULT);
+  } else {
+    attr = H5Aopen_by_name(loc, ".", attr_name.c_str(), H5P_DEFAULT, H5P_DEFAULT);
+  }
   if (attr < 0) {
     ERRORLOG("Couldn't create attribute " + attr_name);
     H5Aclose(attr);
@@ -191,8 +199,14 @@ bool WriteAttribute(hid_t loc, const std::string& attr_name,
    return false;
   if (H5Sset_extent_simple(attr_space, 1, dims, NULL) < 0)
     return false;
-  attr = H5Acreate2(loc, attr_name.c_str(), H5T_NATIVE_FLOAT,
-                   attr_space, H5P_DEFAULT, H5P_DEFAULT);
+
+  if (H5Aexists_by_name(loc, ".", attr_name.c_str(), H5P_DEFAULT) == 0) {
+    attr = H5Acreate2(loc, attr_name.c_str(), H5T_NATIVE_FLOAT,
+                      attr_space, H5P_DEFAULT, H5P_DEFAULT);
+  } else {
+    attr = H5Aopen_by_name(loc, ".", attr_name.c_str(), H5P_DEFAULT, H5P_DEFAULT);
+  }
+
 
   if (attr < 0) {
     ERRORLOG( "Couldn't create attribute " + attr_name);

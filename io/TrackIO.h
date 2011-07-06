@@ -41,12 +41,6 @@ public:
     Close();
   }
 
-  bool Create(const char* fname);
-  bool Create(const std::string& fname);
-  bool Open(const char* fname);
-  bool Open(const std::string& fname);
-  void Close();
-  bool IsOpen() { return isopen_; }
 
   // General Track stuff
   std::vector<std::string> GetSubTrackNames(const std::string& subtrackname) const;
@@ -54,15 +48,24 @@ public:
 
   // Write Stuff
   template <typename T>
-  bool WriteSubTrack(const std::string& tname, typename Track<T>::Ptr data);
+  bool WriteSubTrack(const std::string& fname,
+                     const std::string& tname,
+                     typename Track<T>::Ptr data);
  
   // Read stuff
   template <typename T>
-  bool ReadSubTrack(const std::string& trackname,
+  bool ReadSubTrack(const std::string& fname,
+                    const std::string& trackname,
                     const std::string& subtrackname,
                     typename Track<T>::Ptr subtrack); 
 private:
-  
+  bool Create(const char* fname);
+  bool Create(const std::string& fname);
+  bool Open(const char* fname);
+  bool Open(const std::string& fname);
+  void Close();
+  bool IsOpen() { return isopen_; }
+
   hid_t h5file_;
   std::string filename_;
   bool isopen_;
@@ -74,7 +77,8 @@ private:
 
 
 template<typename DataT>
-bool TrackIO::WriteSubTrack(const std::string& trackname,
+bool TrackIO::WriteSubTrack(const std::string& fname,
+                            const std::string& trackname,
                             typename Track<DataT>::Ptr subtrack)
 {
   hid_t dataset;
@@ -83,6 +87,13 @@ bool TrackIO::WriteSubTrack(const std::string& trackname,
   std::vector<std::string> tracknames;
   H5SCreate data_space(H5S_SIMPLE);
   hid_t dcpl;
+
+  if (!Open(fname)) {
+    if (!Create(fname)) {
+      ERRORLOG("Can't open file " + fname);
+      return false;
+    }
+  }
 
   if (data_space.id() < 0) {
     ERRORLOG("Can't create data space");
@@ -114,8 +125,9 @@ bool TrackIO::WriteSubTrack(const std::string& trackname,
   tracknames = GetSubTrackNames(trackname);
   if (std::find(tracknames.begin(), tracknames.end(), subtrack->name()) == tracknames.end()) {
     dcpl = H5Pcreate(H5P_DATASET_CREATE);
-    dataset = H5Dcreate(track_group, subtrack->name().c_str(),
-                        DataTypeTraits<DataT>::H5Type(), H5P_DEFAULT, dcpl);
+    dataset = H5Dcreate2(track_group, subtrack->name().c_str(),
+                        DataTypeTraits<DataT>::H5Type(), data_space.id(),
+                        H5P_DEFAULT, dcpl, H5P_DEFAULT);
   } else {
     dataset = H5Dopen2(track_group, subtrack->name().c_str(), H5P_DEFAULT);
   }
@@ -161,13 +173,15 @@ bool TrackIO::WriteSubTrack(const std::string& trackname,
   H5Gclose(root_group);
   H5Dclose(dataset);
   H5Gclose(track_group);
+  Close();
   return true;
 }
 template <typename DataT>
 bool
-TrackIO::ReadSubTrack(const std::string& trackname,
-                             const std::string& subtrackname,
-                             typename Track<DataT>::Ptr subtrack)
+TrackIO::ReadSubTrack(const std::string& fname,
+                      const std::string& trackname,
+                      const std::string& subtrackname,
+                      typename Track<DataT>::Ptr subtrack)
 {
   hid_t root_group;
   hid_t track_group;
@@ -175,6 +189,10 @@ TrackIO::ReadSubTrack(const std::string& trackname,
   int start;
   int stop;
 
+  if(!Open(fname)) {
+    ERRORLOG("Can't open " + fname);
+    return false;
+  }
   root_group = H5Gopen2(h5file_, "/", H5P_DEFAULT);
   // Do some error checking...
   track_group = H5Gopen2(root_group, trackname.c_str(), H5P_DEFAULT);
