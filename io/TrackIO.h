@@ -11,7 +11,6 @@
 #include <map>
 
 #include <boost/intrusive_ptr.hpp>
-#include <boost/filesystem.hpp>
 
 #include <hdf5.h>
 
@@ -42,6 +41,8 @@ public:
     Close();
   }
 
+  bool Create(const char* fname);
+  bool Create(const std::string& fname);
   bool Open(const char* fname);
   bool Open(const std::string& fname);
   void Close();
@@ -114,8 +115,7 @@ bool TrackIO::WriteSubTrack(const std::string& trackname,
   if (std::find(tracknames.begin(), tracknames.end(), subtrack->name()) == tracknames.end()) {
     dcpl = H5Pcreate(H5P_DATASET_CREATE);
     dataset = H5Dcreate(track_group, subtrack->name().c_str(),
-                        DataTypeTraits<DataT>::H5Type(), H5P_DEFAULT,
-                        dcpl, H5P_DEFAULT);
+                        DataTypeTraits<DataT>::H5Type(), H5P_DEFAULT, dcpl);
   } else {
     dataset = H5Dopen2(track_group, subtrack->name().c_str(), H5P_DEFAULT);
   }
@@ -149,7 +149,7 @@ bool TrackIO::WriteSubTrack(const std::string& trackname,
     return false;
   }
 
-  hid_t err = H5Dwrite(dataset, DataTypeTraits<DataT>::H5type(), H5S_ALL, H5S_ALL,
+  hid_t err = H5Dwrite(dataset, DataTypeTraits<DataT>::H5Type(), H5S_ALL, H5S_ALL,
                        H5P_DEFAULT, &(*subtrack->begin()));
   if (err < 0) {
     ERRORLOG("Error writing subtrack");

@@ -19,9 +19,6 @@
 #include "base/FileParser.h"
 #include "base/SVector.h"
 
-#include "io/TrackWriter.h"
-#include "io/TrackReader.h"
-
 #include "analysis/Chromosome.h"
 
 class Genome
@@ -37,7 +34,7 @@ public:
 
 private:
 
-  std::map<std::string, Chromosome*> open_chrs_;
+  std::map<std::string, Chromosome::Ptr> open_chrs_;
   std::string chr_file_;
 };
 

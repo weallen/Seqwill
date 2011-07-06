@@ -8,7 +8,7 @@
 #include <iostream>
 #include <string>
 
-#include <boost/shared_ptr.hpp>
+#include <boost/intrusive_ptr.hpp>
 
 //#include <H5Cpp.h>
 #include <hdf5.h>
@@ -16,18 +16,17 @@
 #include "base/DNASequence.h"
 #include "base/StringUtil.h"
 #include "base/FileParser.h"
-#include "base/SVector.h"
-#include "io/TrackWriter.h"
+#include "base/Log.h"
+#include "base/RefCount.h"
+#include "io/TrackIO.h"
+#include "common/Track.h"
 
 
-class Chromosome;
-
-int SaveChrFromFASTA(const std::string& fname, const std::string& seqfname);
-int LoadChr(const std::string& fname, const std::string& chrname, Chromosome* chr);
-
-class Chromosome
+class Chromosome : public RefBase
 {
 public:
+  typedef boost::intrusive_ptr<Chromosome> Ptr;
+
   Chromosome() {}
 
   Chromosome(const std::string& chrname)
@@ -45,5 +44,9 @@ private:
   int len_;
   DNASequencePtr seq_;
 };
+
+void SaveChrFromFASTA(const std::string& outname, const std::string& seqname,
+                         const std::string& genome_name);
+int LoadChr(const std::string& fname, const std::string& chrname, Chromosome::Ptr chr);
 
 #endif

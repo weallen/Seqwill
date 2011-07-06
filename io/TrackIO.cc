@@ -1,5 +1,20 @@
 #include "io/TrackIO.h"
 
+bool TrackIO::Create(const char* fname)
+{
+  return Create(std::string(fname));
+}
+
+bool TrackIO::Create(const std::string& fname)
+{
+  h5file_ = H5Fcreate(fname.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+  if (h5file_ < 0) {
+    ERRORLOG("Couldn't create file " + fname);
+    return false;
+  }
+  return true;
+}
+
 bool TrackIO::Open(const char* dirname)
 {
   return Open(std::string(dirname));
@@ -7,9 +22,13 @@ bool TrackIO::Open(const char* dirname)
 
 bool TrackIO::Open(const std::string& dirname)
 {
+  if (isopen_) {
+    Close();
+  }
   filename_ = dirname;
   bool success = true;
-  if (boost::filesystem::exists(dirname)) {
+  struct stat s;
+  if (stat(dirname.c_str(), &s) == 0) {
     if (H5Fis_hdf5(dirname.c_str())) {
       h5file_ = H5Fopen(dirname.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
       if (h5file_ < 0)
@@ -17,14 +36,10 @@ bool TrackIO::Open(const std::string& dirname)
     } else {
         success = false;
     }
+    isopen_ = true;
   } else {
-      success = false;
+    return Create(dirname);
   }
-  if (!success) {
-    ERRORLOG("Couldn't open file " + dirname);
-    return false;
-  }
-  isopen_ = true;
   return true;
 }
 

@@ -13,6 +13,7 @@
 #include "data/TrackData.h"
 
 #include "base/SVector.h"
+#include "analysis/Chromosome.h"
 
 using namespace std;
 namespace {
@@ -31,6 +32,10 @@ class HDFTrackTest : public ::testing::Test {
   
 
 };
+TEST_F(HDFTrackTest, ChromosomeTest) {
+  SaveChrFromFASTA("out.h5", "/media/Storage/user/data/genomedata/fasta/chr1.fa", "mm9");
+}
+
 TEST_F(HDFTrackTest, WriterCreateTest) {
 }
 

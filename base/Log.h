@@ -18,4 +18,8 @@ const int FATAL = 3;
     std::cerr << "Warning: " << "[" << __func__ << ":" << __LINE__ << "] "  \
     << __Msg << std::endl
 
+#define DEBUGLOG(__Msg)\
+    std::cout << "Debug: " << "[" << __func__ << ":" << __LINE__ << "] " \
+    << __Msg << std::endl;\
+
 #endif

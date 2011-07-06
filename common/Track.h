@@ -68,9 +68,10 @@ public:
   void set_data(const VectorType& data) { data_ = data; }
   void set_metadata(const TrackMetadata& metadata) { metadata_ = metadata; }
 
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
 private:
   DISALLOW_COPY_AND_ASSIGN(Track)
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   void SizeChanged()
   {

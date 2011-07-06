@@ -71,11 +71,13 @@ set(DATA_SRCS data/TrackData.h
 
 set(ANALYSIS_SRCS analysis/Genome.cc 
     analysis/Genome.h
+    analysis/Chromosome.h
+    analysis/Chromosome.cc
     analysis/GenomeSeq.h
     analysis/GenomeSeq.cc)
 
 # libraries
-add_library(util ${COMMON_SRCS} ${IO_SRCS} ${HDF5_SRCS} ${UTIL_SRCS} ${BASE_SRCS} ${DATA_SRCS})# ${ANALYSIS_SRCS})
+add_library(util ${COMMON_SRCS} ${IO_SRCS} ${HDF5_SRCS} ${UTIL_SRCS} ${BASE_SRCS} ${DATA_SRCS} ${ANALYSIS_SRCS})
 target_link_libraries(util hdf5_cpp hdf5 bamtools)
 
 # binaries

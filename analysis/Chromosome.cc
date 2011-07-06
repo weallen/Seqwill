@@ -1,29 +1,33 @@
 #include "analysis/Chromosome.h"
 
-int SaveChrFromFASTA(const std::string& fname, const std::string& seqfname)
-{
-}
 
 int LoadChr(const std::string& fname, const std::string& chrname, Chromosome* chr)
 {
+  return 1;
 }
 
 //
 // CHROMOSOME
 //
-void SaveChrSeqFromFASTA(const std::string& fname, const std::string& seqfname)
+void SaveChrFromFASTA(const std::string& outname, const std::string& seqname,
+                      const std::string& genome_name)
 {
   // parse file
   std::string currseq;
   FlatFileParser fastaparse;
   std::string line;
-  TrackWriter<const char> writer;
+  TrackIO::Ptr trackio(new TrackIO);
+  typename Track<char>::Ptr track(new Track<char>);
 
-  writer.Open(fname);
-  fastaparse.Open(seqfname);
+  DEBUGLOG("Saving chr " + seqname + " for " + genome_name);
+
+
+  trackio->Open(outname);
+  fastaparse.Open(seqname);
+
   // count number of lines in fasta
   int i = 0;
-  std::string chrname = "";
+  std::string chrname;
   while (fastaparse.GetLine(line)) {
     // skip the header
     if (line[0] == '>')
@@ -32,6 +36,8 @@ void SaveChrSeqFromFASTA(const std::string& fname, const std::string& seqfname)
       currseq.append(line);
     }
   }
-  writer.WriteSubTrack(chrname, (const char*) currseq.c_str());
-  writer.Close();
+  track->set_name(chrname);
+  track->set_extends(0, currseq.length());
+  std::copy(currseq.begin(), currseq.end(), track->begin());
+  trackio->WriteSubTrack<char>(chrname, track);
 }
