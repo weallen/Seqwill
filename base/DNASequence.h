@@ -162,12 +162,12 @@ class DNASequence : public RefBase {
   void Assign(const DNASequence &ref, DNALength start=0, DNALength plength=0) {
 		if (plength) {
       length = plength;
-      std::vector<Nucleotide> seq(plength);
+      seq.resize(plength);
       seq.assign(ref.seq.begin() + start, ref.seq.begin() + start + plength);
 		}
 		else if (start) {
       length = ref.length - start;
-      std::vector<Nucleotide> seq(length);
+      seq.resize(length);
       seq.assign(ref.seq.begin() + start, ref.seq.begin() + start + length);
     }
 		else {

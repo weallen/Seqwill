@@ -31,7 +31,9 @@ set(COMMON_SRCS common/Track.h
 set(IO_SRCS 
     io/TrackIO.cc
     io/TrackIO.h
-    io/Traits.h)
+    io/Traits.h
+    io/BamIO.h
+    io/BamIO.cc)
  
 set(UTIL_SRCS util/SComm.h
     util/SComm.cc 
@@ -63,7 +65,9 @@ set(BASE_SRCS base/BEDelement.h
     base/Hdf5Util.cc
     base/RefCount.h
     base/Log.h
-    base/Log.cc)
+    base/Log.cc
+    base/FileUtil.h
+    base/FileUtil.cc)
 
 set(DATA_SRCS data/TrackData.h
     data/ChrData.h
@@ -95,3 +99,4 @@ endfunction()
 #cxx_test(GenomeTest)
 #cxx_test(ChromosomeTest)
 cxx_test(HDFTrackTest)
+cxx_test(BamIOTest)

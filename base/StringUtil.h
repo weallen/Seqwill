@@ -23,6 +23,7 @@
 #include <iostream>
 #include <sstream>
 #include <vector>
+#include <stdint.h>
 
 using namespace std;
 
@@ -69,6 +70,15 @@ int Tokenize( const string &a_string,
 	      vector<string> &tokens );
 
 
+  inline uint64_t HashString(const char* __s)
+  {
+    uint64_t hash = 0xcbf29ce484222325ull;
+    for ( ; *__s; ++__s) {
+      hash *= 1099511628211ull;
+      hash ^= *__s;
+    }
+    return hash;
+  }
 
 
 #endif

@@ -5,6 +5,8 @@
 #include <vector>
 #include <sys/stat.h>
 
+bool FileExists(const std::string& fname);
+
 inline void
 GetAllFastaFilesInDirectory(const std::string& directory,
                             std::vector<std::string>* file_names);
