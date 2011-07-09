@@ -1,5 +1,5 @@
 #include "io/TrackIO.h"
-bool TrackIO::HasTrack(const std::string& trackname) const {
+bool TrackFile::HasTrack(const std::string& trackname) const {
   std::vector<std::string> tracknames = GetTrackNames();
   if (std::find(tracknames.begin(), tracknames.end(), trackname) != tracknames.end()) {
     return true;
@@ -7,7 +7,7 @@ bool TrackIO::HasTrack(const std::string& trackname) const {
   return false;
 }
 
-bool TrackIO::HasSubTrack(const std::string& trackname,
+bool TrackFile::HasSubTrack(const std::string& trackname,
                           const std::string& subtrackname) const {
   std::vector<std::string> tracknames = GetSubTrackNames(trackname);
   if(std::find(tracknames.begin(), tracknames.end(), subtrackname) != tracknames.end()) {
@@ -16,12 +16,12 @@ bool TrackIO::HasSubTrack(const std::string& trackname,
   return false;
 }
 
-bool TrackIO::Create(const char* fname)
+bool TrackFile::Create(const char* fname)
 {
   return Create(std::string(fname));
 }
 
-bool TrackIO::Create(const std::string& fname)
+bool TrackFile::Create(const std::string& fname)
 {
   h5file_ = H5Fcreate(fname.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
   if (h5file_ < 0) {
@@ -32,12 +32,12 @@ bool TrackIO::Create(const std::string& fname)
   return true;
 }
 
-bool TrackIO::Open(const char* dirname)
+bool TrackFile::Open(const char* dirname)
 {
   return Open(std::string(dirname));
 }
 
-bool TrackIO::Open(const std::string& dirname)
+bool TrackFile::Open(const std::string& dirname)
 {
   filename_ = dirname;
   bool success = true;
@@ -59,7 +59,7 @@ bool TrackIO::Open(const std::string& dirname)
   return true;
 }
 
-void TrackIO::Close()
+void TrackFile::Close()
 {
   if (isopen_) {
     isopen_ = false;
@@ -68,7 +68,7 @@ void TrackIO::Close()
 }
 
 std::vector<std::string>
-TrackIO::GetSubTrackNames(const std::string& trackname) const
+TrackFile::GetSubTrackNames(const std::string& trackname) const
 {
   std::vector<std::string> subtracknames;
   ScopedH5GOpen trackgroup(h5file_, trackname);
@@ -94,7 +94,7 @@ TrackIO::GetSubTrackNames(const std::string& trackname) const
 }
 
 std::vector<std::string>
-TrackIO::GetTrackNames() const
+TrackFile::GetTrackNames() const
 {
   std::vector<std::string> tracknames;
   hid_t root_group = H5Gopen2(h5file_, "/", H5P_DEFAULT);

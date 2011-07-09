@@ -4,7 +4,7 @@
 bool LoadChr(const std::string& fname, const std::string& genome_name,
             const std::string& chrname, Chromosome::Ptr chr)
 {
-  TrackIO trackio;
+  TrackFile trackio;
   typename Track<unsigned char>::Ptr track(new Track<unsigned char>);
 
   if (trackio.ReadSubTrack<unsigned char>(fname, genome_name, chrname, track)) {
@@ -25,7 +25,7 @@ bool SaveChrFromFASTA(const std::string& outname, const std::string& seqname,
   std::string currseq;
   FlatFileParser fastaparse;
   std::string line;
-  TrackIO trackio;
+  TrackFile trackio;
   typename Track<unsigned char>::Ptr track(new Track<unsigned char>);
 
   DEBUGLOG("Saving chr " + seqname + " for " + genome_name);
@@ -44,7 +44,7 @@ bool SaveChrFromFASTA(const std::string& outname, const std::string& seqname,
       currseq.append(line);
     }
   }
-  track->set_name(chrname);
+  track->set_subtrackname(chrname);
   track->set_extends(0, currseq.length());
   std::copy(currseq.begin(), currseq.end(), track->begin());
   return trackio.WriteSubTrack<unsigned char>(outname, genome_name, track);

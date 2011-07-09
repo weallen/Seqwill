@@ -10,7 +10,7 @@
 #include <vector>
 #include <map>
 
-#include <boost/intrusive_ptr.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include <hdf5.h>
 
@@ -26,18 +26,18 @@
 // A trackfile can store multiple subtracks
 // For example, in genomic data these subtracks would correspond to individual chromosomes
 
-class TrackIO : public RefBase
+
+class TrackFile
 {
 public:
 
-  typedef boost::intrusive_ptr<TrackIO> Ptr;
+  typedef boost::shared_ptr<TrackFile> Ptr;
 
-  TrackIO() 
-    : RefBase()
-    , h5file_(-1) 
+  TrackFile()
+    : h5file_(-1)
   {}
 
-  virtual ~TrackIO() {
+  virtual ~TrackFile() {
     Close();
   }
 
@@ -62,6 +62,8 @@ public:
                     typename Track<T>::Ptr subtrack);
 
 private:
+  DISALLOW_COPY_AND_ASSIGN(TrackFile)
+
   bool Create(const char* fname);
   bool Create(const std::string& fname);
   bool Open(const char* fname);
@@ -77,10 +79,15 @@ private:
 // Implementation
 // FUCK YOU C++
 
+class TrackIO
+{
+};
 
+//-------------------------------------------------------------------
+// Implementation
 
 template<typename DataT>
-bool TrackIO::WriteSubTrack(const std::string& fname,
+bool TrackFile::WriteSubTrack(const std::string& fname,
                             const std::string& trackname,
                             typename Track<DataT>::Ptr subtrack)
 {
@@ -126,17 +133,17 @@ bool TrackIO::WriteSubTrack(const std::string& fname,
   H5Sset_extent_simple(data_space.id(), 1, memsize, NULL);
   // Check if subtrack exists already
   tracknames = GetSubTrackNames(trackname);
-  if (std::find(tracknames.begin(), tracknames.end(), subtrack->name()) == tracknames.end()) {
+  if (std::find(tracknames.begin(), tracknames.end(), subtrack->subtrackname()) == tracknames.end()) {
     dcpl = H5Pcreate(H5P_DATASET_CREATE);
-    dataset = H5Dcreate2(track_group, subtrack->name().c_str(),
+    dataset = H5Dcreate2(track_group, subtrack->subtrackname().c_str(),
                         DataTypeTraits<DataT>::H5Type(), data_space.id(),
                         H5P_DEFAULT, dcpl, H5P_DEFAULT);
   } else {
-    dataset = H5Dopen2(track_group, subtrack->name().c_str(), H5P_DEFAULT);
+    dataset = H5Dopen2(track_group, subtrack->subtrackname().c_str(), H5P_DEFAULT);
   }
 
   if (dataset < 0) {
-    ERRORLOG("Couldn't open subtrack " + subtrack->name());
+    ERRORLOG("Couldn't open subtrack " + subtrack->subtrackname());
     H5Gclose(root_group);
     H5Gclose(track_group);
     return false;
@@ -152,10 +159,13 @@ bool TrackIO::WriteSubTrack(const std::string& fname,
     attrwritesuccess = false;
   }
 
-  if (!WriteAttribute(dataset, "Name", subtrack->name())) {
+  if (!WriteAttribute(dataset, "Name", subtrack->subtrackname())) {
     attrwritesuccess = false;
   }
 
+  if (!WriteAttribute(dataset, "Resolution", 1, subtrack->resolution())) {
+    attrwritesuccess = false;
+  }
   if (!attrwritesuccess) {
     ERRORLOG("Couldn't write attributes");
     H5Gclose(root_group);
@@ -181,65 +191,57 @@ bool TrackIO::WriteSubTrack(const std::string& fname,
 }
 template <typename DataT>
 bool
-TrackIO::ReadSubTrack(const std::string& fname,
+TrackFile::ReadSubTrack(const std::string& fname,
                       const std::string& trackname,
                       const std::string& subtrackname,
                       typename Track<DataT>::Ptr subtrack)
 {
-  hid_t root_group;
-  hid_t track_group;
   hid_t dataset;
   int start;
   int stop;
+  int resolution;
 
   if(!Open(fname)) {
     ERRORLOG("Can't open " + fname);
     return false;
   }
-  root_group = H5Gopen2(h5file_, "/", H5P_DEFAULT);
+  ScopedH5GOpen root_group(h5file_, std::string("/"));
   // Do some error checking...
-  track_group = H5Gopen2(root_group, trackname.c_str(), H5P_DEFAULT);
+  ScopedH5GOpen track_group(root_group.id(), trackname);
+      //= H5Gopen2(root_group, trackname.c_str(), H5P_DEFAULT);
   if (track_group < 0) {
     ERRORLOG("Can't open track group " + trackname);
-    H5Gclose(root_group);
     return false;
   }
   // CHeck if dataset exists before trying to open
   if (!HasSubTrack(trackname, subtrackname)) {
     WARNLOG("Can't find subtrack " + subtrackname);
-    H5Gclose(root_group);
-    H5Gclose(track_group);
     return false;
   }
   dataset = H5Dopen2(track_group, subtrackname.c_str(), H5P_DEFAULT);
   if (dataset < 0) {
     ERRORLOG("Can't open subtrack " + subtrackname);
-    H5Gclose(root_group);
-    H5Gclose(track_group);
     return false;
   }
 
   // Read size attributes...
   if (!ReadAttribute(dataset, "Start", 1, &start)
-      || !ReadAttribute(dataset, "Stop", 1, &stop)) {
+      || !ReadAttribute(dataset, "Stop", 1, &stop)
+      || !ReadAttribute(dataset, "Resolution", 1, &resolution)) {
     ERRORLOG("Can't read attributes");
-    H5Gclose(root_group);
-    H5Gclose(track_group);
     H5Dclose(dataset);
     return false;
   }
+  subtrack->set_resolution(resolution);
   subtrack->set_extends(start, stop);
-  subtrack->set_name(subtrackname);
+  subtrack->set_trackname(trackname);
+  subtrack->set_subtrackname(subtrackname);
   if (H5Dread(dataset, DataTypeTraits<DataT>::H5Type(), H5S_ALL, H5S_ALL,
               H5P_DEFAULT, &(*subtrack->begin())) < 0) {
     ERRORLOG("Can't read dataset " + subtrackname);
-    H5Gclose(root_group);
-    H5Gclose(track_group);
     H5Dclose(dataset);
     return false;
   }
-  H5Gclose(root_group);
-  H5Gclose(track_group);
   H5Dclose(dataset);
   return true;
 }

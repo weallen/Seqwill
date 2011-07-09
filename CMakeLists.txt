@@ -78,7 +78,8 @@ set(ANALYSIS_SRCS analysis/Genome.cc
     analysis/Chromosome.h
     analysis/Chromosome.cc
     analysis/GenomeSeq.h
-    analysis/GenomeSeq.cc)
+    analysis/GenomeSeq.cc
+    analysis/AnalysisBase.h)
 
 # libraries
 add_library(util ${COMMON_SRCS} ${IO_SRCS} ${HDF5_SRCS} ${UTIL_SRCS} ${BASE_SRCS} ${DATA_SRCS} ${ANALYSIS_SRCS})
