@@ -5,11 +5,11 @@
 
 #include "analysis/AnalysisBase.h"
 
-template <int Nstates>
+template <class EmitDistT>
 class HMM : public Analysis<float, float>
 {
 public: 
-  typedef Eigen::Vector<float, Nstates> VectorType;
+  typedef Eigen::Vector<float, Eigen::Dynamic, 1> VectorType;
   typedef Eigen::Vector<float Nstates, Nstates> MatrixType;
 
   HMM() 
@@ -51,13 +51,14 @@ public:
   { return emit_fn_; }
 
   int num_states() const 
-  { return HMM<Nstates>::num_states; }
+  { return num_states_; }
+
+  void set_num_states(int s) 
+  { num_states_ = s; }
 
   float LogProb();
   void ViterbiDecode();
   
-  static const int num_states = Nstates;
-
 private:
   void FitEM();
   void FwdBack(const VectorType& pi, 
@@ -78,11 +79,19 @@ private:
   VectorType init_;
   VectorType init_prior_;
   int num_states_;
+  std::vector<EmitDistT> emit_dists_;
 };
 
-template <int Nstates>
+template<>
+void
+HMM<GaussDist>::UpdateEmitEM()
+{
+  
+}
+
+template <class EmitTypeT>
 void 
-HMM<Nstates>::FitEM() 
+HMM<EmitTypeT>::FitEM() 
 {
   MatrixType start_counts;
   MatrixType trans_counts;
@@ -96,24 +105,25 @@ HMM<Nstates>::FitEM()
   }
 }
 
-template <int Nstates>
+template <class EmitTypeT>
 void 
-HMM<Nstates>::FwdBack()
+HMM<EmitTypeT>::FwdBack()
 {
 }
 
-template <int Nstates>
+template <class EmitTypeT>
 void 
-HMM<Nstates>::ViterbiDecode(std::vector<int>& output)
+HMM<EmitTypeT>::ViterbiDecode(std::vector<int>& output)
 {
 }
 
-template <int Nstates>
+template <class EmitTypeT>
 MatrixType 
-HMM<Nstates>::CountTransitions()
+HMM<EmitTypeT>::CountTransitions()
 {
   return m;
 }
+
 
 
 #endif
