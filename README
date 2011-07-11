@@ -1,4 +1,10 @@
+TODO
+- Write stuff for reading/writing metadata to tracks in hdf5 file
+- Write wrapper around TrackIO to make TrackFile 
+- Write SparseTrack w/ Block and MemoryManager to allocate Blocks efficiently w/ anonymous mmap'd memory arena
+- 
 
+- Refactor Track inferface into
 == DESIGN NOTES ==
 === BAM LOADING ===
 Done using the BamTools library.
