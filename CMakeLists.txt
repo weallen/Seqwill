@@ -90,6 +90,8 @@ target_link_libraries(util hdf5_cpp hdf5 bamtools)
 #add_executable(LoadData tool/LoadData.cc)
 #target_link_libraries(LoadSeq util analysis)
 #target_link_libraries(LoadData util analysis)
+add_executable(RnaSeqCoverage tool/RnaSeqCoverage.cc)
+target_link_libraries(RnaSeqCoverage util)
 
 # testing
 function(cxx_test name)
