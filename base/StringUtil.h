@@ -41,9 +41,9 @@ string After(string &s, string &t);
 string Before(string &s, string &t);
 bool Contains(string &s, string &t);
 
-string After(string &s, char *t);
-string Before(string &s, char *t);
-bool Contains(string &s, char *t);
+string After(const string &s, const char *t);
+string Before(const string &s, const char *t);
+bool Contains(const string &s, const char *t);
 
 bool ContainsAt(string &s, string &t, int at);
 

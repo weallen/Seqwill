@@ -26,7 +26,7 @@ class Chromosome : public RefBase
 {
 public:
   typedef boost::intrusive_ptr<Chromosome> Ptr;
-  typedef typename Track<char>::Ptr CharTrackPtr;
+  typedef Track<char>::Ptr CharTrackPtr;
 
   Chromosome() {
    Init();

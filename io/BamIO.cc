@@ -5,7 +5,7 @@ ReadTable::Init(const std::vector<std::string>& chrnames)
 {
   uint32_t currid;
 
-  for (int i = 0; i < chrnames.size(); ++i) {
+  for (size_t i = 0; i < chrnames.size(); ++i) {
     currid = HashString(chrnames[i].c_str());
     chrs_[currid] = chrnames[i];
     inv_chrs_[chrnames[i]] = currid;
@@ -41,7 +41,7 @@ ReadTable::Clear()
 void
 SingleReadFactory::Init(const std::vector<std::string>& refseqnames)
 {
-  for (int i = 0; i < refseqnames.size(); ++i) {
+  for (size_t i = 0; i < refseqnames.size(); ++i) {
     refseq_ids_[i] = HashString(refseqnames[i].c_str());
   }
 }

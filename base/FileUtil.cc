@@ -15,11 +15,13 @@ GetAllFastaFilesInDirectory(const std::string& directory,
 inline std::string
 GetFilenameWithoutPath(const std::string& filename)
 {
+    return std::string("");
 }
 
 inline std::string
 GetFilenameWithoutExtension(const std::string& filename)
 {
+    return std::string("");
 }
 
 

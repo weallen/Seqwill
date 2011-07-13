@@ -136,7 +136,7 @@ template <typename DataT>
 std::ostream& operator << (std::ostream& s, const Track<DataT>& t) {
   s << "Track: " << t.GetName() << " chr " <<
        t.chr() << " : " << t.GetStart() << " - " << t.GetEnd();
-   
+    return s;
 }
 
 template <typename T>

@@ -112,8 +112,8 @@ bool TrackFile::WriteSubTrack(const std::string& fname,
 
 
   hsize_t memsize[1] = {(hsize_t) subtrack->MemSize()};
-  hsize_t best_chunk_size = 4096*16;
-  const hsize_t chunk_size = std::min(best_chunk_size, memsize[0] / 2);
+  //hsize_t best_chunk_size = 4096*16;
+//  const hsize_t chunk_size = std::min(best_chunk_size, memsize[0] / 2);
 
   root_group = H5Gopen2(h5file_, "/", H5P_DEFAULT);
 

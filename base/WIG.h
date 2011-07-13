@@ -6,8 +6,6 @@
 #include "base/FileParser.h"
 #include "base/StringUtil.h"
 
-typedef std::map<std::string, std::string> KeyValMap;
-
 struct WIGLine {
   int chr;
   int pos;

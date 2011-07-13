@@ -24,17 +24,17 @@ ParseWig(const std::string &wigname, std::vector<WIGLine> &out)
   while (f.ParseLine()) {
     sp.SetLine(f.Line());
     if (!sp.IsInt(0)) {
-      if (Contains(sp.AsString(0), "fixedStep")) {
-        fixed_step = true;
-        chrom = ParseKeyValue(sp.AsString(1)).second;
-        start = StringToInt(ParseKeyValue(sp.AsString(2)).second);
-        step = StringToInt(ParseKeyValue(sp.AsString(3)).second);
-        if (sp.GetItemCount() > 4) {
-          span = StringToInt(ParseKeyValue(sp.AsString(4)).second);
-        }
-      } else if (Contains(sp.AsString(0), "variableStep")) {
-        fixed_step = false;
-        chrom = ParseKeyValue(sp.AsString(1)).second;
+        if (Contains(sp.AsString(0), "fixedStep")) {
+            fixed_step = true;
+            chrom = ParseKeyValue(sp.AsString(1)).second;
+            start = StringToInt(ParseKeyValue(sp.AsString(2)).second);
+            step = StringToInt(ParseKeyValue(sp.AsString(3)).second);
+            if (sp.GetItemCount() > 4) {
+                span = StringToInt(ParseKeyValue(sp.AsString(4)).second);
+            }
+        } else if (Contains(sp.AsString(0), "variableStep")) {
+          fixed_step = false;
+          chrom = ParseKeyValue(sp.AsString(1)).second;
         if (sp.GetItemCount() > 1) {
           span = StringToInt(ParseKeyValue(sp.AsString(1)).second);
         }

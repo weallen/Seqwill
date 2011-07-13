@@ -5,6 +5,6 @@
 
 // GenomeMgr
 
-int Genome::GetChrSeq(const std::string& chrname, Chromosome* chr)
+void Genome::GetChrSeq(const std::string& chrname, Chromosome* chr)
 {
 }

@@ -40,7 +40,6 @@ bool TrackFile::Open(const char* dirname)
 bool TrackFile::Open(const std::string& dirname)
 {
   filename_ = dirname;
-  bool success = true;
   struct stat s;
   if (stat(dirname.c_str(), &s) == 0) {
     if (H5Fis_hdf5(dirname.c_str())) {
@@ -72,7 +71,6 @@ TrackFile::GetSubTrackNames(const std::string& trackname) const
 {
   std::vector<std::string> subtracknames;
   ScopedH5GOpen trackgroup(h5file_, trackname);
-  hsize_t idx;
   H5G_info_t group_info;
   char* name;
   ssize_t size;
@@ -98,7 +96,6 @@ TrackFile::GetTrackNames() const
 {
   std::vector<std::string> tracknames;
   hid_t root_group = H5Gopen2(h5file_, "/", H5P_DEFAULT);
-  hsize_t idx;
   H5G_info_t group_info;
   char* name;
   ssize_t size;

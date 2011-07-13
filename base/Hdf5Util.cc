@@ -1,6 +1,6 @@
 #include "base/Hdf5Util.h"
 
-bool ReadAttribute(hid_t loc, const std::string& attr_name, std::string* value)
+bool ReadAttribute(hid_t loc, const std::string& attr_name, std::string& value)
 {
   hsize_t str_len;
   H5A_info_t attr_info;
@@ -30,7 +30,7 @@ bool ReadAttribute(hid_t loc, const std::string& attr_name, std::string* value)
     ERRORLOG("Couldn't read attribute " + attr_name);
     return false;
   }
-  value = &(std::string(&temp_str[0]));
+  value = std::string(&temp_str[0]);
   return true;
 }
 
@@ -153,7 +153,6 @@ bool WriteAttribute(hid_t loc, const std::string& attr_name,
   hid_t attr_space;
   hsize_t dims[1];
   dims[0] = attr_size;
-  bool success = true;
 
   attr_space = H5Screate(H5S_SIMPLE);
   if (attr_space == -1)
@@ -192,7 +191,6 @@ bool WriteAttribute(hid_t loc, const std::string& attr_name,
   hid_t attr_space;
   hsize_t dims[1];
   dims[0] = attr_size;
-  bool success = true;
 
   attr_space = H5Screate(H5S_SIMPLE);
   if (attr_space == -1)

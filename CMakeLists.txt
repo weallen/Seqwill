@@ -3,9 +3,9 @@ if(COMMAND cmake_policy)
   cmake_policy(SET CMP0003 NEW)
 endif(COMMAND cmake_policy)
 
-#set(CMAKE_C_COMPILER "clang")
+set(CMAKE_C_COMPILER "clang")
 
-#set(CMAKE_CXX_COMPILER "clang++")
+set(CMAKE_CXX_COMPILER "clang++")
 project(Seqwill)
 
 set(CMAKE_CXX_FLAGS "-g")
@@ -21,7 +21,7 @@ include_directories("/usr/include")
 include_directories("/usr/local/include/eigen3")
 
 # include Google Test
-set(gtest_SOURCE_DIR "~/src/googletest-read-only")
+set(gtest_SOURCE_DIR "~/src/gtest")
 include_directories("${gtest_SOURCE_DIR}/include" ${gtest_SOURCE_DIR})
 link_directories("${gtest_SOURCE_DIR}")
 
@@ -83,18 +83,24 @@ set(ANALYSIS_SRCS analysis/Genome.cc
     analysis/GenomeSeq.cc
     analysis/AnalysisBase.h)
 
+SOURCE_GROUP(Util FILES ${UTIL_SRCS})
+SOURCE_GROUP(Analysis FILES ${ANALYSIS_SRCS})
+SOURCE_GROUP(Data FILES ${DATA_SRCS}) 
+SOURCE_GROUP(IO FILES ${IO_SRCS})
+SOURCE_GROUP(Base FILES ${BASE_SRCS})
+SOURCE_GROUP(Common FILES ${COMMON_SRCS})
+
 # libraries
 add_library(util ${COMMON_SRCS} ${IO_SRCS} ${HDF5_SRCS} ${UTIL_SRCS} ${BASE_SRCS} ${DATA_SRCS} ${ANALYSIS_SRCS})
-target_link_libraries(util hdf5_cpp hdf5 bamtools)
-
+target_link_libraries(util hdf5 bamtools)
 # binaries
 #add_executable(LoadSeq tool/LoadSeq.cc)
-#add_executable(LoadData tool/LoadData.cc)
-#target_link_libraries(LoadSeq util analysis)
-#target_link_libraries(LoadData util analysis)
+
+add_executable(LoadData tool/LoadData.cc)
+target_link_libraries(LoadData util)
+
 add_executable(RnaSeqCoverage tool/RnaSeqCoverage.cc)
 target_link_libraries(RnaSeqCoverage util)
-
 # testing
 function(cxx_test name)
   add_executable(${name} "test/${name}.cc")
@@ -105,3 +111,5 @@ endfunction()
 #cxx_test(ChromosomeTest)
 cxx_test(HDFTrackTest)
 cxx_test(BamIOTest)
+cxx_test(LoadDataTest)
+cxx_test(HMMTest)

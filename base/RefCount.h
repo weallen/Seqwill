@@ -27,7 +27,7 @@ public:
 
     bool Release() const
     {
-        --m_counter == 0;
+        return(--m_counter == 0);
     }
 
 private:

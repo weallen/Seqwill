@@ -58,18 +58,22 @@ class ReadHit
 {
  public:
 
-  ReadHit() {}
+  ReadHit() 
+    : has_mate_(false) 
+    {}
 
   ReadHit(SingleRead* left_align)
-    : first_read_(left_align)
-    , has_mate_(false)
+    : has_mate_(false)
+    , first_read_(left_align)
+    , second_read_(NULL)
+
   {}
 
   ReadHit(SingleRead* left_align,
           SingleRead* right_align)
-    : first_read_(left_align)
+    : has_mate_(true)
+    , first_read_(left_align)
     , second_read_(right_align)
-    , has_mate_(true)
   {}
 
   virtual ~ReadHit()

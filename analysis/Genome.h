@@ -30,7 +30,7 @@ public:
   void SetChrFile(const std::string& fname) { chr_file_ = fname; }
 
 
-  int GetChrSeq(const std::string& chrname, Chromosome* chr);
+  void GetChrSeq(const std::string& chrname, Chromosome* chr);
 
 private:
 
