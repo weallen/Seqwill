@@ -44,6 +44,8 @@ set(UTIL_SRCS util/SComm.h
     util/FastaParser.h)
 
 set(BASE_SRCS base/BEDelement.h
+    base/WIG.h
+    base/WIG.cc
     base/CommandLineParser.h
     base/ErrorHandling.h
     base/ErrorHandling.cc 
