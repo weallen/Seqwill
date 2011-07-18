@@ -1,41 +1,65 @@
 #ifndef GENOME_H_
 #define GENOME_H_
 
-#include <fstream>
 #include <sys/stat.h>
-#include <sys/types.h>
-#include <dirent.h>
-#include <unistd.h>
 #include <iostream>
 #include <string>
 #include <vector>
 #include <map>
+#include <sqlite3.h>
 
 #include <boost/shared_ptr.hpp>
 
-#include <hdf5.h>
-
+#include "base/Log.h"
+#include "base/Common.h"
+#include "base/WIG.h"
 #include "base/StringUtil.h"
 #include "base/FileParser.h"
-#include "base/SVector.h"
+#include "base/Types.h"
+#include "io/TrackIO.h"
 
-#include "analysis/Chromosome.h"
+class GenomeInfo;
+class GenomeData;
 
-class Genome
+void SaveGenomeDataFromWIG(const std::string& wigname, const std::string& genomefilename);
+
+void LoadGenomeInfo(const std::string& infoname, GenomeInfo* g);
+
+
+class GenomeInfo 
 {
 public:
-  Genome() {}
-  virtual ~Genome() {}
-
-  void SetChrFile(const std::string& fname) { chr_file_ = fname; }
-
-
-  void GetChrSeq(const std::string& chrname, Chromosome* chr);
-
+  GenomeInfo() {}
+  virtual ~GenomeInfo() { Close(); }
+  
+  void Open(const std::string& fname);
+  void Close();
+  
+  const std::vector<std::string> chr_names() const
+  { return chr_names_; }
+  
+  const int chr_size(const std::string& name) 
+  { return chr_sizes_[name]; }
+  
 private:
+  DISALLOW_COPY_AND_ASSIGN(GenomeInfo)
+  void Load();
+  void Save();
+  
+  std::string fname_;
+  bool isopen_;
+  std::vector<std::string> chr_names_;
+  std::map<std::string, int> chr_sizes_;
+};
 
-  std::map<std::string, Chromosome::Ptr> open_chrs_;
-  std::string chr_file_;
+class GenomeData
+{
+public:
+  GenomeData() {}
+  virtual ~GenomeData() {}
+  
+private:
+  TrackFile::Ptr trackfile_;  
 };
 
 

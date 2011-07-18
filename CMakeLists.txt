@@ -44,6 +44,8 @@ set(UTIL_SRCS util/SComm.h
     util/FastaParser.h)
 
 set(BASE_SRCS base/BEDelement.h
+    base/ProgressBar.h 
+    base/ProgressBar.cc
     base/WIG.h
     base/WIG.cc
     base/CommandLineParser.h
@@ -99,8 +101,12 @@ target_link_libraries(util hdf5 bamtools)
 add_executable(LoadData tool/LoadData.cc)
 target_link_libraries(LoadData util)
 
+add_executable(LoadSeq tool/LoadSeq.cc)
+target_link_libraries(LoadSeq util)
+
 add_executable(RnaSeqCoverage tool/RnaSeqCoverage.cc)
 target_link_libraries(RnaSeqCoverage util)
+
 # testing
 function(cxx_test name)
   add_executable(${name} "test/${name}.cc")

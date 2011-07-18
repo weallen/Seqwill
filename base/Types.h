@@ -30,4 +30,30 @@ typedef u_int32_t UInt;
 typedef u_int8_t  Byte;
 typedef u_int16_t HalfWord;
 
+enum ChromosomeEnum {
+  kChr1 = 1,
+  kChr2 = 2,
+  kChr3 = 3,
+  kChr4 = 4,
+  kChr5 = 5,
+  kChr6 = 6,
+  kChr7 = 7,
+  kChr8 = 8,
+  kChr9 = 9,
+  kChr10 = 10,
+  kChr11 = 11,
+  kChr12 = 12,
+  kChr13 = 13,
+  kChr14 = 14,
+  kChr15 = 15,
+  kChr16 = 16,
+  kChr17 = 17,
+  kChr18 = 18,
+  kChr19 = 19,
+  kChr20 = 20,
+  kChrX = 21,
+  kChrY = 22,
+  kChrM = 23,
+  kChrUnknown = 24
+};
 #endif

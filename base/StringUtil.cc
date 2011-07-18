@@ -91,12 +91,15 @@ string Before(string &s, string &t)
 }
 
 
-bool Contains(string &s, string &t)
+bool Contains(const string &s, const string &t)
 {
   return (s.find(t) != string::npos);
 }
 
-
+bool Contains(const string& s, const char* t) 
+{
+  return Contains(s, std::string(t));
+}
 
 string After(string &s, char *t)
 {

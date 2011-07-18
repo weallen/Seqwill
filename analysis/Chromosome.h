@@ -22,11 +22,11 @@
 #include "common/Track.h"
 #include "base/Common.h"
 
-class Chromosome : public RefBase
+class Chromosome 
 {
 public:
-  typedef boost::intrusive_ptr<Chromosome> Ptr;
-  typedef Track<char>::Ptr CharTrackPtr;
+  typedef boost::shared_ptr<Chromosome> Ptr;
+  typedef Track<unsigned char>::Ptr CharTrackPtr;
 
   Chromosome() {
    Init();

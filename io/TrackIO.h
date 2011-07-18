@@ -23,10 +23,12 @@
 #include "common/Track.h"
 #include "io/Traits.h"
 
+
+class TrackFile;
+
+
 // A trackfile can store multiple subtracks
 // For example, in genomic data these subtracks would correspond to individual chromosomes
-
-
 class TrackFile
 {
 public:
@@ -36,7 +38,7 @@ public:
   TrackFile()
     : h5file_(-1)
   {}
-
+   
   virtual ~TrackFile() {
     Close();
   }
@@ -78,10 +80,6 @@ private:
 
 // Implementation
 // FUCK YOU C++
-
-class TrackIO
-{
-};
 
 //-------------------------------------------------------------------
 // Implementation

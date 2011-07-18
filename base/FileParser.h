@@ -58,6 +58,8 @@ class FlatFileParser : public StringParser
   void Open(const string & fileName);
   bool Exists(const string &fileName);
 
+  int NumLines();
+  
   bool ParseLine();
   bool IsEndOfFile();
 
@@ -70,6 +72,7 @@ class FlatFileParser : public StringParser
  private:
   CMAsciiReadFileStream m_file;
   string m_line;
+  string m_fname;
 };
 
 

@@ -112,6 +112,7 @@ FlatFileParser::FlatFileParser() : StringParser()
 FlatFileParser::FlatFileParser(const string & fileName)
 {
   m_file.Open(fileName.c_str());
+  m_fname = fileName;
 }
 
 FlatFileParser::~FlatFileParser()
@@ -121,6 +122,7 @@ FlatFileParser::~FlatFileParser()
 void FlatFileParser::Open(const string & fileName)
 {
   m_file.Open(fileName.c_str());    
+  m_fname = fileName;
 }
 
 bool FlatFileParser::Exists(const string &fileName)
@@ -131,6 +133,24 @@ bool FlatFileParser::Exists(const string &fileName)
 
   return isFile;
 
+}
+
+int FlatFileParser::NumLines()
+{
+  int num_lines = 0;
+  const int SZ = 1024 * 1024;
+  char* buff = new char[SZ];
+  
+  ifstream istrm(m_fname.c_str());
+  while (istrm.read(buff, SZ).gcount()) {
+    for (int i = 0; i < SZ; ++i) {
+      if (buff[i] == '\n') 
+        num_lines++;
+    }
+  }  
+  istrm.close();
+  delete[] buff;
+  return num_lines;
 }
 
 bool FlatFileParser::ParseLine()

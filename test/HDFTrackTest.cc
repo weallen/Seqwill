@@ -45,6 +45,7 @@ TEST_F(BamIOTest, ChromosomeLoadTest) {
 
 }
 
+
 }//Namespace
 int main(int argc, char** argv) {
   ::testing::InitGoogleTest(&argc, argv);

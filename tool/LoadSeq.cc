@@ -10,27 +10,27 @@
 #include "base/FileParser.h"
 #include "base/StringUtil.h"
 
-#include "analysis/Genome.h"
+#include "analysis/Chromosome.h"
 
 using namespace std;
 
 int main(int argc, char** argv) {
   commandArg<string> iGenomeFasta("-i", "genome fasta dir");
   commandArg<string> oDataPath("-o", "HDF5 dir name"); 
+  commandArg<string> gGenome("-g", "Genome name");
   commandLineParser P(argc, argv);
   P.SetDescription("Load fasta sequence files into HDF5.");
   P.registerArg(iGenomeFasta);
   P.registerArg(oDataPath);
+  P.registerArg(gGenome);
   P.parse();
 
   string genomeFasta = P.GetStringValueFor(iGenomeFasta);
   string dataPath = P.GetStringValueFor(oDataPath);
+  string genomeName = P.GetStringValueFor(gGenome);
   cout << "Reading genome fasta directory " << genomeFasta << "..." << endl;
-  TrackReader genome(dataPath);
 
-  struct stat filestat;
   DIR* fastaDir;
-  DIR* dataDir;
   struct dirent* dirp; 
 
   fastaDir = opendir(genomeFasta.c_str());
@@ -44,7 +44,7 @@ int main(int argc, char** argv) {
     string extension = ".fa";
     if (Contains(fname, extension)) {
       cout << "Processing " << fname << endl; 
-      genome.LoadChrSeq(genomeFasta + "/" + fname);
+      SaveChrFromFASTA(dataPath, genomeFasta + "/" + fname, genomeName);
     }
   }
 
