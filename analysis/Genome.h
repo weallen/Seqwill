@@ -23,31 +23,29 @@ class GenomeData;
 
 void SaveGenomeDataFromWIG(const std::string& wigname, const std::string& genomefilename);
 
-void LoadGenomeInfo(const std::string& infoname, GenomeInfo* g);
-
+void LoadGenomeInfoFromChr(const std::string& chrtracksname, const std::string& genomename, GenomeInfo* info);
 
 class GenomeInfo 
 {
 public:
   GenomeInfo() {}
-  virtual ~GenomeInfo() { Close(); }
-  
-  void Open(const std::string& fname);
-  void Close();
-  
+  virtual ~GenomeInfo() { }
+    
   const std::vector<std::string> chr_names() const
   { return chr_names_; }
   
-  const int chr_size(const std::string& name) 
-  { return chr_sizes_[name]; }
+  const int chr_size(const std::string& chrname) 
+  { return chr_sizes_[chrname]; }
+  
+  void set_chr_names(const std::vector<std::string>& chrnames)
+  { chr_names_ = chrnames; }
+  
+  void set_chr_size(const std::string& chrname, int size)
+  { chr_sizes_[chrname] = size; }
   
 private:
   DISALLOW_COPY_AND_ASSIGN(GenomeInfo)
-  void Load();
-  void Save();
   
-  std::string fname_;
-  bool isopen_;
   std::vector<std::string> chr_names_;
   std::map<std::string, int> chr_sizes_;
 };
@@ -58,8 +56,16 @@ public:
   GenomeData() {}
   virtual ~GenomeData() {}
   
+  void set_genome_info(const GenomeInfo& ginfo);
+  
+  const GenomeInfo& genome_info() const 
+  { return genome_info_; }
+  
+  void InitEmpty();
+  
 private:
   TrackFile::Ptr trackfile_;  
+  GenomeInfo genome_info_;
 };
 
 

@@ -94,7 +94,7 @@ public:
 
   // these don't do anything unless it is a resizabletrack
   void set_extends(int start, int stop)
-  { stop_ = stop; start_ = start; }
+  { stop_ = stop; start_ = start; SizeChanged(); }
 
   virtual std::string ClassName() const
   { return std::string("Track"); }

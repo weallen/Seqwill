@@ -26,7 +26,8 @@ include_directories("${gtest_SOURCE_DIR}/include" ${gtest_SOURCE_DIR})
 link_directories("${gtest_SOURCE_DIR}")
 
 set(COMMON_SRCS common/Track.h
-    common/Track.cc)
+    common/Track.cc
+    common/TrackMetadata.h)
 
 set(IO_SRCS 
     io/TrackIO.cc

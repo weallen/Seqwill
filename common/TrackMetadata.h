@@ -77,7 +77,6 @@ public:
  
 
 private:
-  DISALLOW_COPY_AND_ASSIGN(TrackMetadata)
 
   StrMetadata str_metadata_;
   IntMetadata int_metadata_;

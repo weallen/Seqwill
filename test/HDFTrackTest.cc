@@ -17,12 +17,12 @@
 
 using namespace std;
 namespace {
-class BamIOTest : public ::testing::Test {
+class HDFTrackTest : public ::testing::Test {
   protected:
-    BamIOTest() {
+    HDFTrackTest() {
     }
 
-    virtual ~BamIOTest() {
+    virtual ~HDFTrackTest() {
     }
 
     virtual void SetUp() {
@@ -32,17 +32,7 @@ class BamIOTest : public ::testing::Test {
   
 
 };
-TEST_F(BamIOTest, ChromosomeSaveTest) {
-  ASSERT_TRUE(SaveChrFromFASTA("/tmp/out.h5", "/media/Storage/user/data/genomedata/fasta/chr1.fa", "mm9"));
-}
-
-TEST_F(BamIOTest, ChromosomeLoadTest) {
-  Chromosome::Ptr chr(new Chromosome);
-  ASSERT_TRUE(LoadChr("/tmp/out.h5", "mm9", "chr1", chr));
-  ASSERT_FALSE(LoadChr("/tmp/out.h5", "mm9", "chr2", chr));
-  DNASequence::Ptr data = chr->data();
-  ASSERT_EQ(data->GetNuc(1), 'N');
-
+TEST_F(HDFTrackTest, ChromosomeSaveTest) {
 }
 
 

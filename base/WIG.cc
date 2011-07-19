@@ -35,7 +35,6 @@ ParseWig(const std::string &wigname, std::vector<WIGLine>* outvec)
         fsstate.span = StringToInt(sp.AsString(4).substr(5));
       }
       DEBUGLOG("Parsing chr " + Stringify(fsstate.chr));
-      std::cerr << "Chr: " << fsstate.chr << " , " << fsstate.start << " , " << fsstate.step << " , " << fsstate.span << std::endl;
     } else if (Contains(sp.AsString(0), "variableStep")) {
       fixed_step = false;
       vsstate.chr = ChrToNum(sp.AsString(1).substr(6));
@@ -43,7 +42,6 @@ ParseWig(const std::string &wigname, std::vector<WIGLine>* outvec)
         vsstate.span = StringToInt(sp.AsString(1).substr(5));
       }
       DEBUGLOG("Parsing chr " + Stringify(vsstate.chr));
-      std::cerr <<  "Chr: " << vsstate.chr << " , " << vsstate.span << std::endl;
     }
     else {
       if (fixed_step)

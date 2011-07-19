@@ -35,7 +35,7 @@ public:
   {
     id_ = H5Gopen2(loc, name.c_str(), H5P_DEFAULT);
     if (id_ < 0) {
-        ERRORLOG("Couldn't open attribute " + name);
+        ERRORLOG("Couldn't open group " + name);
     }
   }
 

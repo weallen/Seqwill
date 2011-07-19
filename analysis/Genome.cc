@@ -15,21 +15,25 @@ SaveTracksFromWIG(const std::string& wigname, const std::string& trackfilename)
   }
 }
 
+void 
+LoadGenomeInfoFromChr(const std::string& chrtracksname, const std::string& genomename, GenomeInfo* info)
+{
+  TrackFile f;
+  TrackMetadata m;
+  int stop = -1;
+  int resolution = 1;
+  f.Open(chrtracksname);
+  std::vector<std::string> chr_names = f.GetSubTrackNames(genomename);
+  info->set_chr_names(chr_names);
+  for (std::vector<std::string>::iterator it = chr_names.begin();
+       it != chr_names.end(); ++it) {
+    m = f.GetSubTrackMetadata(genomename, *it);
+    stop = m.GetIntMetadata("Stop", -1);
+    resolution = m.GetIntMetadata("Resolution", 1);
+    info->set_chr_size(*it, stop * resolution);
+  }
+  f.Close();
+}
 
 //---------------------------------------------------------------------------
-
-void 
-GenomeInfo::Open(const std::string& fname)
-{
-}
-
-void 
-GenomeInfo::Load() 
-{  
-}
-
-void
-GenomeInfo::Close()
-{
-}
 

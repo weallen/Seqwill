@@ -22,6 +22,7 @@
 #include "base/Hdf5Util.h"
 #include "common/Track.h"
 #include "io/Traits.h"
+#include "common/TrackMetadata.h"
 
 
 class TrackFile;
@@ -47,6 +48,8 @@ public:
   // General Track stuff
   std::vector<std::string> GetSubTrackNames(const std::string& subtrackname) const;
   std::vector<std::string> GetTrackNames() const;
+  TrackMetadata GetSubTrackMetadata(const std::string& trackname, const std::string& subtrackname) const;
+  
   bool HasSubTrack(const std::string& trackname, const std::string& subtrackname) const;
   bool HasTrack(const std::string& trackname) const;
 
@@ -62,16 +65,17 @@ public:
                     const std::string& trackname,
                     const std::string& subtrackname,
                     typename Track<T>::Ptr subtrack);
+  
+  bool Open(const char* fname);
+  bool Open(const std::string& fname);
+  void Close();
+  bool IsOpen() { return isopen_; }
 
 private:
   DISALLOW_COPY_AND_ASSIGN(TrackFile)
 
   bool Create(const char* fname);
   bool Create(const std::string& fname);
-  bool Open(const char* fname);
-  bool Open(const std::string& fname);
-  void Close();
-  bool IsOpen() { return isopen_; }
 
   hid_t h5file_;
   std::string filename_;

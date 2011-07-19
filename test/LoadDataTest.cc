@@ -11,6 +11,7 @@
 #include "gtest/gtest.h"
 
 #include "base/WIG.h"
+#include "analysis/Genome.h"
 
 using namespace std;
 namespace {
@@ -29,8 +30,16 @@ class LoadDataTest : public ::testing::Test {
     }
   
   std::string filename_;
+  
 };
       
+TEST_F(LoadDataTest, LoadGenomeInfoTest) {
+  std::string genome_info_name("/Users/admin/chromosome.trk");
+  GenomeInfo g;
+  LoadGenomeInfoFromChr(genome_info_name, std::string("mm9"), &g);
+  std::vector<std::string> c = g.chr_names();
+  ASSERT_EQ(g.chr_size(std::string("chr1")), 197195432);
+}
 TEST_F(LoadDataTest, LoadFromWIGTest) {
   std::vector<WIGLine> lines;
   ParseWig(filename_, &lines);
