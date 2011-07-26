@@ -1,8 +1,10 @@
 #ifndef WIG_H_
 #define WIG_H_
+
 #include <iostream>
 #include <utility>
 #include <vector>
+#include <map>
 #include <limits>
 #include <stdio.h>
 
@@ -13,8 +15,15 @@
 
 struct WIGLine;
 
+struct WIGFile {
+  std::map<ChromosomeEnum, std::vector<WIGLine> > lines;
+  std::map<ChromosomeEnum, int> span;
+  std::map<ChromosomeEnum, int> step;
+  std::map<ChromosomeEnum, int> start;
+  std::map<ChromosomeEnum, bool> is_fixed;
+};
+
 struct WIGLine {
-    ChromosomeEnum chr;
     int pos;
     float val;
 };
@@ -56,11 +65,10 @@ struct VariableStepState {
   int span;
 };
 
-void ParseWig(const std::string& wigname, std::vector<WIGLine>* outvec);
+void ParseWig(const std::string& wigname, WIGFile* outfile);  
 
 void ParseVariableStep( StringParser* f,  VariableStepState* state, std::vector<WIGLine>* outvec);
-void ParseFixedStep( StringParser* f,  FixedStepState* state, std::vector<WIGLine>* outvec);
 
-ChromosomeEnum ChrToNum(const std::string& chr);
+void ParseFixedStep( StringParser* f,  FixedStepState* state, std::vector<WIGLine>* outvec);
 
 #endif

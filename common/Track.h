@@ -103,6 +103,7 @@ public:
   { return DataTypeTraits<DataT>::Name(); }
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  
 private:
   void SizeChanged()
   {

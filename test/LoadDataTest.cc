@@ -10,7 +10,7 @@
 
 #include "gtest/gtest.h"
 
-#include "base/WIG.h"
+#include "base/Types.h"
 #include "analysis/Genome.h"
 
 using namespace std;
@@ -41,13 +41,15 @@ TEST_F(LoadDataTest, LoadGenomeInfoTest) {
   ASSERT_EQ(g.chr_size(std::string("chr1")), 197195432);
 }
 TEST_F(LoadDataTest, LoadFromWIGTest) {
-  std::vector<WIGLine> lines;
-  ParseWig(filename_, &lines);
+  WIGFile wig;
+  ParseWig(filename_, &wig);
+  std::vector<WIGLine> lines = wig.lines[kChr1];
   ASSERT_EQ(lines[0].val, 0.0);
   ASSERT_EQ(lines[100000].val, 0.778793812);
 }
 
 TEST_F(LoadDataTest, WIGToTrackTest) {
+  Track<float> t;
   
 }
 

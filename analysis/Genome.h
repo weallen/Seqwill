@@ -6,10 +6,11 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <sqlite3.h>
+#include <algorithm>
 
 #include <boost/shared_ptr.hpp>
 
+#include "base/Types.h"
 #include "base/Log.h"
 #include "base/Common.h"
 #include "base/WIG.h"
@@ -21,8 +22,7 @@
 class GenomeInfo;
 class GenomeData;
 
-void SaveGenomeDataFromWIG(const std::string& wigname, const std::string& genomefilename);
-
+void SaveTrackFromWIG(const std::string& wigname, const std::string& trackname);
 void LoadGenomeInfoFromChr(const std::string& chrtracksname, const std::string& genomename, GenomeInfo* info);
 
 class GenomeInfo 
@@ -50,9 +50,15 @@ private:
   std::map<std::string, int> chr_sizes_;
 };
 
+// GenomeData interfaces between TrackFile and user.
+// Holds a collection of tracks -- one for each chromosome
+// And information about the genome itself
 class GenomeData
 {
 public:
+  typedef std::map<std::string, Track<float>::Ptr> ChrMap;  
+  typedef std::map<std::string, ChrMap> SubtrackToChrMap;
+  
   GenomeData() {}
   virtual ~GenomeData() {}
   
@@ -60,12 +66,18 @@ public:
   
   const GenomeInfo& genome_info() const 
   { return genome_info_; }
+                     
+  Track<float>::Ptr GetTrackForChrom(const std::string& trackname, const std::string& chrname);
+  
+  void SaveTrackFromWIG(const std::string& wigname, const std::string& trackname, int resolution);
   
   void InitEmpty();
   
 private:
+  std::string trackfile_name_;
   TrackFile::Ptr trackfile_;  
   GenomeInfo genome_info_;
+  SubtrackToChrMap open_chrs_;
 };
 
 
