@@ -23,6 +23,21 @@ LoadGenomeInfoFromChr(const std::string& chrtracksname, const std::string& genom
 
 //---------------------------------------------------------------------------
 
+void
+GenomeData::Init(const std::string& fname, const GenomeInfo& g) 
+{
+  trackfile_name_ = fname;
+  trackfile_->Open(fname);
+  genome_info_ = g;
+}
+
+void
+GenomeData::Close()
+{
+  trackfile_->Close();
+}
+
+ 
 Track<float>::Ptr
 GenomeData::GetTrackForChrom(const std::string& trackname, const std::string& chrname)
 {
@@ -32,7 +47,7 @@ GenomeData::GetTrackForChrom(const std::string& trackname, const std::string& ch
     Track<float>::Ptr curr_track = m[chrname];    
   } else {
     Track<float>::Ptr curr_track(new Track<float>);    
-    trackfile_->ReadSubTrack<float>(trackfile_name_, trackname, chrname, curr_track);
+    trackfile_->ReadSubTrack<float>(trackname, chrname, curr_track);
     m[chrname] = curr_track;
   }
   return curr_track;
@@ -41,24 +56,31 @@ GenomeData::GetTrackForChrom(const std::string& trackname, const std::string& ch
 void
 GenomeData::SaveTrackFromWIG(const std::string& wigname, const std::string& trackname, int resolution)
 {
-  WIGFile wig;
-  
+  int curr_pos;
+  WIGParser p;
   DEBUGLOG("Loading track " + trackname + " from WIG file " + wigname);    
-  ParseWig(wigname, &wig);
+  p.Open(wigname);
   std::vector<std::string> chrnames = genome_info_.chr_names();
-  
   for (std::vector<std::string>::const_iterator it = chrnames.begin();
-       it != chrnames.end(); ++it) {
+       it != chrnames.end(); ++it) {   
+    std::cerr << *it << std::endl;
     Track<float>::Ptr track(new Track<float>);
     track->set_resolution(resolution);
-    track->set_extends(0, genome_info_.chr_size(*it));
+    track->set_abs_extends(0, genome_info_.chr_size(*it));
     track->set_trackname(trackname);
     track->set_subtrackname(*it);
-    
-    std::vector<WIGLine> curr_chr = wig.lines[ChrToNum(*it)];
-    for (std::vector<WIGLine>::const_iterator it = curr_chr.begin();
-         it != curr_chr.end(); ++it) {
-      
-    }
+    track->set_extends(0, ceil(static_cast<float>(genome_info_.chr_size(*it))/resolution));
+    trackfile_->WriteSubTrack<float>(trackname, track);
   }
+  
+  //for (std::vector<WIGLine>::const_iterator j = curr_chr.begin();
+//       j != curr_chr.end(); ++j) {
+  //   curr_pos = j->pos;
+//        track->aset(curr_pos, j->val);
+  //    }
+//      trackfile_->WriteSubTrack<float>(trackname, track);
+    //} else {
+     // ERRORLOG("Only FixedStep supported for now...");
+    //}
+  //}
 }

@@ -10,6 +10,7 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include "math.h"
 #include "base/Types.h"
 #include "base/Log.h"
 #include "base/Common.h"
@@ -22,7 +23,6 @@
 class GenomeInfo;
 class GenomeData;
 
-void SaveTrackFromWIG(const std::string& wigname, const std::string& trackname);
 void LoadGenomeInfoFromChr(const std::string& chrtracksname, const std::string& genomename, GenomeInfo* info);
 
 class GenomeInfo 
@@ -43,9 +43,7 @@ public:
   void set_chr_size(const std::string& chrname, int size)
   { chr_sizes_[chrname] = size; }
   
-private:
-  DISALLOW_COPY_AND_ASSIGN(GenomeInfo)
-  
+private:  
   std::vector<std::string> chr_names_;
   std::map<std::string, int> chr_sizes_;
 };
@@ -59,9 +57,14 @@ public:
   typedef std::map<std::string, Track<float>::Ptr> ChrMap;  
   typedef std::map<std::string, ChrMap> SubtrackToChrMap;
   
-  GenomeData() {}
-  virtual ~GenomeData() {}
+  GenomeData()
+  : trackfile_name_("")
+  , trackfile_(new TrackFile()) 
+  {}
+  virtual ~GenomeData() { Close(); }
   
+  void Init(const std::string& tfname_, const GenomeInfo& g); 
+    
   void set_genome_info(const GenomeInfo& ginfo);
   
   const GenomeInfo& genome_info() const 
@@ -74,6 +77,10 @@ public:
   void InitEmpty();
   
 private:
+  DISALLOW_COPY_AND_ASSIGN(GenomeData)
+  
+  void Close();
+  
   std::string trackfile_name_;
   TrackFile::Ptr trackfile_;  
   GenomeInfo genome_info_;

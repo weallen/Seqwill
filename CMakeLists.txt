@@ -93,25 +93,24 @@ SOURCE_GROUP(IO FILES ${IO_SRCS})
 SOURCE_GROUP(Base FILES ${BASE_SRCS})
 SOURCE_GROUP(Common FILES ${COMMON_SRCS})
 
+set(ALL_SRCS ${COMMON_SRCS} ${IO_SRCS} ${HDF5_SRCS} ${UTIL_SRCS} ${BASE_SRCS})
+
 # libraries
-add_library(util ${COMMON_SRCS} ${IO_SRCS} ${HDF5_SRCS} ${UTIL_SRCS} ${BASE_SRCS} ${DATA_SRCS} ${ANALYSIS_SRCS})
-target_link_libraries(util hdf5 bamtools)
+add_library(SWLib ${COMMON_SRCS} ${IO_SRCS} ${HDF5_SRCS} ${UTIL_SRCS} ${BASE_SRCS} ${DATA_SRCS} ${ANALYSIS_SRCS})
+target_link_libraries(SWLib hdf5 bamtools)
 # binaries
-#add_executable(LoadSeq tool/LoadSeq.cc)
 
 add_executable(LoadData tool/LoadData.cc)
-target_link_libraries(LoadData util)
+target_link_libraries(LoadData SWLib)
 
 add_executable(LoadSeq tool/LoadSeq.cc)
-target_link_libraries(LoadSeq util)
+target_link_libraries(LoadSeq SWLib)
 
-add_executable(RnaSeqCoverage tool/RnaSeqCoverage.cc)
-target_link_libraries(RnaSeqCoverage util)
 
 # testing
 function(cxx_test name)
   add_executable(${name} "test/${name}.cc")
-  target_link_libraries(${name} util gtest)
+  target_link_libraries(${name} gtest SWLib)
 endfunction()
 
 #cxx_test(GenomeTest)

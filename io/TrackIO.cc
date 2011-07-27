@@ -54,8 +54,8 @@ bool TrackFile::Open(const std::string& dirname)
     }
     isopen_ = true;
   } else {
-    ERRORLOG("File " + dirname + " does not exist.");
-    return false;
+    Create(dirname);      
+    return true;
   }
   return true;
 }

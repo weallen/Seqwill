@@ -31,7 +31,9 @@ public:
   typedef typename VectorType::iterator iterator;
 
   Track()
-    : resolution_(1)
+    : astart_(-1)
+    , astop_(-1)
+    , resolution_(1)
     , start_(-1)
     , stop_(-1)
     , track_("")
@@ -39,7 +41,9 @@ public:
   {}
 
   Track(int start, int stop, const VectorType& data)
-    : resolution_(1)
+    : astart_(start)
+    , astop_(stop)
+    , resolution_(1)
     , start_(start)
     , stop_(stop)
     , track_("")
@@ -60,16 +64,23 @@ public:
   }
 
   // Iterator
-
+  // Returns data at whatever the current resolution is.
+  inline void set(size_t pos, DataT val) { data_[pos] = val; }
   inline DataT operator[](size_t pos) { return data_[pos]; }
-  inline size_t size() { return (data_.size()); }
   inline const_iterator cbegin() const { return (data_.begin()); }
   inline const_iterator cend() const { return (data_.end()); }
   inline DataT& cvalue(size_t pos) const { return data_[pos]; }
   inline size_t size() const { return (data_.size()); }
   inline iterator begin() { return data_.begin(); }
   inline iterator end() { return data_.end(); }
-
+  
+  // Indexes a position by its absolute position
+  inline void aset(size_t pos, DataT val) { data_[ceil(static_cast<float>(pos) / resolution_)] = val; }
+  inline DataT aget(size_t pos) { return data_[ceil(static_cast<float>(pos) / resolution_)]; }
+  inline size_t asize() { return (astop_ - astart_); }
+  int astart() const { return astart_; }
+  int astop() const { return astop_; }
+  
   void Clear(const DataT& val)
   { std::fill(data_.begin(), data_.end(), val); }
 
@@ -92,9 +103,17 @@ public:
   void set_data(const typename Track<DataT>::VectorType& data) { data_ = data; }
   void ReduceResolution(int rez);
 
+  void set_abs_extends(int start, int stop)
+  { astop_ = stop, astart_ = start; }
+  
   // these don't do anything unless it is a resizabletrack
   void set_extends(int start, int stop)
-  { stop_ = stop; start_ = start; SizeChanged(); }
+  { 
+    if (resolution_ == 1)  {
+      set_abs_extends(start, stop);
+    }
+    stop_ = stop; start_ = start; SizeChanged(); 
+  }
 
   virtual std::string ClassName() const
   { return std::string("Track"); }
@@ -122,7 +141,8 @@ private:
 protected:
   DISALLOW_COPY_AND_ASSIGN(Track)
 
-
+  int astart_;
+  int astop_;
   int resolution_;
   int start_;
   int stop_;

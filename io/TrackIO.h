@@ -55,14 +55,12 @@ public:
 
   // Write Stuff
   template <typename T>
-  bool WriteSubTrack(const std::string& fname,
-                     const std::string& tname,
+  bool WriteSubTrack(const std::string& tname,
                      typename Track<T>::Ptr data);
  
   // Read stuff
   template <typename T>
-  bool ReadSubTrack(const std::string& fname,
-                    const std::string& trackname,
+  bool ReadSubTrack(const std::string& trackname,
                     const std::string& subtrackname,
                     typename Track<T>::Ptr subtrack);
   
@@ -89,8 +87,7 @@ private:
 // Implementation
 
 template<typename DataT>
-bool TrackFile::WriteSubTrack(const std::string& fname,
-                            const std::string& trackname,
+bool TrackFile::WriteSubTrack(const std::string& trackname,
                             typename Track<DataT>::Ptr subtrack)
 {
   hid_t dataset;
@@ -100,11 +97,9 @@ bool TrackFile::WriteSubTrack(const std::string& fname,
   ScopedH5SCreate data_space(H5S_SIMPLE);
   hid_t dcpl;
 
-  if (!Open(fname)) {
-    if (!Create(fname)) {
-      ERRORLOG("Can't open file " + fname);
-      return false;
-    }
+  if (!IsOpen()) {
+    ERRORLOG("File not open" + filename_);
+    return false;    
   }
 
   if (data_space.id() < 0) {
@@ -168,6 +163,12 @@ bool TrackFile::WriteSubTrack(const std::string& fname,
   if (!WriteAttribute(dataset, "Resolution", 1, subtrack->resolution())) {
     attrwritesuccess = false;
   }
+  if (!WriteAttribute(dataset, "AStart", 1, subtrack->astart())) {
+    attrwritesuccess = false;
+  }
+  if (!WriteAttribute(dataset, "AStop", 1, subtrack->astop())) {
+    attrwritesuccess = false;
+  }
   if (!attrwritesuccess) {
     ERRORLOG("Couldn't write attributes");
     H5Gclose(root_group);
@@ -193,17 +194,19 @@ bool TrackFile::WriteSubTrack(const std::string& fname,
 }
 template <typename DataT>
 bool
-TrackFile::ReadSubTrack(const std::string& fname,
-                      const std::string& trackname,
+TrackFile::ReadSubTrack(const std::string& trackname,
                       const std::string& subtrackname,
                       typename Track<DataT>::Ptr subtrack)
 {
+  std::string fname = filename_;
   hid_t dataset;
   int start;
   int stop;
+  int astart;
+  int astop;
   int resolution;
 
-  if(!Open(fname)) {
+  if(!IsOpen()) {
     ERRORLOG("Can't open " + fname);
     return false;
   }
@@ -229,11 +232,14 @@ TrackFile::ReadSubTrack(const std::string& fname,
   // Read size attributes...
   if (!ReadAttribute(dataset, "Start", 1, &start)
       || !ReadAttribute(dataset, "Stop", 1, &stop)
-      || !ReadAttribute(dataset, "Resolution", 1, &resolution)) {
+      || !ReadAttribute(dataset, "Resolution", 1, &resolution)
+      || !ReadAttribute(dataset, "AStart", 1, &astart)
+      || !ReadAttribute(dataset, "AStop", 1, &astop)) {
     ERRORLOG("Can't read attributes");
     H5Dclose(dataset);
     return false;
   }
+  subtrack->set_abs_extends(astart, astop);
   subtrack->set_resolution(resolution);
   subtrack->set_extends(start, stop);
   subtrack->set_trackname(trackname);
