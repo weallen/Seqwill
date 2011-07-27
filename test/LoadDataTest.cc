@@ -41,15 +41,16 @@ TEST_F(LoadDataTest, LoadGenomeInfoTest) {
   std::vector<std::string> c = g.chr_names();
   ASSERT_EQ(g.chr_size(std::string("chr1")), 197195432);
 }
-  
-  TEST_F(LoadDataTest, WIGToTrackTest) {
-    Track<float> t;
-    GenomeData d;
-    GenomeInfo g;
-    LoadGenomeInfoFromChr(genome_info_name_, std::string("mm9"), &g);
-    d.Init(outname_, g);
-    d.SaveTrackFromWIG(filename_, std::string("moe_d3a_hmc_raw"), 50);
-  }
+ 
+
+TEST_F(LoadDataTest, WIGToTrackTest) {
+   Track<float> t;
+   GenomeData d;
+   GenomeInfo g;
+   LoadGenomeInfoFromChr(genome_info_name_, std::string("mm9"), &g);
+   d.Init(outname_, g);
+   d.SaveTrackFromWIG(filename_, std::string("moe_d3a_hmc_raw"), 50);
+}
 
 TEST_F(LoadDataTest, LoadFromWIGTest) {
 

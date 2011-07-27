@@ -13,6 +13,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include <hdf5.h>
+#include <hdf5_cpp>
 
 #include "base/StringUtil.h"
 #include "base/FileParser.h"
@@ -88,7 +89,7 @@ private:
 
 template<typename DataT>
 bool TrackFile::WriteSubTrack(const std::string& trackname,
-                            typename Track<DataT>::Ptr subtrack)
+                            const Track<DataT>& subtrack)
 {
   hid_t dataset;
   hid_t track_group;
@@ -97,8 +98,9 @@ bool TrackFile::WriteSubTrack(const std::string& trackname,
   ScopedH5SCreate data_space(H5S_SIMPLE);
   hid_t dcpl;
 
-  if (!IsOpen()) {
-    ERRORLOG("File not open" + filename_);
+
+  if (!isopen_) {
+    ERRORLOG("File not open " + filename_);
     return false;    
   }
 
@@ -108,7 +110,12 @@ bool TrackFile::WriteSubTrack(const std::string& trackname,
   }
 
 
-  hsize_t memsize[1] = {(hsize_t) subtrack->MemSize()};
+
+  DataT* data = (DataT*)malloc(sizeof(DataT)*subtrack->size());
+  for (size_t i = 0; i < subtrack->size(); ++i) {
+    data[i] = (*subtrack)[i];
+  }
+  hsize_t memsize[1] = {(hsize_t) subtrack->size()};
   //hsize_t best_chunk_size = 4096*16;
 //  const hsize_t chunk_size = std::min(best_chunk_size, memsize[0] / 2);
 
@@ -138,7 +145,9 @@ bool TrackFile::WriteSubTrack(const std::string& trackname,
   } else {
     dataset = H5Dopen2(track_group, subtrack->subtrackname().c_str(), H5P_DEFAULT);
   }
-
+  
+  free(data);
+  
   if (dataset < 0) {
     ERRORLOG("Couldn't open subtrack " + subtrack->subtrackname());
     H5Gclose(root_group);
@@ -177,8 +186,8 @@ bool TrackFile::WriteSubTrack(const std::string& trackname,
     return false;
   }
 
-  hid_t err = H5Dwrite(dataset, DataTypeTraits<DataT>::H5Type(), H5S_ALL, H5S_ALL,
-                       H5P_DEFAULT, &(*subtrack->begin()));
+  hid_t err = H5Dwrite(dataset, DataTypeTraits<DataT>::H5Type(), H5S_ALL, H5S_ALL, H5P_DEFAULT, &data[0]);
+  
   if (err < 0) {
     ERRORLOG("Error writing subtrack");
     H5Gclose(root_group);
@@ -196,7 +205,7 @@ template <typename DataT>
 bool
 TrackFile::ReadSubTrack(const std::string& trackname,
                       const std::string& subtrackname,
-                      typename Track<DataT>::Ptr subtrack)
+                      Track<DataT>& subtrack)
 {
   std::string fname = filename_;
   hid_t dataset;
@@ -206,8 +215,8 @@ TrackFile::ReadSubTrack(const std::string& trackname,
   int astop;
   int resolution;
 
-  if(!IsOpen()) {
-    ERRORLOG("Can't open " + fname);
+  if(!isopen_) {
+    ERRORLOG(fname + " is not open");
     return false;
   }
   ScopedH5GOpen root_group(h5file_, std::string("/"));

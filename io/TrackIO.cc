@@ -10,7 +10,7 @@ bool TrackFile::HasTrack(const std::string& trackname) const {
 }
 
 bool TrackFile::HasSubTrack(const std::string& trackname,
-                          const std::string& subtrackname) const {
+                            const std::string& subtrackname) const {
   std::vector<std::string> tracknames = GetSubTrackNames(trackname);
   if(std::find(tracknames.begin(), tracknames.end(), subtrackname) != tracknames.end()) {
     return true;

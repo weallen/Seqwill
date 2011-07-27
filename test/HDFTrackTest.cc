@@ -10,9 +10,8 @@
 
 #include "gtest/gtest.h"
 
-#include "data/TrackData.h"
-
-#include "base/SVector.h"
+#include "common/Track.h"
+#include "io/TrackIO.h"
 #include "analysis/Chromosome.h"
 
 using namespace std;
@@ -32,7 +31,7 @@ class HDFTrackTest : public ::testing::Test {
   
 
 };
-TEST_F(HDFTrackTest, ChromosomeSaveTest) {
+TEST_F(HDFTrackTest, WriteTrackTest) {
 }
 
 

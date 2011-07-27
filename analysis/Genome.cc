@@ -70,7 +70,8 @@ GenomeData::SaveTrackFromWIG(const std::string& wigname, const std::string& trac
     track->set_trackname(trackname);
     track->set_subtrackname(*it);
     track->set_extends(0, ceil(static_cast<float>(genome_info_.chr_size(*it))/resolution));
-    trackfile_->WriteSubTrack<float>(trackname, track);
+    bool ret = trackfile_->WriteSubTrack<float>(trackname, track);
+    
   }
   
   //for (std::vector<WIGLine>::const_iterator j = curr_chr.begin();
