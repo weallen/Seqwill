@@ -50,12 +50,13 @@ enum ChromosomeEnum {
   kChr16 = 16,
   kChr17 = 17,
   kChr18 = 18,
+  kChr19 = 19,
   kChrX = 21,
   kChrY = 22,
   kChrM = 23,
   kChrUnknown = 24
 };
 
-static const int NUM_CHRS = 21;
+static const int NUM_CHRS = 22;
 
 #endif

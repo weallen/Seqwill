@@ -1,20 +1,27 @@
 #ifndef HMM_H_
 #define HMM_H_
+#include <math.h>
 #include <boost/function.hpp>
 #include <Eigen/Dense>
-
 #include "analysis/AnalysisBase.h"
+#include "common/Track.h"
 
-template <class EmitDistT>
-class HMM : public Analysis<float, float>
+class HMM : public Analysis<float, int>
 {
 public: 
-  typedef Eigen::Vector<float, Eigen::Dynamic, 1> VectorType;
-  typedef Eigen::Vector<float Nstates, Nstates> MatrixType;
-
+  typedef Eigen::ArrayXf VectorType;
+  typedef Eigen::ArrayXXf MatrixType;
+  typedef Eigen::ArrayXi StateVectorType;
+  typedef Eigen::ArrayXXi StateMatrixType;
+  
+  using Analysis<float, int>::TrackInPtr;
+  using Analysis<float, int>::TrackOutPtr;
+  
   HMM() 
   : rand_init_probs_(true)
   , rand_trans_probs_(true)
+  , has_trans_prior_(false)
+  , has_init_prior_(false)
   {}
   
   virtual ~HMM() {}
@@ -32,23 +39,17 @@ public:
   { return init_; }
 
   void set_init_probs_prior(const VectorType& prior)
-  { init_prior_ = prior; }
+  { init_prior_ = prior; has_init_prior_ = true; }
 
   const VectorType& init_probs_prior() const
   { return init_prior_; }
 
   // pseudo counts for transition matrix
   void set_trans_prior(const MatrixType& prior)
-  { trans_prior_ = prior; }
+  { trans_prior_ = prior; has_trans_prior_ = true; }
 
   const MatrixType& trans_prior() const
   { return trans_prior_; }
-
-  void set_emit_fn(const EmitFnType& fun) 
-  { emit_fn_ = fun; }
-
-  const EmitFnType& emit_fn() const
-  { return emit_fn_; }
 
   int num_states() const 
   { return num_states_; }
@@ -56,73 +57,59 @@ public:
   void set_num_states(int s) 
   { num_states_ = s; }
 
-  float LogProb();
-  void ViterbiDecode();
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   
-private:
+  void ViterbiDecode(StateVectorType& output);
+  float LogProb();
+  
+protected:
   void FitEM();
-  void FwdBack(const VectorType& pi, 
-               const MatrixType& A,
-               Eigen::MatrixXf* gamma,
-               Eigne::MatrixXf* alpha,
-               float* logp);
-   
-  void CountTransitions(MatrixType* out);
+  void FwdBack();
+
+  MatrixType CountTransitions(const StateVectorType& curr_states);
 
   // Compute fits the model
-  virtual void Compute();
-
+  virtual void ComputeAnalysis(TrackOutPtr output) = 0;
+  
+  // Implemented in the derived class b/c depends on the 
+  // Particular emission distribution for the model.
+  virtual void UpdateSoftEvidence() = 0;
+  
+  using Analysis<float, int>::input_;
+  
   bool rand_init_probs_;
   bool rand_trans_probs_;
+  bool has_trans_prior_;
+  bool has_init_prior_;
+  
+  StateVectorType curr_states_;
+  MatrixType soft_evidence_;
+  
   MatrixType trans_; 
   MatrixType trans_prior_;
   VectorType init_;
   VectorType init_prior_;
+  
   int num_states_;
-  std::vector<EmitDistT> emit_dists_;
 };
 
-template<>
-void
-HMM<GaussDist>::UpdateEmitEM()
+
+class GaussHMM : public HMM
 {
+public:  
+  using HMM::TrackInPtr;
+  using HMM::TrackOutPtr;
+
+  GaussHMM() {}
+  virtual ~GaussHMM() {}
   
-}
+  virtual void ComputeAnalysis(TrackOutPtr output);
+  
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+private:
+  
+};
 
-template <class EmitTypeT>
-void 
-HMM<EmitTypeT>::FitEM() 
-{
-  MatrixType start_counts;
-  MatrixType trans_counts;
-  int len = input_.size();
-  float logp;
-  MatrixXf alpha(num_states(), len); 
-  MatrixXf beta(num_states(), len);
-  for (int i = 0; i < len; ++i) {
-    FwdBack( &logp);
-    DEBUGLOG(logp);
-  }
-}
-
-template <class EmitTypeT>
-void 
-HMM<EmitTypeT>::FwdBack()
-{
-}
-
-template <class EmitTypeT>
-void 
-HMM<EmitTypeT>::ViterbiDecode(std::vector<int>& output)
-{
-}
-
-template <class EmitTypeT>
-MatrixType 
-HMM<EmitTypeT>::CountTransitions()
-{
-  return m;
-}
 
 
 

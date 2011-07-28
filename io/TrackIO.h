@@ -13,7 +13,6 @@
 #include <boost/shared_ptr.hpp>
 
 #include <hdf5.h>
-#include <hdf5_cpp>
 
 #include "base/StringUtil.h"
 #include "base/FileParser.h"
@@ -56,14 +55,13 @@ public:
 
   // Write Stuff
   template <typename T>
-  bool WriteSubTrack(const std::string& tname,
-                     typename Track<T>::Ptr data);
+  bool WriteSubTrack(Track<T>& data);
  
   // Read stuff
   template <typename T>
   bool ReadSubTrack(const std::string& trackname,
                     const std::string& subtrackname,
-                    typename Track<T>::Ptr subtrack);
+                    Track<T>& subtrack);
   
   bool Open(const char* fname);
   bool Open(const std::string& fname);
@@ -88,94 +86,130 @@ private:
 // Implementation
 
 template<typename DataT>
-bool TrackFile::WriteSubTrack(const std::string& trackname,
-                            const Track<DataT>& subtrack)
+bool TrackFile::WriteSubTrack(Track<DataT>& subtrack)
 {
   hid_t dataset;
   hid_t track_group;
   hid_t root_group;
+  hid_t space;
+//  hid_t status;
   std::vector<std::string> tracknames;
-  ScopedH5SCreate data_space(H5S_SIMPLE);
   hid_t dcpl;
 
-
+  hsize_t best_chunk_size = 4096*16;
+  hsize_t memsize[1] = {(hsize_t) subtrack.size()};
+  const hsize_t chunk_size = std::min(best_chunk_size, memsize[0] / 2);
+  //hsize_t chunk[1] = {chunk_size};
+  //DataT buff[chunk_size];
+  
   if (!isopen_) {
     ERRORLOG("File not open " + filename_);
     return false;    
   }
 
-  if (data_space.id() < 0) {
-    ERRORLOG("Can't create data space");
-    return false;
-  }
-
-
-
-  DataT* data = (DataT*)malloc(sizeof(DataT)*subtrack->size());
-  for (size_t i = 0; i < subtrack->size(); ++i) {
-    data[i] = (*subtrack)[i];
-  }
-  hsize_t memsize[1] = {(hsize_t) subtrack->size()};
-  //hsize_t best_chunk_size = 4096*16;
-//  const hsize_t chunk_size = std::min(best_chunk_size, memsize[0] / 2);
 
   root_group = H5Gopen2(h5file_, "/", H5P_DEFAULT);
 
   // Make sure track exists.
   tracknames = GetTrackNames();
-  if (std::find(tracknames.begin(), tracknames.end(), trackname) == tracknames.end()) {
-    track_group = H5Gcreate2(root_group, trackname.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+  if (std::find(tracknames.begin(), tracknames.end(), subtrack.trackname()) == tracknames.end()) {
+    track_group = H5Gcreate2(root_group, subtrack.trackname().c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
   } else {
-    track_group = H5Gopen2(root_group, trackname.c_str(), H5P_DEFAULT);
+    track_group = H5Gopen2(root_group, subtrack.trackname().c_str(), H5P_DEFAULT);
   }
   if (track_group < 0) {
-    ERRORLOG("Can't open track group " + trackname);
+    ERRORLOG("Can't open track group " + subtrack.trackname());
     H5Gclose(root_group);
     return false;
   }
+  
+  // Create dataspace, setting max size to NULL so max size = curr size
+  space = H5Screate_simple(1, memsize, NULL);
+  if (space < 0) {
+    ERRORLOG("Can't create data space");
+    return false;
+  }      
 
-  H5Sset_extent_simple(data_space.id(), 1, memsize, NULL);
+  //H5Sset_extent_simple(data_space.id(), 1, memsize, NULL);
   // Check if subtrack exists already
-  tracknames = GetSubTrackNames(trackname);
-  if (std::find(tracknames.begin(), tracknames.end(), subtrack->subtrackname()) == tracknames.end()) {
+  tracknames = GetSubTrackNames(subtrack.trackname());
+  if (std::find(tracknames.begin(), tracknames.end(), subtrack.subtrackname()) == tracknames.end()) {
+  
+    // Create dataset creation plist, and set chunk size
     dcpl = H5Pcreate(H5P_DATASET_CREATE);
-    dataset = H5Dcreate2(track_group, subtrack->subtrackname().c_str(),
-                        DataTypeTraits<DataT>::H5Type(), data_space.id(),
+    //status = H5Pset_chunk(dcpl, 1, chunk);
+    dataset = H5Dcreate2(track_group, subtrack.subtrackname().c_str(),
+                        DataTypeTraits<DataT>::H5Type(), space,
                         H5P_DEFAULT, dcpl, H5P_DEFAULT);
   } else {
-    dataset = H5Dopen2(track_group, subtrack->subtrackname().c_str(), H5P_DEFAULT);
+    
+    dataset = H5Dopen2(track_group, subtrack.subtrackname().c_str(), H5P_DEFAULT);
   }
   
-  free(data);
-  
   if (dataset < 0) {
-    ERRORLOG("Couldn't open subtrack " + subtrack->subtrackname());
+    ERRORLOG("Couldn't open subtrack " + subtrack.subtrackname());
     H5Gclose(root_group);
+    H5Gclose(track_group);
+    return false;
+  }
+  
+  // Write data in chunks, using buff
+  /*
+  int num_chunks = ceil(((float) memsize[0]) / chunk_size);
+  int pos;
+  hid_t offset[1];
+  hid_t count[1];
+
+
+  for (int i = 0; i < num_chunks-1; ++i) {
+    for (int j = 0; j < chunk_size; ++j) {
+      buff[j] = track.get(pos);
+      pos++;
+    }
+    offset[0] = i;
+    status[0] = chunk_size;
+    status = H5Sselect_hyperslab(dataset, H5S_SELECT_SET, offset, NULL, count, NULL);
+    if (status < 0) {
+      ERRORLOG("Couldn't select slab " + i);
+      H5Gclose(root_group);
+      H5Dclose(dataset);
+      H5Gclose(track_group);
+      return false;
+    }
+    status = H5Dwrite(dataset, DataTypeTraits<DataT>::H5Type(),
+                      space, 
+  }*/
+  hid_t err = H5Dwrite(dataset, DataTypeTraits<DataT>::H5Type(), H5S_ALL, H5S_ALL, H5P_DEFAULT, &(*subtrack.begin()));
+  
+  if (err < 0) {
+    ERRORLOG("Error writing subtrack");
+    H5Gclose(root_group);
+    H5Dclose(dataset);
     H5Gclose(track_group);
     return false;
   }
 
   bool attrwritesuccess = true;
   // Write size attributes
-  if (!WriteAttribute(dataset, "Start", 1, subtrack->start())) {
+  if (!WriteAttribute(dataset, "Start", 1, subtrack.start())) {
     attrwritesuccess = false;
   }
 
-  if (!WriteAttribute(dataset, "Stop", 1, subtrack->stop())) {
+  if (!WriteAttribute(dataset, "Stop", 1, subtrack.stop())) {
     attrwritesuccess = false;
   }
 
-  if (!WriteAttribute(dataset, "Name", subtrack->subtrackname())) {
+  if (!WriteAttribute(dataset, "Name", subtrack.subtrackname())) {
     attrwritesuccess = false;
   }
 
-  if (!WriteAttribute(dataset, "Resolution", 1, subtrack->resolution())) {
+  if (!WriteAttribute(dataset, "Resolution", 1, subtrack.resolution())) {
     attrwritesuccess = false;
   }
-  if (!WriteAttribute(dataset, "AStart", 1, subtrack->astart())) {
+  if (!WriteAttribute(dataset, "AStart", 1, subtrack.astart())) {
     attrwritesuccess = false;
   }
-  if (!WriteAttribute(dataset, "AStop", 1, subtrack->astop())) {
+  if (!WriteAttribute(dataset, "AStop", 1, subtrack.astop())) {
     attrwritesuccess = false;
   }
   if (!attrwritesuccess) {
@@ -186,26 +220,17 @@ bool TrackFile::WriteSubTrack(const std::string& trackname,
     return false;
   }
 
-  hid_t err = H5Dwrite(dataset, DataTypeTraits<DataT>::H5Type(), H5S_ALL, H5S_ALL, H5P_DEFAULT, &data[0]);
-  
-  if (err < 0) {
-    ERRORLOG("Error writing subtrack");
-    H5Gclose(root_group);
-    H5Dclose(dataset);
-    H5Gclose(track_group);
-    return false;
-  }
   H5Gclose(root_group);
   H5Dclose(dataset);
   H5Gclose(track_group);
-  Close();
   return true;
 }
+
 template <typename DataT>
 bool
 TrackFile::ReadSubTrack(const std::string& trackname,
-                      const std::string& subtrackname,
-                      Track<DataT>& subtrack)
+                        const std::string& subtrackname,
+                        Track<DataT>& subtrack)
 {
   std::string fname = filename_;
   hid_t dataset;
@@ -248,13 +273,13 @@ TrackFile::ReadSubTrack(const std::string& trackname,
     H5Dclose(dataset);
     return false;
   }
-  subtrack->set_abs_extends(astart, astop);
-  subtrack->set_resolution(resolution);
-  subtrack->set_extends(start, stop);
-  subtrack->set_trackname(trackname);
-  subtrack->set_subtrackname(subtrackname);
+  subtrack.set_abs_extends(astart, astop);
+  subtrack.set_resolution(resolution);
+  subtrack.set_extends(start, stop);
+  subtrack.set_trackname(trackname);
+  subtrack.set_subtrackname(subtrackname);
   if (H5Dread(dataset, DataTypeTraits<DataT>::H5Type(), H5S_ALL, H5S_ALL,
-              H5P_DEFAULT, &(*subtrack->begin())) < 0) {
+              H5P_DEFAULT, &(*subtrack.begin())) < 0) {
     ERRORLOG("Can't read dataset " + subtrackname);
     H5Dclose(dataset);
     return false;

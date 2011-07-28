@@ -29,6 +29,7 @@ GenomeData::Init(const std::string& fname, const GenomeInfo& g)
   trackfile_name_ = fname;
   trackfile_->Open(fname);
   genome_info_ = g;
+  
 }
 
 void
@@ -39,49 +40,55 @@ GenomeData::Close()
 
  
 Track<float>::Ptr
-GenomeData::GetTrackForChrom(const std::string& trackname, const std::string& chrname)
+GenomeData::GetSubTrackForChrom(const std::string& chrname)
 {
   Track<float>::Ptr curr_track;
-  ChrMap m = open_chrs_[trackname];
-  if (m.find(chrname) != m.end()) {
-    Track<float>::Ptr curr_track = m[chrname];    
+
+  if (open_chrs_.find(chrname) != open_chrs_.end()) {
+    Track<float>::Ptr curr_track = open_chrs_[chrname];    
   } else {
     Track<float>::Ptr curr_track(new Track<float>);    
-    trackfile_->ReadSubTrack<float>(trackname, chrname, curr_track);
-    m[chrname] = curr_track;
+    trackfile_->ReadSubTrack<float>(trackname_, chrname, *curr_track);
+    open_chrs_[chrname] = curr_track;
   }
   return curr_track;
 }
 
 void
-GenomeData::SaveTrackFromWIG(const std::string& wigname, const std::string& trackname, int resolution)
+GenomeData::SaveTrackFromWIG(const std::string& wigname, int resolution)
 {
-  int curr_pos;
   WIGParser p;
-  DEBUGLOG("Loading track " + trackname + " from WIG file " + wigname);    
+  DEBUGLOG("Loading track " + trackname_ + " from WIG file " + wigname);    
   p.Open(wigname);
   std::vector<std::string> chrnames = genome_info_.chr_names();
-  for (std::vector<std::string>::const_iterator it = chrnames.begin();
-       it != chrnames.end(); ++it) {   
-    std::cerr << *it << std::endl;
-    Track<float>::Ptr track(new Track<float>);
-    track->set_resolution(resolution);
-    track->set_abs_extends(0, genome_info_.chr_size(*it));
-    track->set_trackname(trackname);
-    track->set_subtrackname(*it);
-    track->set_extends(0, ceil(static_cast<float>(genome_info_.chr_size(*it))/resolution));
-    bool ret = trackfile_->WriteSubTrack<float>(trackname, track);
-    
+
+  WIGLine curr_line;
+  Track<float>::Ptr curr_track;
+  std::string curr_chr;
+  int max_pos;
+  while(p.HasNextLine()) {
+    curr_line = p.NextLine();
+    if (p.StateChanged()) {
+      if (curr_track.get() != NULL) {
+        DEBUGLOG("Writing " + curr_track->subtrackname());
+        trackfile_->WriteSubTrack<float>(*curr_track);
+      }
+      curr_chr = ChrToString(p.curr_state().chr);
+      DEBUGLOG("Processing " + curr_chr);
+      curr_track = open_chrs_[curr_chr];
+      curr_track = Track<float>::Ptr(new Track<float>);
+      curr_track->set_resolution(resolution);
+      curr_track->set_abs_extends(0, genome_info_.chr_size(curr_chr));
+      curr_track->set_trackname(trackname_);
+      curr_track->set_subtrackname(curr_chr);
+      curr_track->set_extends(0, ceil(static_cast<float>(genome_info_.chr_size(curr_chr))/resolution));      
+      max_pos = curr_track->astop();
+    }
+    if (curr_line.pos < max_pos) {
+      curr_track->aset(curr_line.pos, curr_line.val);    
+    }
   }
-  
-  //for (std::vector<WIGLine>::const_iterator j = curr_chr.begin();
-//       j != curr_chr.end(); ++j) {
-  //   curr_pos = j->pos;
-//        track->aset(curr_pos, j->val);
-  //    }
-//      trackfile_->WriteSubTrack<float>(trackname, track);
-    //} else {
-     // ERRORLOG("Only FixedStep supported for now...");
-    //}
-  //}
+  // Write last track
+  DEBUGLOG("Writing " + curr_track->subtrackname());
+  trackfile_->WriteSubTrack<float>(*curr_track);
 }

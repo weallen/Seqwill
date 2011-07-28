@@ -66,6 +66,7 @@ public:
   // Iterator
   // Returns data at whatever the current resolution is.
   inline void set(size_t pos, DataT val) { data_[pos] = val; }
+  inline DataT get(size_t pos) const { return data_[pos]; }
   inline DataT operator[](size_t pos) { return data_[pos]; }
   inline const_iterator cbegin() const { return (data_.begin()); }
   inline const_iterator cend() const { return (data_.end()); }
@@ -75,8 +76,8 @@ public:
   inline iterator end() { return data_.end(); }
   
   // Indexes a position by its absolute position
-  inline void aset(size_t pos, DataT val) { data_[ceil(static_cast<float>(pos) / resolution_)] = val; }
-  inline DataT aget(size_t pos) { return data_[ceil(static_cast<float>(pos) / resolution_)]; }
+  inline void aset(size_t pos, DataT val) { data_[floor(static_cast<float>(pos) / resolution_)] = val; }
+  inline DataT aget(size_t pos) const { return data_[floor(static_cast<float>(pos) / resolution_)]; }
   inline size_t asize() { return (astop_ - astart_); }
   int astart() const { return astart_; }
   int astop() const { return astop_; }

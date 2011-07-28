@@ -27,22 +27,30 @@ WIGParser::NextLine()
   std::vector<char> seps;
   seps.push_back('=');
   bool chr_line = false;
+  WIGLine w;
   fp_.ParseLine();
   sp_.SetLine(fp_.Line());
-  if (Contains(sp_.AsString(0), "fixedStep")) {     
-    chr_line = true;
+  if (Contains(sp_.AsString(0), "track")) {
+    fp_.ParseLine();
+    sp_.SetLine(fp_.Line()); // Read to next line
+  }
+  if (Contains(sp_.AsString(0), "fixedStep")) { 
     fixed_step_ = true;
+    state_changed_ = true;
+    chr_line = true;
     fsstate_.chr = ChrToNum(sp_.AsString(1).substr(6));
     fsstate_.start = StringToInt(sp_.AsString(2).substr(6));
     fsstate_.step = StringToInt(sp_.AsString(3).substr(5));
     if (sp_.GetItemCount() > 4) {
       fsstate_.span = StringToInt(sp_.AsString(4).substr(5));
     }
-    DEBUGLOG("Parsing chr " + Stringify(fsstate_.chr));
+    fsstate_.count = 0;
+    DEBUGLOG("Parsing chr " + Stringify(fsstate_.chr) + " at " + Stringify(fsstate_.step) + " from " + Stringify(fsstate_.start));
     delete curr_state_;
     curr_state_= new WIGState(fsstate_);
     
   } else if (Contains(sp_.AsString(0), "variableStep")) {
+    fixed_step_ = false;
     chr_line = true;
     fixed_step_ = false;
     vsstate_.chr = ChrToNum(sp_.AsString(1).substr(6));
@@ -53,6 +61,7 @@ WIGParser::NextLine()
     delete curr_state_;
     curr_state_ = new WIGState(vsstate_);
   }
+  
   if (chr_line) {
     fp_.ParseLine();
     sp_.SetLine(fp_.Line()); // Read to next line
@@ -61,33 +70,21 @@ WIGParser::NextLine()
   if (!chr_line) {
     state_changed_ = false;
   }
-  if (fixed_step_) 
-    return ParseFixedStep();  
-  else 
-    return ParseVariableStep();
+  
+  if (fixed_step_) {
+    w.pos = fsstate_.start + (fsstate_.count * fsstate_.step);
+    w.val = sp_.AsFloat(0);  
+    fsstate_.count++;  
+    return w;
+  }
+  else {
+    w.pos = sp_.AsInt(0);
+    w.val = sp_.AsFloat(1);
+    return w;
+  }
 }
 
 
-
-
-WIGLine 
-WIGParser::ParseVariableStep()
-{
-  WIGLine w;
-  w.pos = sp_.AsInt(0);
-  w.val = sp_.AsFloat(1);
-  return w;
-}
-
-WIGLine 
-WIGParser::ParseFixedStep()
-{
-  WIGLine w;
-  w.pos = fsstate_.start + (fsstate_.count * fsstate_.step);
-  w.val = sp_.AsFloat(0);
-  fsstate_.count++;  
-  return w;
-}
 
 ChromosomeEnum 
 ChrToNum(const std::string& chr) 
@@ -128,6 +125,8 @@ ChrToNum(const std::string& chr)
     return kChr17;
   if (chr.compare("chr18") == 0 || chr.compare("Chr18") == 0) 
     return kChr18;
+  if (chr.compare("chr19") == 0 || chr.compare("Chr19") == 0)
+    return kChr19;
   if (chr.compare("chrX") == 0 || chr.compare("ChrX") == 0) 
     return kChrX;
   if (chr.compare("chrY") == 0 || chr.compare("ChrY") == 0) 
@@ -140,48 +139,50 @@ ChrToNum(const std::string& chr)
  std::string ChrToString(ChromosomeEnum chr) 
  {
  if (chr == kChr1)
- return "Chr1";
+ return "chr1";
  if (chr == kChr2)
- return "Chr2";
+ return "chr2";
  if (chr == kChr3)
- return "Chr3";
+ return "chr3";
  if (chr == kChr4)
- return "Chr4";
+ return "chr4";
  if (chr == kChr5)
- return "Chr5";
+ return "chr5";
  if (chr == kChr6)
- return "Chr6";
+ return "chr6";
  if (chr == kChr7)
- return "Chr7";
+ return "chr7";
  if (chr == kChr8)
- return "Chr8";
+ return "chr8";
  if (chr == kChr9)
- return "Chr9";
+ return "chr9";
  if (chr == kChr10)
- return "Chr10";
+ return "chr10";
  if (chr == kChr11)
- return "Chr11";
+ return "chr11";
  if (chr == kChr12)
- return "Chr12";
+ return "chr12";
  if (chr == kChr13)
- return "Chr13";
+ return "chr13";
  if (chr == kChr14)
- return "Chr14";
+ return "chr14";
  if (chr == kChr15)
- return "Chr15";
+ return "chr15";
  if (chr == kChr16)
- return "Chr16";
+ return "chr16";
  if (chr == kChr17)
- return "Chr17";
+ return "chr17";
  if (chr == kChr18)
- return "Chr18";
+ return "chr18";
+if (chr == kChr19)
+  return "chr19";
  if (chr == kChrX)
- return "ChrX";
+ return "chrX";
  if (chr == kChrY)
- return "ChrY";
+ return "chrY";
  if (chr == kChrM)
- return "ChrM";
+ return "chrM";
  else
- return "Unknown";
+ return "unknown";
  }
  

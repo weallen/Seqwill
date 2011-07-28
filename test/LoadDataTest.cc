@@ -46,10 +46,11 @@ TEST_F(LoadDataTest, LoadGenomeInfoTest) {
 TEST_F(LoadDataTest, WIGToTrackTest) {
    Track<float> t;
    GenomeData d;
+    d.set_track_name(std::string("moe_d3a_hmc_raw"));
    GenomeInfo g;
    LoadGenomeInfoFromChr(genome_info_name_, std::string("mm9"), &g);
    d.Init(outname_, g);
-   d.SaveTrackFromWIG(filename_, std::string("moe_d3a_hmc_raw"), 50);
+   d.SaveTrackFromWIG(filename_, 50);
 }
 
 TEST_F(LoadDataTest, LoadFromWIGTest) {

@@ -54,25 +54,28 @@ private:
 class GenomeData
 {
 public:
-  typedef std::map<std::string, Track<float>::Ptr> ChrMap;  
-  typedef std::map<std::string, ChrMap> SubtrackToChrMap;
+  typedef std::map<std::string, Track<float>::Ptr > ChrMap;  
   
   GenomeData()
   : trackfile_name_("")
+  , trackname_("")
   , trackfile_(new TrackFile()) 
   {}
+  
   virtual ~GenomeData() { Close(); }
   
   void Init(const std::string& tfname_, const GenomeInfo& g); 
     
   void set_genome_info(const GenomeInfo& ginfo);
+  void set_track_name(const std::string& trackname)
+  { trackname_ = trackname; }
   
   const GenomeInfo& genome_info() const 
   { return genome_info_; }
                      
-  Track<float>::Ptr GetTrackForChrom(const std::string& trackname, const std::string& chrname);
+  Track<float>::Ptr GetSubTrackForChrom(const std::string& chrname);
   
-  void SaveTrackFromWIG(const std::string& wigname, const std::string& trackname, int resolution);
+  void SaveTrackFromWIG(const std::string& wigname, int resolution);
   
   void InitEmpty();
   
@@ -82,9 +85,10 @@ private:
   void Close();
   
   std::string trackfile_name_;
+  std::string trackname_;
   TrackFile::Ptr trackfile_;  
   GenomeInfo genome_info_;
-  SubtrackToChrMap open_chrs_;
+  ChrMap open_chrs_;
 };
 
 

@@ -10,19 +10,24 @@
 
 #include "gtest/gtest.h"
 
-#include "data/TrackData.h"
+#include "common/Track.h"
+#include "io/TrackIO.h"
 
-#include "base/SVector.h"
-#include "analysis/Chromosome.h"
+#include "analysis/Dist.h"
+#include "analysis/HMM.h"
 
 using namespace std;
 namespace {
-class BamIOTest : public ::testing::Test {
+class HMMTest : public ::testing::Test {
   protected:
-    BamIOTest() {
+    HMMTest() {
+      TrackFile f;
+      f.Open(std::string("/Users/admin/Documents/test_hmm.trk"));
+      f.ReadSubTrack(std::string("testdata"), std::string("test1"), *track_);
+      h_.set_num_states(2);
     }
 
-    virtual ~BamIOTest() {
+    virtual ~HMMTest() {
     }
 
     virtual void SetUp() {
@@ -30,19 +35,12 @@ class BamIOTest : public ::testing::Test {
     virtual void TearDown() {
     }
   
-
+  Track<float>::Ptr track_;
+  HMM h_;
 };
-TEST_F(BamIOTest, ChromosomeSaveTest) {
-  ASSERT_TRUE(SaveChrFromFASTA("/tmp/out.h5", "/media/Storage/user/data/genomedata/fasta/chr1.fa", "mm9"));
-}
-
-TEST_F(BamIOTest, ChromosomeLoadTest) {
-  Chromosome::Ptr chr(new Chromosome);
-  ASSERT_TRUE(LoadChr("/tmp/out.h5", "mm9", "chr1", chr));
-  ASSERT_FALSE(LoadChr("/tmp/out.h5", "mm9", "chr2", chr));
-  DNASequence::Ptr data = chr->data();
-  ASSERT_EQ(data->GetNuc(1), 'N');
-
+  
+TEST_F(HMMTest, InitHMMTest) {
+  
 }
 
 

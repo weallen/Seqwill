@@ -4,13 +4,15 @@
 #include <Eigen/StdVector>
 #include <boost/shared_ptr.hpp>
 
+#include "common/Track.h"
+
 template <typename TypeT>
 class AnalysisBase
 {
 public:
   typedef Track<TypeT> Track;
   typedef typename Track::Ptr TrackPtr;
-  typedef typename Track::ConstPTr TrackConstPtr;
+  typedef typename Track::ConstPtr TrackConstPtr;
 
   AnalysisBase()
     : input_()
@@ -18,16 +20,15 @@ public:
 
   virtual ~AnalysisBase();
 
-  virtual inline void
-  set_input_track(const TrackConstPtr& track) { input_ = track; }
-  inline TrackConstPtr const  input_track() { return input_; }
+  virtual void set_input_track(const TrackConstPtr& track) { input_ = track; }
+  TrackConstPtr const  input_track() { return input_; }
   
-  
+  virtual void Compute() = 0;
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 protected:
-  inline bool Init()
+  bool Init()
   {
     if (!input_) {
       return false;
@@ -35,7 +36,7 @@ protected:
     return true;
   }
 
-  inline void DeInit()
+  bool DeInit()
   {
     return true;
   }
@@ -57,7 +58,7 @@ public:
 
   typedef Track<TrackInT> TrackIn;
   typedef typename Track<TrackInT>::Ptr TrackInPtr;
-  typedef typename Track<TrackInT>::ConstPTr TrackInConstPtr;
+  typedef typename Track<TrackInT>::ConstPtr TrackInConstPtr;
 
   typedef Track<TrackOutT> TrackOut;
   typedef typename Track<TrackOutT>::Ptr TrackOutPtr;
@@ -67,7 +68,8 @@ public:
 
   virtual ~Analysis() {}
 
-  void Compute(TrackOutPtr out);
+  void Compute(TrackOutPtr output) 
+  { ComputeAnalysis(output); }
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -79,7 +81,7 @@ protected:
   ClassName() const { return analysis_name_; }
 
 private:
-  virtual void ComputeAnalysis(TrackOutPtr out) = 0;
+  virtual void ComputeAnalysis(TrackOutPtr output) = 0;
 };
 
 
@@ -97,12 +99,12 @@ public:
   typedef typename Track<TrackInT>::Ptr TrackPtr;
   typedef typename Track<TrackInT>::ConstPTr TrackConstPtr;
 
-  FilterBase() {}
-  virtual ~FilterBase() {}
+  Filter() {}
+  virtual ~Filter() {}
 
   // Calls filter method 
-  inline void 
-  Filter(typename Track<TrackInT>::Ptr out)
+  virtual void 
+  Compute(typename Track<TrackInT>::Ptr out)
   {
     if (!Init())
       return;

@@ -1,7 +1,10 @@
 #ifndef HMM_EMIT_H_
 #define HMM_EMIT_H_
 
+#include <vector>
 #include <Eigen/Dense>
+#include <gsl/gsl_randist.h>
+#include <gsl/gsl_rng.h>
 
 typedef Eigen::VectorXf VectorType;
 typedef Eigen::MatrixXf MatrixType;
@@ -10,17 +13,20 @@ float SampleGauss(float m, float s);
 int SampleMulti(Eigen::VectorXf vals);
 VectorType SampleMultiVarGauss(VectorType m, MatrixType cov);
 
+
 class GaussDist 
 {
 public:
 
   GaussDist() : m_(0), stddev_(1) {}
+  GaussDist(float m, float s) : m_(m), stddev_(s) {}
+  
   virtual ~GaussDist() {}
 
   void Init();
 
   void set_mean(float m)
-  { mean_ = m; }
+  { m_ = m; }
 
   float mean() const { return m_; }
 
@@ -30,11 +36,9 @@ public:
   float stddev() const
   { return stddev_; }
 
-  float pdf(float val)
-  {}
-  
-  float sample() { return 0.0; }
-  std::vector<float> sample(int n);
+  float pdf(float val);  
+  float sample(const gsl_rng* r);
+  std::vector<float> sample(int n, const gsl_rng* r);
 
 private:
   float m_;
@@ -44,7 +48,9 @@ private:
 class MultiVarGaussDist
 {
 public:
-  MultiVarGaussDist() {}
+  MultiVarGaussDist()
+  : ndim_(0)
+  {}
   virtual ~MultiVarGaussDist() {}
   
   void set_ndim(int n) 
@@ -73,6 +79,7 @@ public:
   std::vector<VectorType> sample(int n);
 
 private:
+  int ndim_;
   VectorType m_;
   MatrixType cov_;
 };
@@ -82,8 +89,8 @@ class MultiDist
 public:
   typedef Eigen::VectorXf VectorType;
 
-  MultiEmit() : n_(1) {}
-  virtual ~MultiEmit() {}
+  MultiDist() : n_(1) {}
+  virtual ~MultiDist() {}
 
   void Init(); 
  
@@ -95,7 +102,7 @@ public:
 
 
   float pdf(int val)
-  { return 0.0 }
+  { return 0.0; }
 
   int sample() { return 0; }
 
@@ -107,8 +114,8 @@ private:
 class MixGaussDist 
 {
 public:
-  typedef Eigen::Matrix<float, Dynamic, 1> VectorType;
-  typedef Eigen::Matrix<float, Dynamic, Dynamic> MatrixType;
+  typedef Eigen::Matrix<float, Eigen::Dynamic, 1> VectorType;
+  typedef Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> MatrixType;
 
   MixGaussDist() {}
   virtual ~MixGaussDist() {

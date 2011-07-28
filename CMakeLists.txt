@@ -79,6 +79,12 @@ set(DATA_SRCS data/TrackData.h
     data/SeqData.h)
 
 set(ANALYSIS_SRCS analysis/Genome.cc 
+    analysis/HMM.h
+    analysis/HMM.cc
+    analysis/Dist.h
+    analysis/Dist.cc 
+    analysis/Random.h
+    analysis/Random.cc
     analysis/Genome.h
     analysis/Chromosome.h
     analysis/Chromosome.cc
@@ -97,7 +103,7 @@ set(ALL_SRCS ${COMMON_SRCS} ${IO_SRCS} ${HDF5_SRCS} ${UTIL_SRCS} ${BASE_SRCS})
 
 # libraries
 add_library(SWLib ${COMMON_SRCS} ${IO_SRCS} ${HDF5_SRCS} ${UTIL_SRCS} ${BASE_SRCS} ${DATA_SRCS} ${ANALYSIS_SRCS})
-target_link_libraries(SWLib hdf5 bamtools)
+target_link_libraries(SWLib hdf5 bamtools tbb gsl)
 # binaries
 
 add_executable(LoadData tool/LoadData.cc)
@@ -106,6 +112,8 @@ target_link_libraries(LoadData SWLib)
 add_executable(LoadSeq tool/LoadSeq.cc)
 target_link_libraries(LoadSeq SWLib)
 
+add_executable(GenerateHMMTestData tool/GenerateHMMTestData.cc)
+target_link_libraries(GenerateHMMTestData SWLib)
 
 # testing
 function(cxx_test name)

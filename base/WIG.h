@@ -107,9 +107,8 @@ public:
   bool StateChanged() const { return state_changed_; }
   WIGState curr_state() { return *curr_state_; }
   int num_lines() const { return num_lines_; }
+  int curr_line_num() const {return curr_line_; }
 private:  
-  WIGLine ParseVariableStep();
-  WIGLine ParseFixedStep();
     
   bool state_changed_;
   int num_lines_;
