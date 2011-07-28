@@ -18,9 +18,9 @@ public:
     : input_()
   {}
 
-  virtual ~AnalysisBase();
+  virtual ~AnalysisBase() {}
 
-  virtual void set_input_track(const TrackConstPtr& track) { input_ = track; }
+  virtual void set_input(TrackPtr track) { input_ = track; }
   TrackConstPtr const  input_track() { return input_; }
   
   virtual void Compute() = 0;
@@ -54,7 +54,7 @@ public:
 
   typedef AnalysisBase<TrackInT> BaseClass;
   typedef boost::shared_ptr<Analysis<TrackInT, TrackOutT> > Ptr;
-  typedef boost::shared_ptr<const Analysis<TrackInT, TrackOutT> > ConstPTr;
+  typedef boost::shared_ptr<const Analysis<TrackInT, TrackOutT> > ConstPtr;
 
   typedef Track<TrackInT> TrackIn;
   typedef typename Track<TrackInT>::Ptr TrackInPtr;
@@ -62,14 +62,17 @@ public:
 
   typedef Track<TrackOutT> TrackOut;
   typedef typename Track<TrackOutT>::Ptr TrackOutPtr;
+  typedef typename Track<TrackInT>::ConstPtr TrackOutConstPtr;
 
   Analysis() 
+  : output_()
   {}
 
+  TrackOutConstPtr const output() const { return output_; }
   virtual ~Analysis() {}
 
-  void Compute(TrackOutPtr output) 
-  { ComputeAnalysis(output); }
+  virtual void Compute()
+  { ComputeAnalysis(); }
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -81,7 +84,8 @@ protected:
   ClassName() const { return analysis_name_; }
 
 private:
-  virtual void ComputeAnalysis(TrackOutPtr output) = 0;
+  virtual void ComputeAnalysis() = 0;
+  TrackOutPtr output_;
 };
 
 
