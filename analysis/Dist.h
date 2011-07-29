@@ -18,7 +18,7 @@ class GaussDist
 {
 public:
 
-  GaussDist() : m_(0), stddev_(1) {}
+  GaussDist() : m_(0.0), stddev_(1.0) {}
   GaussDist(float m, float s) : m_(m), stddev_(s) {}
   
   virtual ~GaussDist() {}

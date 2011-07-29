@@ -23,18 +23,24 @@ class HMMTest : public ::testing::Test {
     HMMTest() 
   {
     track_ = Track<float>::Ptr(new Track<float>);
-      h_ = new GaussHMM();
+      h_ = new GaussHMM(2);
       TrackFile f;
       f.Open(std::string("/Users/admin/Documents/test_hmm.trk"));
       f.ReadSubTrack(std::string("testdata"), std::string("test1"), *track_);
       h_->set_input(track_);
-      h_->set_num_states(2);
       
-      HMM::MatrixType trans = HMM::MatrixType::Constant(2, 2, 0.5);
+      HMM::MatrixType trans_prior = HMM::MatrixType::Constant(2, 2, 0.25);
       HMM::VectorType init = HMM::VectorType::Constant(2, 0.5);
 
-      h_->set_transition(trans);
-      h_->set_init_probs(init);
+      h_->set_trans_prior(trans_prior);
+      h_->set_init_probs_prior(init);
+    std::vector<GaussDist> g;
+    g.push_back(GaussDist(10.0, 1.0));
+    g.push_back(GaussDist(0.0, 1.0));
+    h_->set_emit(g);
+
+      h_->Init();
+    
     }
 
     virtual ~HMMTest() {
@@ -50,14 +56,11 @@ class HMMTest : public ::testing::Test {
   GaussHMM* h_;
 };
   
-
-TEST_F(HMMTest, LogProbTest) {
-  HMM::MatrixType softev = HMM::MatrixType::Random(2, 10);
-  std::cerr << h_->LogProb(softev) << std::endl;
-}
-
-TEST_F(HMMTest, FwdBackTest) {
+TEST_F(HMMTest, FitEMTest) {
   h_->FitEM();
+  std::vector<GaussDist> e = h_->emit();
+  std::cerr << e[0].mean() << " , " << e[0].stddev() << std::endl;
+  std::cerr << e[1].mean() << " , " << e[1].stddev() << std::endl;
 }
 
 }//Namespace

@@ -10,7 +10,7 @@
 int main(int argc, char** argv) {
   std::string out(argv[1]);
   GaussDist g1(0.0, 1.0);
-  GaussDist g2(1.0, 1.0);
+  GaussDist g2(10.0, 1.0);
   gsl_rng* rng = InitRng();
   std::vector<float> trueval(100000);
   std::vector<float> v(100000);

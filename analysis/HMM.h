@@ -23,12 +23,22 @@ public:
   HMM() 
   : rand_init_probs_(true)
   , rand_trans_probs_(true)
-  , has_trans_prior_(false)
+  , has_trans_prior_(false)  
   , has_init_prior_(false)
-  {}
+  , num_states_(1)
+  {  }
   
+  HMM(int num_states)
+  : rand_init_probs_(true)
+  , rand_trans_probs_(true)
+  , has_trans_prior_(false)  
+  , has_init_prior_(false)
+  , num_states_(num_states)
+  {  }
+
   virtual ~HMM() {}
  
+  void Init();
   void set_transition(const MatrixType& m)
   { trans_ = m; rand_trans_probs_ = false; }
 
@@ -58,19 +68,22 @@ public:
   { return num_states_; }
 
   void set_num_states(int s) 
-  { num_states_ = s; }
+  { num_states_ = s; NumStatesChanged(); }
 
+  // OUTPUT: log(p(y(1:T))
+  float LogProb(const MatrixType& softev);  
+  
+  void FitEM();
+  
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  
+protected:  
+  virtual void NumStatesChanged() = 0;
   
   // OUTPUT: 
   void ViterbiDecode(const VectorType& init, const MatrixType& trans,
-                     const MatrixType& softev, StateVectorType& path)
+                     const MatrixType& softev, StateVectorType& path);
   
-  // OUTPUT: log(p(y(1:T))
-  float LogProb(const MatrixType& softev);
-  
-  
-  
-  void FitEM();
   
   // Computes p(S(t) = i | y(1:T))
   // OUTPUT: gamma(i,t) = p(S(t) = i | y(1:T)), returns loglik
@@ -82,9 +95,7 @@ public:
   float FwdBack(const MatrixType& transmat, const VectorType& init, 
                 const MatrixType& softev, MatrixType& alpha, MatrixType& beta, 
                 MatrixType& gamma);
-  
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-protected:  
+
   // Computes p(S(t) = i | y(1:t))
   void FilterFwd(const MatrixType& transmat, const MatrixType& softev, 
                  const VectorType& init, float& loglik, MatrixType& alpha);
@@ -111,8 +122,8 @@ protected:
   // Implemented in the derived class b/c depends on the 
   // Particular emission distribution for the model.
   // OUTPUT: softev(i,t) = p(y(t) | S(t) = i)
-  virtual void UpdateSoftEvidence() = 0;
-  virtual void UpdateEmissionDist(const StateVectorType& curr_states) = 0;
+  virtual void UpdateSoftEvidence(MatrixType& softev) = 0;
+  virtual void UpdateEmissionDist(const MatrixType& weights) = 0;
   
   using Analysis<float, int>::input_;
   
@@ -122,7 +133,8 @@ protected:
   bool has_init_prior_;
   
   // soft_evidence_(i,t) = p(y(t) | S(t) = i)
-  MatrixType soft_evidence_;
+  // Moved to inside FitEM
+  //MatrixType soft_evidence_;
   
   // trans_(i,j) = p(S(t) = j | S(t-1) = i)
   MatrixType trans_; 
@@ -137,6 +149,8 @@ protected:
   VectorType init_prior_;
   
   int num_states_;
+  
+  friend class HMMTest;
 };
 
 // HMM class that fits using EM
@@ -147,14 +161,20 @@ public:
   using HMM::TrackOutPtr;
   using Analysis<float, int>::Compute;
   
-  GaussHMM() {}
+  GaussHMM();
+  GaussHMM(int num_states);
   virtual ~GaussHMM() {}
   
   virtual void ComputeAnalysis();
-  virtual void UpdateSoftEvidence();
+  virtual void UpdateSoftEvidence(MatrixType& softev);
   virtual void Compute() { ComputeAnalysis(); }
-  virtual void UpdateEmissionDist(const StateVectorType& curr_states);
+  virtual void UpdateEmissionDist(const MatrixType& weights);
+  virtual void NumStatesChanged();
   
+  void set_emit(const std::vector<GaussDist>& emits)
+  { emit_ = emits; }
+  
+  const std::vector<GaussDist>& emit() const { return emit_; }
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   
 private:
