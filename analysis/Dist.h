@@ -28,7 +28,7 @@ public:
   void set_mean(float m)
   { m_ = m; }
 
-  float mean() const { return m_; }
+  double mean() const { return m_; }
 
   void set_stddev(float s) 
   { stddev_ = s; }
@@ -36,13 +36,32 @@ public:
   float stddev() const
   { return stddev_; }
 
-  float pdf(float val);  
-  float sample(const gsl_rng* r);
-  std::vector<float> sample(int n, const gsl_rng* r);
+  double pdf(double val);  
+  double sample(const gsl_rng* r);
+  std::vector<double> sample(int n, const gsl_rng* r);
 
 private:
-  float m_;
-  float stddev_;
+  double m_;
+  double stddev_;
+};
+
+class BernDist
+{
+public:
+  BernDist() : p_(0.0) {}
+  BernDist(double p) : p_(p) {}
+
+  void set_prob(double p)
+  { p_ = p; }
+  
+  const double prob() const
+  { return p_; }
+  
+  double pdf(int k);
+  int sample(const gsl_rng* r);
+  
+private:
+  double p_;
 };
 
 class MultiVarGaussDist
@@ -71,7 +90,7 @@ public:
   const MatrixType& cov() const
   { return cov_; }
 
-  float pdf(VectorType pt) { return 0.0; }
+  double pdf(VectorType pt) { return 0.0; }
 
   VectorType sample() 
   { VectorType v(10);  return v; }

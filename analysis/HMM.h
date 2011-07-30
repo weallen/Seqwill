@@ -12,8 +12,8 @@
 class HMM : public Analysis<float, int>
 {
 public: 
-  typedef Eigen::ArrayXf VectorType;
-  typedef Eigen::ArrayXXf MatrixType;
+  typedef Eigen::ArrayXd VectorType;
+  typedef Eigen::ArrayXXd MatrixType;
   typedef Eigen::ArrayXi StateVectorType;
   typedef Eigen::ArrayXXi StateMatrixType;
   
@@ -74,8 +74,11 @@ public:
   float LogProb(const MatrixType& softev);  
   
   void FitEM();
+
+  void Decode(StateVectorType& path);
   
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
   
 protected:  
   virtual void NumStatesChanged() = 0;
@@ -181,6 +184,32 @@ private:
   std::vector<GaussDist> emit_;
 };
 
+class BernHMM : public HMM
+{
+public:  
+  using HMM::TrackInPtr;
+  using HMM::TrackOutPtr;
+  using Analysis<float, int>::Compute;
+  
+  BernHMM();
+  BernHMM(int num_states);
+  virtual ~BernHMM() {}
+  
+  virtual void ComputeAnalysis();
+  virtual void UpdateSoftEvidence(MatrixType& softev);
+  virtual void Compute() { ComputeAnalysis(); }
+  virtual void UpdateEmissionDist(const MatrixType& weights);
+  virtual void NumStatesChanged();
+  
+  void set_emit(const std::vector<BernDist>& emits)
+  { emit_ = emits; }
+  
+  const std::vector<BernDist>& emit() const { return emit_; }
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  
+private:
+  std::vector<BernDist> emit_;
+};
 
 
 
