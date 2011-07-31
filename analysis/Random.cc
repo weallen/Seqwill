@@ -1,8 +1,9 @@
 #include "analysis/Random.h"
 
-gsl_rng* InitRng() {
+void Rng::Init() {
 	const gsl_rng_type* T;
 	gsl_rng_env_setup();
 	T = gsl_rng_default;
-	return gsl_rng_alloc(T);
+	rng_ = gsl_rng_alloc(T);
 }
+

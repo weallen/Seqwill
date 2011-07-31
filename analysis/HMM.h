@@ -8,6 +8,7 @@
 #include "common/Track.h"
 #include "base/Log.h"
 #include "base/StringUtil.h"
+#include "analysis/Random.h"
 
 class HMM : public Analysis<float, int>
 {
@@ -74,7 +75,8 @@ public:
   float LogProb(const MatrixType& softev);  
   
   void FitEM();
-
+  void FitBlockedGibbs();
+  
   void Decode(StateVectorType& path);
   
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -103,6 +105,9 @@ protected:
   void FilterFwd(const MatrixType& transmat, const MatrixType& softev, 
                  const VectorType& init, float& loglik, MatrixType& alpha);
   
+  void SampleBack(const MatrixType& transmat, const MatrixType& softev, 
+                  const MatrixType& alpha, StateVectorType curr_states);
+  
   // Computes p(y(t+1:T) | S(t) = i)
   void SmoothBack(const MatrixType& transmat, const MatrixType& softev, 
                   MatrixType& beta);
@@ -127,7 +132,8 @@ protected:
   // OUTPUT: softev(i,t) = p(y(t) | S(t) = i)
   virtual void UpdateSoftEvidence(MatrixType& softev) = 0;
   virtual void UpdateEmissionDist(const MatrixType& weights) = 0;
-  
+  virtual void UpdateEmissionDistGibbs(const StateVectorType& states) = 0;
+
   using Analysis<float, int>::input_;
   
   bool rand_init_probs_;
@@ -171,7 +177,8 @@ public:
   virtual void ComputeAnalysis();
   virtual void UpdateSoftEvidence(MatrixType& softev);
   virtual void Compute() { ComputeAnalysis(); }
-  virtual void UpdateEmissionDist(const MatrixType& weights);
+  virtual void UpdateEmissionDistEM(const MatrixType& weights);
+  virtual void UpdateEmissionDistGibbs(const StateVectorType& states);
   virtual void NumStatesChanged();
   
   void set_emit(const std::vector<GaussDist>& emits)
@@ -181,6 +188,9 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   
 private:
+  
+  ChiSqDist var_prior;
+  StudentTDist mean_prior;
   std::vector<GaussDist> emit_;
 };
 
@@ -198,7 +208,8 @@ public:
   virtual void ComputeAnalysis();
   virtual void UpdateSoftEvidence(MatrixType& softev);
   virtual void Compute() { ComputeAnalysis(); }
-  virtual void UpdateEmissionDist(const MatrixType& weights);
+  virtual void UpdateEmissionDistEM(const MatrixType& weights);
+  virtual void UpdateEmissionDistGibbs(const StateVectorType& states);
   virtual void NumStatesChanged();
   
   void set_emit(const std::vector<BernDist>& emits)
@@ -210,6 +221,8 @@ public:
 private:
   std::vector<BernDist> emit_;
 };
+
+
 
 
 

@@ -199,6 +199,51 @@ HMM::SmoothBack(const MatrixType& transmat, const MatrixType& softev,
   }
 }
 
+void
+HMM::FitBlockedGibbs()
+{
+  int length = input_->size();
+  StateVectorType curr_states = StateVectorType::Random(length);
+  MatrixType alpha;
+  MatrixType transmat = trans_;
+  MatrixType init = init_;
+  MatrixType softev;
+  float loglik;
+  for (int n = 0; n < 10; ++n) {
+    DEBUGLOG("Blocked Gibbs step: " + Stringify(n));
+    UpdateSoftEvidence(softev);
+    FilterFwd(transmat, softev, init, loglik, alpha);
+    SampleBack(transmat, softev, alpha, curr_states);
+  }
+}
+
+void
+HMM::SampleBack(const MatrixType& transmat, const MatrixType& softev, 
+                const MatrixType& alpha, StateVectorType curr_states)
+{
+  MultiDist multi(num_states_);
+  Rng r;
+  
+  int T = alpha.cols();
+  
+  if (curr_states.size() != alpha.cols()) {
+    curr_states.resize(alpha.cols());
+  }
+  Eigen::VectorXd curr_vals = Eigen::VectorXd::Zero(num_states_);
+  // sample z_T ~ p(z_T = i| x_{1:T}) = \alpha_T(i)
+  multi.set_vals(alpha.col(T-1));
+  curr_states(T-1) = multi.Sample(r.rng());
+  // sample z_t^* ~ p(z_t|z_{t+1}^*, x_{1:T}) 
+  for (int t = T-2; t >= 0; --t) {
+    int j = curr_states(t+1);
+    for (int i = 0; i < num_states_; ++i) {      
+      curr_vals(i) = (trans_(i,j) * alpha(i,t) * softev(j, t+1)) / alpha(j,t+1);
+    }
+    multi.set_vals(curr_vals);
+    curr_states(t) = multi.Sample(r.rng());
+  }  
+}
+
 void 
 HMM::FitEM() 
 {
@@ -284,13 +329,13 @@ GaussHMM::UpdateSoftEvidence(MatrixType& softev)
     softev.resize(num_states_, input_->size());
   for (int i = 0; i < softev.cols(); ++i) {
     for (int j = 0; j < softev.rows(); ++j) {
-      softev(j, i) = emit_[j].pdf((double)input_->get(i));
+      softev(j, i) = emit_[j].Pdf((double)input_->get(i));
     }
   }
 }
 
 void
-GaussHMM::UpdateEmissionDist(const MatrixType& weights)
+GaussHMM::UpdateEmissionDistEM(const MatrixType& weights)
 {
   for (int k = 0; k < num_states_; ++k) {
     double norm = weights.row(k).sum();
@@ -308,6 +353,22 @@ GaussHMM::UpdateEmissionDist(const MatrixType& weights)
     emit_[k].set_stddev(sqrt(stddev));
     std::cerr << "State " << k << " mean " << mean << " std " << stddev << std::endl;
   }      
+}
+
+
+// From paper "Inferring a Gaussian distribution" by T. Minka, 2001
+void
+GaussHMM::UpdateEmissionDistGibbs(const StateVectorType& states)
+{
+  // sample parameters of Gaussian dist from posterior distribution conditioned on current
+  // assignment of the latent variables.
+  //
+  // First sample 
+  for (int i = 0; i < num_states_; ++i) {
+    for (int t = 0; t < input_->size(); ++t) {
+      
+    }
+  }
 }
 
 //-----------------------------------------------------------------
@@ -342,13 +403,13 @@ BernHMM::UpdateSoftEvidence(MatrixType& softev)
     softev.resize(num_states_, input_->size());
   for (int i = 0; i < softev.cols(); ++i) {
     for (int j = 0; j < softev.rows(); ++j) {
-      softev(j, i) = emit_[j].pdf((int)input_->get(i));
+      softev(j, i) = emit_[j].Pdf((int)input_->get(i));
     }
   }
 }
 
 void
-BernHMM::UpdateEmissionDist(const MatrixType& weights)
+BernHMM::UpdateEmissionDistEM(const MatrixType& weights)
 {
   float norm = weights.sum();
   for (int k = 0; k < num_states_; ++k) {
@@ -360,4 +421,10 @@ BernHMM::UpdateEmissionDist(const MatrixType& weights)
     emit_[k].set_prob(val);
 //    std::cerr << "State " << k << " prob " << val << std::endl;
   }      
+}
+
+void
+BernHMM::UpdateEmissionDistGibbs(const StateVectorType& states)
+{
+  
 }

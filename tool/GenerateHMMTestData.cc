@@ -12,7 +12,8 @@ int main(int argc, char** argv) {
   std::string out(argv[1]);
   GaussDist g1(1.0, 1.0);
   GaussDist g2(9.0, 1.0);
-  gsl_rng* rng = InitRng();
+  Rng r;
+  gsl_rng* rng = r.rng();
   std::vector<float> trueval(100000);
   std::vector<float> v(100000);
   int num_1 = 0;
