@@ -18,7 +18,7 @@ namespace {
 class LoadDataTest : public ::testing::Test {
   protected:
     LoadDataTest() {
-      filename_ = "/Users/admin/src/Seqwill/testdata/moe_d3a_hmc_50_raw.wig";
+      filename_ = "/Users/admin/src/Seqwill/testdata/moe_wt_hmc_50_raw.wig";
       outname_ = "/Users/admin/Documents/test.trk";
       genome_info_name_ = "/Users/admin/Documents/chromosomes.trk";
     }
@@ -46,7 +46,7 @@ TEST_F(LoadDataTest, LoadGenomeInfoTest) {
 TEST_F(LoadDataTest, WIGToTrackTest) {
    Track<float> t;
    GenomeData d;
-    d.set_track_name(std::string("moe_d3a_hmc_raw"));
+    d.set_track_name(std::string("moe_wt_hmc_raw"));
    GenomeInfo g;
    LoadGenomeInfoFromChr(genome_info_name_, std::string("mm9"), &g);
    d.Init(outname_, g);

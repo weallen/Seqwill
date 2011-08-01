@@ -153,6 +153,9 @@ public:
   : base_dist_(nu), s2_(scale)
   {}
   
+  void set_scale(double s2) { s2_ = s2; }
+  void set_df(int n) { base_dist_.set_df(n); }
+  
   double scale() { return s2_; }
   double df() { return base_dist_.df(); }
 

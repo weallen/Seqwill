@@ -43,7 +43,8 @@ HMM::Decode(StateVectorType& path)
 }
 
 void
-HMM::ViterbiDecode(const VectorType& init, const MatrixType& trans, const MatrixType& softev, StateVectorType& path)
+HMM::ViterbiDecode(const VectorType& init, const MatrixType& trans, 
+                   const MatrixType& softev, StateVectorType& path)
 { 
   int T = softev.cols();
   if (path.size() != T) {
@@ -203,23 +204,54 @@ void
 HMM::FitBlockedGibbs()
 {
   int length = input_->size();
-  StateVectorType curr_states = StateVectorType::Random(length);
+  Rng r;
+  MultiDist m;
+  
+  // Randomly initialize states
+  m.set_vals(VectorType::Constant(num_states_, 1.0/((float) num_states_)));
+  StateVectorType curr_states = StateVectorType::Zero(length);
+  for (int i = 0; i < length; ++i) {
+    curr_states(i) = m.Sample(r.rng());
+  }
   MatrixType alpha;
   MatrixType transmat = trans_;
+  MatrixType trans_counts;
   MatrixType init = init_;
   MatrixType softev;
+  DirichletDist trans_dist;
+  
   float loglik;
-  for (int n = 0; n < 10; ++n) {
+  for (int n = 0; n < 100; ++n) {
     DEBUGLOG("Blocked Gibbs step: " + Stringify(n));
     UpdateSoftEvidence(softev);
-    FilterFwd(transmat, softev, init, loglik, alpha);
-    SampleBack(transmat, softev, alpha, curr_states);
+    std::cerr << "Filter fwd" << std::endl;
+    //FilterFwd(transmat, softev, init, loglik, alpha);
+    
+    
+    std::cerr << "Sample back" << std::endl;
+    //SampleBack(transmat, softev, alpha, curr_states);
+    
+    // Sample transition matrix, regularized by adding a pseudocount 
+    // XXX Make pseudocount a parameter of the model
+    trans_counts = CountTransitions(curr_states);
+    for (int i = 0; i < num_states_; ++i) {
+      trans_dist.set_alpha(trans_counts.row(i) + 1);
+      transmat.row(i) = trans_dist.Sample(r.rng());
+    }
+    std::cerr << "TRANSMAT: " << transmat << std::endl;
+    std::cerr << (curr_states == 0).count() << std::endl;
+    std::cerr << (curr_states == 1).count() << std::endl;
+    // Sample emission parameters
+    std::cerr << "Update emission" << std::endl;
+    UpdateEmissionDistGibbs(r, curr_states);
   }
+  trans_ = transmat;
+  init_ = init;
 }
 
 void
 HMM::SampleBack(const MatrixType& transmat, const MatrixType& softev, 
-                const MatrixType& alpha, StateVectorType curr_states)
+                const MatrixType& alpha, StateVectorType& curr_states)
 {
   MultiDist multi(num_states_);
   Rng r;
@@ -287,7 +319,7 @@ HMM::FitEM()
     for (int i = 0; i < num_states_; ++i) {
       trans.row(i) /= z; 
     }
-    UpdateEmissionDist(gamma);
+    UpdateEmissionDistEM(gamma);
     delta_loglik = old_loglik - loglik;
     old_loglik = loglik;
   } 
@@ -325,7 +357,7 @@ GaussHMM::ComputeAnalysis()
 void
 GaussHMM::UpdateSoftEvidence(MatrixType& softev)
 {  
-  if (softev.cols() != input_->size() || softev.rows() != num_states_) 
+  if (softev.cols() != (int)input_->size() || softev.rows() != num_states_) 
     softev.resize(num_states_, input_->size());
   for (int i = 0; i < softev.cols(); ++i) {
     for (int j = 0; j < softev.rows(); ++j) {
@@ -357,19 +389,67 @@ GaussHMM::UpdateEmissionDistEM(const MatrixType& weights)
 
 
 // From paper "Inferring a Gaussian distribution" by T. Minka, 2001
+// And pg 83 of Bayesian Data Analysis ("Samping from the Joint Posterior
+// Distribution" of a normal distribution)
 void
-GaussHMM::UpdateEmissionDistGibbs(const StateVectorType& states)
+GaussHMM::UpdateEmissionDistGibbs(Rng& r, const StateVectorType& states)
 {
+  GaussDist mean_dist;
+  InvChiSqDist var_dist;
+  
   // sample parameters of Gaussian dist from posterior distribution conditioned on current
   // assignment of the latent variables.
   //
-  // First sample 
+
   for (int i = 0; i < num_states_; ++i) {
-    for (int t = 0; t < input_->size(); ++t) {
-      
+    int state_count = 0;
+    float mean = 0.0;
+    float var = 0.0;
+    double mean_sum = 0.0;
+    double var_sum = 0.0;
+    double tau = 0.0;
+    
+    // Hyperparams
+    double s0 = 1.0;
+    double m0 = 0.01;
+    double t0 = 1.0;
+    int nu = 1;
+    
+    for (size_t t = 0; t < input_->size(); ++t) {
+      if (states(t) == i) {
+        state_count++; 
+        mean_sum += input_->get(t);
+      }
     }
+
+    mean = mean_sum / (double) state_count;
+    for (int j = 0; j < 3; ++j) {
+      // Sample each several times
+      var_sum = 0.0;
+      // Sample sigma_k | mu_k ~ InvChiSq(var, N)
+      for (size_t t = 0; t < input_->size(); ++t) {
+        if (states(t) == i) {
+          var_sum += pow((input_->get(t) - mean), 2);
+        }
+      }
+      var_dist.set_df(state_count - 1);
+      var_dist.set_scale(var_sum / (state_count - 1));
+      
+      //  sample var from it's posterior
+      var = var_dist.Sample(r.rng());
+
+      // Sample mu_k | sigma_k ~ Gaussian(mean, var|data)
+      mean_dist.set_stddev(1.0/(1.0/t0 + state_count / var));
+      mean_dist.set_mean((m0 / t0 + 1.0 / var * mean_sum) / (1.0 / t0 + state_count/var));
+      mean = mean_dist.Sample(r.rng());
+    }
+    emit_[i].set_stddev(var);  
+    emit_[i].set_mean(mean);
+
+    std::cerr << "State " << i << " mean " << emit_[i].mean() << " std " << emit_[i].stddev() << std::endl;
   }
 }
+
 
 //-----------------------------------------------------------------
 
@@ -399,7 +479,7 @@ BernHMM::ComputeAnalysis()
 void
 BernHMM::UpdateSoftEvidence(MatrixType& softev)
 {  
-  if (softev.cols() != input_->size() || softev.rows() != num_states_) 
+  if (softev.cols() != (int) input_->size() || softev.rows() != num_states_) 
     softev.resize(num_states_, input_->size());
   for (int i = 0; i < softev.cols(); ++i) {
     for (int j = 0; j < softev.rows(); ++j) {
@@ -424,7 +504,17 @@ BernHMM::UpdateEmissionDistEM(const MatrixType& weights)
 }
 
 void
-BernHMM::UpdateEmissionDistGibbs(const StateVectorType& states)
+BernHMM::UpdateEmissionDistGibbs(Rng& r, const StateVectorType& states)
 {
-  
+
+  double alpha = 1.0;
+  for (int k = 0; k < num_states_; ++k) {
+    int count = 0;
+    for (size_t i = 0; i < input_->size(); ++i) {
+      if ((int) input_->get(i) == k)  
+        count++;
+    }
+    emit_[k].set_prob(count / input_->size());
+    std::cerr << "State " << k << " prob " << (float)count / (float)input_->size() << std::endl;
+  }      
 }

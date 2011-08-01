@@ -41,13 +41,16 @@ BernDist::Sample(const gsl_rng* r)
 
 MultiDist::MultiDist()
 : n_(1)
+, lookup(NULL)
 {
   set_vals(Eigen::VectorXd::Constant(n_, 1.0/((double) n_)));
 }
 
 MultiDist::MultiDist(int n)
 : n_(n)
+, lookup(NULL)
 {
+
   set_vals(Eigen::VectorXd::Constant(n_, 1.0/((double) n)));
 }
 
@@ -57,7 +60,8 @@ MultiDist::set_vals(const Eigen::VectorXd& vals)
   if (vals.size() != n_) {
     n_ = vals.size();
   }
-  gsl_ran_discrete_free(lookup);
+  if (lookup != NULL)
+    gsl_ran_discrete_free(lookup);
   double* p = new double[n_];
   for (int i = 0; i < n_; ++i) {
     p[i] = vals(i);

@@ -106,7 +106,7 @@ protected:
                  const VectorType& init, float& loglik, MatrixType& alpha);
   
   void SampleBack(const MatrixType& transmat, const MatrixType& softev, 
-                  const MatrixType& alpha, StateVectorType curr_states);
+                  const MatrixType& alpha, StateVectorType& curr_states);
   
   // Computes p(y(t+1:T) | S(t) = i)
   void SmoothBack(const MatrixType& transmat, const MatrixType& softev, 
@@ -131,8 +131,8 @@ protected:
   // Particular emission distribution for the model.
   // OUTPUT: softev(i,t) = p(y(t) | S(t) = i)
   virtual void UpdateSoftEvidence(MatrixType& softev) = 0;
-  virtual void UpdateEmissionDist(const MatrixType& weights) = 0;
-  virtual void UpdateEmissionDistGibbs(const StateVectorType& states) = 0;
+  virtual void UpdateEmissionDistEM(const MatrixType& weights) = 0;
+  virtual void UpdateEmissionDistGibbs(Rng& r, const StateVectorType& states) = 0;
 
   using Analysis<float, int>::input_;
   
@@ -162,7 +162,6 @@ protected:
   friend class HMMTest;
 };
 
-// HMM class that fits using EM
 class GaussHMM : public HMM
 {
 public:  
@@ -178,9 +177,9 @@ public:
   virtual void UpdateSoftEvidence(MatrixType& softev);
   virtual void Compute() { ComputeAnalysis(); }
   virtual void UpdateEmissionDistEM(const MatrixType& weights);
-  virtual void UpdateEmissionDistGibbs(const StateVectorType& states);
+  virtual void UpdateEmissionDistGibbs(Rng& r, const StateVectorType& states);
   virtual void NumStatesChanged();
-  
+    
   void set_emit(const std::vector<GaussDist>& emits)
   { emit_ = emits; }
   
@@ -209,7 +208,7 @@ public:
   virtual void UpdateSoftEvidence(MatrixType& softev);
   virtual void Compute() { ComputeAnalysis(); }
   virtual void UpdateEmissionDistEM(const MatrixType& weights);
-  virtual void UpdateEmissionDistGibbs(const StateVectorType& states);
+  virtual void UpdateEmissionDistGibbs(Rng& r, const StateVectorType& states);
   virtual void NumStatesChanged();
   
   void set_emit(const std::vector<BernDist>& emits)
