@@ -89,12 +89,9 @@ HMM::CountTransitions(const StateVectorType& curr_states)
   MatrixType m = MatrixType::Zero(num_states_, num_states_);
   
   // Count transitions
-  int curr_state;
-  int next_state;
-  for (int pos = 0; pos < curr_states.size()-1; ++pos) {
-    curr_state = curr_states(pos);
-    next_state = curr_states(pos+1);
-    m(curr_state, next_state) += 1;
+
+  for (int pos = 1; pos < curr_states.size(); ++pos) {
+    m(curr_states(pos-1), curr_states(pos)) += 1;
   }
   // Normalize matrix
   /*
@@ -119,7 +116,7 @@ HMM::TwoSliceSum(const MatrixType& transmat, const MatrixType& softev,
   for (int t = T-2; t >= 0; --t) {
     // multiply by soft evidence
     b = beta.col(t+1) * softev.col(t+1);
-    
+
     xit = transmat * (alpha.col(t).matrix() * b.matrix().transpose()).array();    
     xi_summed += xit / xit.sum();
   }
@@ -177,6 +174,10 @@ HMM::FilterFwd(const MatrixType& transmat, const MatrixType& softev,
     alpha.col(t) = (at.matrix() * alpha.col(t-1).matrix()).array();
     alpha.col(t) *= softev.col(t);
     scale(t) = alpha.col(t).sum();
+    if (scale(t) <= 0) {
+      std::cerr << t << std::endl;
+      std::cerr << transmat << std::endl;
+    }
     alpha.col(t) /= scale(t);
   }
   loglik = scale.log().sum();
@@ -196,6 +197,7 @@ HMM::SmoothBack(const MatrixType& transmat, const MatrixType& softev,
     // beta(:,t) = trans_ * (beta(:,t+1) .* soft_evidence_(:,t+1))
     beta.col(t) = transmat.matrix() * (beta.col(t+1) * softev.col(t+1)).matrix();    
     // normalize
+    assert(beta.col(t).sum() > 0);
     beta.col(t) /= beta.col(t).sum();
   }
 }
@@ -204,6 +206,7 @@ void
 HMM::FitBlockedGibbs()
 {
   int length = input_->size();
+  int T = length;
   Rng r;
   MultiDist m;
   
@@ -215,25 +218,52 @@ HMM::FitBlockedGibbs()
   }
   MatrixType alpha;
   MatrixType transmat = trans_;
-  MatrixType trans_counts;
-  MatrixType init = init_;
+  MatrixType trans_counts = MatrixType::Zero(num_states_, num_states_);
+  VectorType init = init_;
   MatrixType softev;
   DirichletDist trans_dist;
-  
+  MultiDist multi(num_states_);
+
   float loglik;
   for (int n = 0; n < 100; ++n) {
     DEBUGLOG("Blocked Gibbs step: " + Stringify(n));
     UpdateSoftEvidence(softev);
     std::cerr << "Filter fwd" << std::endl;
-    //FilterFwd(transmat, softev, init, loglik, alpha);
+    FilterFwd(transmat, softev, init, loglik, alpha);    
     
+    // FILTER FORWARD
+    /*
+    MatrixType m(num_states_, length);
+    for (int i = 0; i < num_states_; ++i) {
+      m(i, T - 1) = 1.0;
+    }
+    for (int t = T-2; t >= 0; --t) {
+      for (int k = 0; k < num_states_; ++k) {
+        for (int j = 0; j < num_states_; ++j) {
+          m(k,t) += transmat(k,j) * softev(j, t) * m(j, t+1);
+        }
+      }
+    }*/
     
     std::cerr << "Sample back" << std::endl;
-    //SampleBack(transmat, softev, alpha, curr_states);
+    /*
+    VectorType f(num_states_);
+    multi.set_vals(init);
+    curr_states(0) = multi.Sample(r.rng());
+    for (int t = 1; t < T; ++t) {
+      for (int k = 0; k < num_states_; ++k) {
+        f(k) = transmat(curr_states(t-1), k) * softev(k, t) * m(k, t+1);
+      }
+      multi.set_vals(f);
+      curr_states(t) = multi.Sample(r.rng());
+      trans_counts(curr_states(t-1), curr_states(t)) += 1;
+    }*/
+    SampleBack(transmat, softev, alpha, curr_states);
     
     // Sample transition matrix, regularized by adding a pseudocount 
     // XXX Make pseudocount a parameter of the model
     trans_counts = CountTransitions(curr_states);
+    std::cerr << "TRANS COUNTS: " << trans_counts << std::endl;
     for (int i = 0; i < num_states_; ++i) {
       trans_dist.set_alpha(trans_counts.row(i) + 1);
       transmat.row(i) = trans_dist.Sample(r.rng());
@@ -256,22 +286,29 @@ HMM::SampleBack(const MatrixType& transmat, const MatrixType& softev,
   MultiDist multi(num_states_);
   Rng r;
   
-  int T = alpha.cols();
-  
   if (curr_states.size() != alpha.cols()) {
     curr_states.resize(alpha.cols());
   }
-  Eigen::VectorXd curr_vals = Eigen::VectorXd::Zero(num_states_);
+  int T = alpha.cols();
+  MatrixType xi_filtered;
+
+  VectorType temp;
   // sample z_T ~ p(z_T = i| x_{1:T}) = \alpha_T(i)
-  multi.set_vals(alpha.col(T-1));
+  multi.set_vals(alpha.col(T-1) / alpha.col(T-1).sum());
   curr_states(T-1) = multi.Sample(r.rng());
   // sample z_t^* ~ p(z_t|z_{t+1}^*, x_{1:T}) 
   for (int t = T-2; t >= 0; --t) {
-    int j = curr_states(t+1);
-    for (int i = 0; i < num_states_; ++i) {      
-      curr_vals(i) = (trans_(i,j) * alpha(i,t) * softev(j, t+1)) / alpha(j,t+1);
+    xi_filtered = (alpha.col(t).matrix() * softev.col(t+1).matrix().transpose()).array() * transmat;
+    for (int i = 0; i < xi_filtered.rows(); ++i) {
+      xi_filtered.row(i) /= xi_filtered.row(i).sum();
     }
-    multi.set_vals(curr_vals);
+    //int j = curr_states(t+1);
+    //for (int i = 0; i < num_states_; ++i) {      
+    //  curr_vals(i) = (transmat(i,j) * alpha(i,t) * softev(j, t+1)) / alpha(j,t+1);
+    //}
+    temp = xi_filtered.col(curr_states(t+1));
+    temp /= temp.sum();
+    multi.set_vals(temp);
     curr_states(t) = multi.Sample(r.rng());
   }  
 }
@@ -297,16 +334,16 @@ HMM::FitEM()
   StateVectorType v;
   float delta_loglik = INFINITY;
   float old_loglik = 0.0;
-  for (int n = 0; n < 30; ++n) {
+  for (int n = 0; n < 100; ++n) {
     DEBUGLOG("EM step " + Stringify(n));
     //
     // E STEP  
     //
     UpdateSoftEvidence(softev);
-    
+    std::cerr << "SOFTEV " << softev.block(0, 100000, num_states_, 10) << std::endl;
     loglik = FwdBack(trans, init, softev, alpha, beta, gamma);    
     trans_counts = TwoSliceSum(trans, softev, alpha, beta);
-
+    std::cerr << "TRANS COUNTS: " << trans_counts << std::endl;
     std::cerr << "LOGLIK: " << loglik << std::endl;
     //
     // M STEP
@@ -314,7 +351,7 @@ HMM::FitEM()
     
     init = gamma.col(1) + init_prior_;
     init /= init.sum();
-    trans = trans_counts + trans_prior_;
+    trans = trans_counts;
     VectorType z = trans.rowwise().sum();
     for (int i = 0; i < num_states_; ++i) {
       trans.row(i) /= z; 
@@ -377,10 +414,12 @@ GaussHMM::UpdateEmissionDistEM(const MatrixType& weights)
       mean += weights(k,i) * (double)input_->get(i);
     }
     mean /= norm;
+    assert(mean > 0 && mean != NAN);
     for (size_t i = 0; i < input_->size(); ++i) {
       stddev += weights(k,i) * ((double)input_->get(i) - mean) * ((double)input_->get(i) - mean);
     }
     stddev /= norm;    
+    assert(stddev > 0 && stddev != NAN);
     emit_[k].set_mean(mean);
     emit_[k].set_stddev(sqrt(stddev));
     std::cerr << "State " << k << " mean " << mean << " std " << stddev << std::endl;

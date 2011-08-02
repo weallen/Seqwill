@@ -106,7 +106,7 @@ protected:
                  const VectorType& init, float& loglik, MatrixType& alpha);
   
   void SampleBack(const MatrixType& transmat, const MatrixType& softev, 
-                  const MatrixType& alpha, StateVectorType& curr_states);
+                  const MatrixType& gamma, StateVectorType& curr_states);
   
   // Computes p(y(t+1:T) | S(t) = i)
   void SmoothBack(const MatrixType& transmat, const MatrixType& softev, 
@@ -222,7 +222,48 @@ private:
 };
 
 
+double 
+eexp(double x)
+{
+  if (x == NAN) {
+    return 0.0;
+  }
+  return exp(x);
+}
 
+double
+eln(double x)
+{
+  assert(x >= 0.0);
+  if (x == 0.0)
+    return NAN;
+  else if (x > 0.0)
+    return log(x);
+}
 
+double
+elnsum(double x, double y)
+{
+  if (x == NAN || x) == NAN) {
+    if (x == NAN)
+      return y;
+    else
+      return x;
+  } else {
+    if (x > y) {
+      return x + eln(1+exp(y-x));
+    } else {
+      return y + eln(1+exp(x-y));
+    }
+  }  
+} 
 
+double
+elnproduct(double x, double y)
+{
+  if (x == NAN || y == NAN)
+    return NAN;
+  else
+    return x + y;
+}
 #endif
