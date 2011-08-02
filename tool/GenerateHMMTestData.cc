@@ -27,11 +27,11 @@ int main(int argc, char** argv) {
   double s = 0.0;
   for (int i = 0; i < 100000; ++i) {
     if (curr_state == 0) {
-      v[i] = g1.Sample(rng);
+      v[i] = g1.sample(rng);
       num_1++;
     }
     else if (curr_state == 1) {
-      v[i] = g2.Sample(rng);
+      v[i] = g2.sample(rng);
       num_2++;
     }
     trueval[i] = curr_state;

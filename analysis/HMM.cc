@@ -116,7 +116,7 @@ HMM::TwoSliceSum(const MatrixType& transmat, const MatrixType& softev,
   for (int t = T-2; t >= 0; --t) {
     // multiply by soft evidence
     b = beta.col(t+1) * softev.col(t+1);
-
+    
     xit = transmat * (alpha.col(t).matrix() * b.matrix().transpose()).array();    
     xi_summed += xit / xit.sum();
   }
@@ -175,8 +175,10 @@ HMM::FilterFwd(const MatrixType& transmat, const MatrixType& softev,
     alpha.col(t) *= softev.col(t);
     scale(t) = alpha.col(t).sum();
     if (scale(t) <= 0) {
+      std::cerr << at << std::endl;
+      std::cerr << softev.col(t) << std::endl;
+      std::cerr << alpha.col(t-1) << std::endl;
       std::cerr << t << std::endl;
-      std::cerr << transmat << std::endl;
     }
     alpha.col(t) /= scale(t);
   }
@@ -197,7 +199,6 @@ HMM::SmoothBack(const MatrixType& transmat, const MatrixType& softev,
     // beta(:,t) = trans_ * (beta(:,t+1) .* soft_evidence_(:,t+1))
     beta.col(t) = transmat.matrix() * (beta.col(t+1) * softev.col(t+1)).matrix();    
     // normalize
-    assert(beta.col(t).sum() > 0);
     beta.col(t) /= beta.col(t).sum();
   }
 }
@@ -206,7 +207,6 @@ void
 HMM::FitBlockedGibbs()
 {
   int length = input_->size();
-  int T = length;
   Rng r;
   MultiDist m;
   
@@ -218,52 +218,25 @@ HMM::FitBlockedGibbs()
   }
   MatrixType alpha;
   MatrixType transmat = trans_;
-  MatrixType trans_counts = MatrixType::Zero(num_states_, num_states_);
-  VectorType init = init_;
+  MatrixType trans_counts;
+  MatrixType init = init_;
   MatrixType softev;
   DirichletDist trans_dist;
-  MultiDist multi(num_states_);
-
+  
   float loglik;
   for (int n = 0; n < 100; ++n) {
     DEBUGLOG("Blocked Gibbs step: " + Stringify(n));
     UpdateSoftEvidence(softev);
     std::cerr << "Filter fwd" << std::endl;
-    FilterFwd(transmat, softev, init, loglik, alpha);    
+    //FilterFwd(transmat, softev, init, loglik, alpha);
     
-    // FILTER FORWARD
-    /*
-    MatrixType m(num_states_, length);
-    for (int i = 0; i < num_states_; ++i) {
-      m(i, T - 1) = 1.0;
-    }
-    for (int t = T-2; t >= 0; --t) {
-      for (int k = 0; k < num_states_; ++k) {
-        for (int j = 0; j < num_states_; ++j) {
-          m(k,t) += transmat(k,j) * softev(j, t) * m(j, t+1);
-        }
-      }
-    }*/
     
     std::cerr << "Sample back" << std::endl;
-    /*
-    VectorType f(num_states_);
-    multi.set_vals(init);
-    curr_states(0) = multi.Sample(r.rng());
-    for (int t = 1; t < T; ++t) {
-      for (int k = 0; k < num_states_; ++k) {
-        f(k) = transmat(curr_states(t-1), k) * softev(k, t) * m(k, t+1);
-      }
-      multi.set_vals(f);
-      curr_states(t) = multi.Sample(r.rng());
-      trans_counts(curr_states(t-1), curr_states(t)) += 1;
-    }*/
-    SampleBack(transmat, softev, alpha, curr_states);
+    //SampleBack(transmat, softev, alpha, curr_states);
     
     // Sample transition matrix, regularized by adding a pseudocount 
     // XXX Make pseudocount a parameter of the model
     trans_counts = CountTransitions(curr_states);
-    std::cerr << "TRANS COUNTS: " << trans_counts << std::endl;
     for (int i = 0; i < num_states_; ++i) {
       trans_dist.set_alpha(trans_counts.row(i) + 1);
       transmat.row(i) = trans_dist.Sample(r.rng());
@@ -286,29 +259,22 @@ HMM::SampleBack(const MatrixType& transmat, const MatrixType& softev,
   MultiDist multi(num_states_);
   Rng r;
   
+  int T = alpha.cols();
+  
   if (curr_states.size() != alpha.cols()) {
     curr_states.resize(alpha.cols());
   }
-  int T = alpha.cols();
-  MatrixType xi_filtered;
-
-  VectorType temp;
+  Eigen::VectorXd curr_vals = Eigen::VectorXd::Zero(num_states_);
   // sample z_T ~ p(z_T = i| x_{1:T}) = \alpha_T(i)
-  multi.set_vals(alpha.col(T-1) / alpha.col(T-1).sum());
+  multi.set_vals(alpha.col(T-1));
   curr_states(T-1) = multi.Sample(r.rng());
   // sample z_t^* ~ p(z_t|z_{t+1}^*, x_{1:T}) 
   for (int t = T-2; t >= 0; --t) {
-    xi_filtered = (alpha.col(t).matrix() * softev.col(t+1).matrix().transpose()).array() * transmat;
-    for (int i = 0; i < xi_filtered.rows(); ++i) {
-      xi_filtered.row(i) /= xi_filtered.row(i).sum();
+    int j = curr_states(t+1);
+    for (int i = 0; i < num_states_; ++i) {      
+      curr_vals(i) = (trans_(i,j) * alpha(i,t) * softev(j, t+1)) / alpha(j,t+1);
     }
-    //int j = curr_states(t+1);
-    //for (int i = 0; i < num_states_; ++i) {      
-    //  curr_vals(i) = (transmat(i,j) * alpha(i,t) * softev(j, t+1)) / alpha(j,t+1);
-    //}
-    temp = xi_filtered.col(curr_states(t+1));
-    temp /= temp.sum();
-    multi.set_vals(temp);
+    multi.set_vals(curr_vals);
     curr_states(t) = multi.Sample(r.rng());
   }  
 }
@@ -334,16 +300,18 @@ HMM::FitEM()
   StateVectorType v;
   float delta_loglik = INFINITY;
   float old_loglik = 0.0;
-  for (int n = 0; n < 100; ++n) {
+  int n = 0;
+  while (delta_loglik > 0.001) {
+    n++;
     DEBUGLOG("EM step " + Stringify(n));
     //
     // E STEP  
     //
     UpdateSoftEvidence(softev);
-    std::cerr << "SOFTEV " << softev.block(0, 100000, num_states_, 10) << std::endl;
+    
     loglik = FwdBack(trans, init, softev, alpha, beta, gamma);    
     trans_counts = TwoSliceSum(trans, softev, alpha, beta);
-    std::cerr << "TRANS COUNTS: " << trans_counts << std::endl;
+
     std::cerr << "LOGLIK: " << loglik << std::endl;
     //
     // M STEP
@@ -351,13 +319,13 @@ HMM::FitEM()
     
     init = gamma.col(1) + init_prior_;
     init /= init.sum();
-    trans = trans_counts;
+    trans = trans_counts + trans_prior_;
     VectorType z = trans.rowwise().sum();
     for (int i = 0; i < num_states_; ++i) {
       trans.row(i) /= z; 
     }
     UpdateEmissionDistEM(gamma);
-    delta_loglik = old_loglik - loglik;
+    delta_loglik = abs(old_loglik - loglik);
     old_loglik = loglik;
   } 
   trans_ = trans;
@@ -398,7 +366,9 @@ GaussHMM::UpdateSoftEvidence(MatrixType& softev)
     softev.resize(num_states_, input_->size());
   for (int i = 0; i < softev.cols(); ++i) {
     for (int j = 0; j < softev.rows(); ++j) {
-      softev(j, i) = emit_[j].Pdf((double)input_->get(i));
+      
+      // XXX HACK ALERT -- ADD MACHINE EPSILON TO PREVENT UNDERFLOW
+      softev(j, i) = emit_[j].Pdf((double)input_->get(i)) + 1.11e-16;
     }
   }
 }
@@ -414,12 +384,10 @@ GaussHMM::UpdateEmissionDistEM(const MatrixType& weights)
       mean += weights(k,i) * (double)input_->get(i);
     }
     mean /= norm;
-    assert(mean > 0 && mean != NAN);
     for (size_t i = 0; i < input_->size(); ++i) {
       stddev += weights(k,i) * ((double)input_->get(i) - mean) * ((double)input_->get(i) - mean);
     }
     stddev /= norm;    
-    assert(stddev > 0 && stddev != NAN);
     emit_[k].set_mean(mean);
     emit_[k].set_stddev(sqrt(stddev));
     std::cerr << "State " << k << " mean " << mean << " std " << stddev << std::endl;
@@ -489,6 +457,75 @@ GaussHMM::UpdateEmissionDistGibbs(Rng& r, const StateVectorType& states)
   }
 }
 
+//-----------------------------------------------------------------
+
+MultiVarGaussHMM::MultiVarGaussHMM()
+: HMM()
+, emit_(1)
+{}
+
+MultiVarGaussHMM::MultiVarGaussHMM(int num_states)
+: HMM(num_states)
+, emit_(num_states)
+{}
+
+void
+MultiVarGaussHMM::NumStatesChanged()
+{
+  emit_.resize(num_states_);
+}
+
+void
+MultiVarGaussHMM::ComputeAnalysis()
+{
+  DEBUGLOG("Fitting model by EM");
+  FitEM();
+}
+
+void
+MultiVarGaussHMM::UpdateSoftEvidence(MatrixType& softev)
+{  
+  if (softev.cols() != (int)input_->size() || softev.rows() != num_states_) 
+    softev.resize(num_states_, input_->size());
+  for (int i = 0; i < softev.cols(); ++i) {
+    for (int j = 0; j < softev.rows(); ++j) {
+      
+      // XXX HACK ALERT -- ADD MACHINE EPSILON TO PREVENT UNDERFLOW
+      softev(j, i) = emit_[j].Pdf((double)input_->get(i)) + 1.11e-16;
+    }
+  }
+}
+
+void
+MultiVarGaussHMM::UpdateEmissionDistEM(const MatrixType& weights)
+{
+  for (int k = 0; k < num_states_; ++k) {
+    double norm = weights.row(k).sum();
+    double mean = 0.0;
+    double stddev = 0.0;      
+    for (size_t i = 0; i < input_->size(); ++i) {
+      //mean += weights(k,i) * (double)input_->get(i);
+    }
+    //mean /= norm;
+    for (size_t i = 0; i < input_->size(); ++i) {
+      //stddev += weights(k,i) * ((double)input_->get(i) - mean) * ((double)input_->get(i) - mean);
+    }
+    //stddev /= norm;    
+    //emit_[k].set_mean(mean);
+    //emit_[k].set_stddev(sqrt(stddev));
+    //std::cerr << "State " << k << " mean " << mean << " std " << stddev << std::endl;
+  }      
+}
+
+
+// From paper "Inferring a Gaussian distribution" by T. Minka, 2001
+// And pg 83 of Bayesian Data Analysis ("Samping from the Joint Posterior
+// Distribution" of a normal distribution)
+void
+MultiVarGaussHMM::UpdateEmissionDistGibbs(Rng& r, const StateVectorType& states)
+{
+  ERRORLOG("GIBBS SAMPLING NOT IMPLEMENTED FOR MULTIVARGAUSSHMM");
+}
 
 //-----------------------------------------------------------------
 

@@ -26,7 +26,7 @@ namespace {
       track2_ = Track<float>::Ptr(new Track<float>);
       track3_ = Track<float>::Ptr(new Track<float>);
       h_ = new GaussHMM(2);
-      h2_ = new GaussHMM(4);
+      h2_ = new GaussHMM(6);
       TrackFile f;
       TrackFile f2;
       f.Open(std::string("/Users/admin/Documents/test_hmm.trk"));
@@ -42,12 +42,6 @@ namespace {
       for (size_t i = 0; i < track2_->size(); ++i) {
         double temp = abs(track2_->get(i) - track3_->get(i));
         track2_->set(i, temp);
-        if (temp > 0.5) {
-          num++;
-//          track2_->set(i, 1.0);
-        } else {
-//          track2_->set(i, 0.0);
-        }        
       }
       std::cerr << num << " greater than 0.5, out of " << track2_->size() << std::endl;
       
@@ -60,10 +54,10 @@ namespace {
     }
     
     virtual void SetUp() {
-      HMM::MatrixType trans_prior = HMM::MatrixType::Constant(2, 2, 1.0);
+      HMM::MatrixType trans_prior = HMM::MatrixType::Constant(3, 3, 1/3);
       HMM::VectorType init = HMM::VectorType::Constant(3, 1/3);
       //h2_->set_transition(trans_prior);
-      h2_->set_trans_prior(trans_prior);
+      //h2_->set_trans_prior(trans_prior);
       //h2_->set_init_probs(init);
       //h2_->set_init_probs_prior(init);
       
@@ -74,10 +68,10 @@ namespace {
       h_->Init();
             
       std::vector<GaussDist> g2;
-      HMM::VectorType means = HMM::VectorType::Random(4);
+      HMM::VectorType means = HMM::VectorType::Random(6);
       
-      for (int i = 0; i < 4; ++i) {
-        g2.push_back(GaussDist(abs(means(i)), 1.0));
+      for (int i = 0; i < 6; ++i) {
+        g2.push_back(GaussDist(abs(means(i)),1.0));
       }
       h2_->set_emit(g2);
       h2_->Init();
@@ -93,10 +87,8 @@ namespace {
     GaussHMM* h_;
     GaussHMM* h2_;
   };
-  
-
   TEST_F(HMMTest, FitRealDataTest) {
-    std::cerr << h2_->transition() << std::endl;
+    //std::cerr << h2_->transition() << std::endl;
     h2_->FitEM();
     HMM::StateVectorType path;
     h2_->Decode(path);
@@ -107,23 +99,15 @@ namespace {
         num++;
       }
     }
-    std::cerr << "NUM GREATER THAN 0 " << num << std::endl;
-    std::cerr << (path == 0).count() << std::endl;
-    std::cerr << (path == 1).count() << std::endl;
-    
-    std::fstream f("/Users/admin/Documents/chr1.txt");
-    f << "fixedStep chr=chr6 start=0 step=50\n";
+    std::fstream f("/Users/admin/Documents/output.wig",std::fstream::out);
+    f << "fixedStep  chrom=chr6  start=0  step=50\n";
     for (int i = 0; i < path.size(); ++i) {
       f << path(i) << std::endl;
     }
-  }
-
-  TEST_F(HMMTest, FitGibbsTest) {
-    h_->FitBlockedGibbs();
-    HMM::StateVectorType path;
-    h_->Decode(path);
-    std::cerr << (path == 0).count() << " in state 0" << std::endl;
-    std::cerr << (path == 1).count() << " in state 1" << std::endl;
+    std::cerr << "NUM GREATER THAN 0 " << num << std::endl;
+    std::cerr << (path == 0).count() << std::endl;
+    std::cerr << (path == 1).count() << std::endl;
+    std::cerr << (path == 2).count() << std::endl;
   }
 
   TEST_F(HMMTest, FitEMTest) {
@@ -136,8 +120,19 @@ namespace {
     ASSERT_EQ((path == 0).count(),12520 );
     ASSERT_EQ((path == 1).count(), 87480);
     std::cerr << h_->transition() << std::endl;
-    
   }
+
+  
+  
+
+  TEST_F(HMMTest, FitGibbsTest) {
+    h_->FitBlockedGibbs();
+    HMM::StateVectorType path;
+    h_->Decode(path);
+    std::cerr << (path == 0).count() << " in state 0" << std::endl;
+    std::cerr << (path == 1).count() << " in state 1" << std::endl;
+  }
+
   
 }//Namespace
 int main(int argc, char** argv) {
