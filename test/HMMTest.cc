@@ -87,28 +87,6 @@ namespace {
     GaussHMM* h_;
     GaussHMM* h2_;
   };
-  TEST_F(HMMTest, FitRealDataTest) {
-    //std::cerr << h2_->transition() << std::endl;
-    h2_->FitEM();
-    HMM::StateVectorType path;
-    h2_->Decode(path);
-    std::cerr << h2_->transition() << std::endl;
-    int num = 0;
-    for (int i = 0; i < path.cols(); ++i) {
-      if (path(i) > 0) {
-        num++;
-      }
-    }
-    std::fstream f("/Users/admin/Documents/output.wig",std::fstream::out);
-    f << "fixedStep  chrom=chr6  start=0  step=50\n";
-    for (int i = 0; i < path.size(); ++i) {
-      f << path(i) << std::endl;
-    }
-    std::cerr << "NUM GREATER THAN 0 " << num << std::endl;
-    std::cerr << (path == 0).count() << std::endl;
-    std::cerr << (path == 1).count() << std::endl;
-    std::cerr << (path == 2).count() << std::endl;
-  }
 
   TEST_F(HMMTest, FitEMTest) {
     h_->FitEM();
@@ -131,6 +109,29 @@ namespace {
     h_->Decode(path);
     std::cerr << (path == 0).count() << " in state 0" << std::endl;
     std::cerr << (path == 1).count() << " in state 1" << std::endl;
+  }
+  
+  TEST_F(HMMTest, FitRealDataTest) {
+    //std::cerr << h2_->transition() << std::endl;
+    h2_->FitBlockedGibbs();
+    HMM::StateVectorType path;
+    h2_->Decode(path);
+    std::cerr << h2_->transition() << std::endl;
+    int num = 0;
+    for (int i = 0; i < path.cols(); ++i) {
+      if (path(i) > 0) {
+        num++;
+      }
+    }
+    std::fstream f("/Users/admin/Documents/output.wig",std::fstream::out);
+    f << "fixedStep  chrom=chr6  start=0  step=50\n";
+    for (int i = 0; i < path.size(); ++i) {
+      f << path(i) << std::endl;
+    }
+    std::cerr << "NUM GREATER THAN 0 " << num << std::endl;
+    std::cerr << (path == 0).count() << std::endl;
+    std::cerr << (path == 1).count() << std::endl;
+    std::cerr << (path == 2).count() << std::endl;
   }
 
   

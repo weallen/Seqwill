@@ -193,32 +193,6 @@ private:
   std::vector<GaussDist> emit_;
 };
 
-class MultiVarGaussHMM : public HMM
-{
-  using HMM::TrackInPtr;
-  using HMM::TrackOutPtr;
-  using Analysis<float, int>::Compute;
-  
-  MultiVarGaussHMM();
-  MultiVarGaussHMM(int num_states);
-  virtual ~MultiVarGaussHMM() {}
-  
-  virtual void ComputeAnalysis();
-  virtual void UpdateSoftEvidence(MatrixType& softev);
-  virtual void Compute() { ComputeAnalysis(); }
-  virtual void UpdateEmissionDistEM(const MatrixType& weights);
-  virtual void UpdateEmissionDistGibbs(Rng& r, const StateVectorType& states);
-  virtual void NumStatesChanged();
-  
-  void set_emit(const std::vector<MultiVarGaussDist>& emits)
-  { emit_ = emits; }
-  
-  const std::vector<MultiVarGaussDist>& emit() const { return emit_; }
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  
-private:
-  std::vector<MultiVarGaussDist> emit_;  
-};
 
 class BernHMM : public HMM
 {
