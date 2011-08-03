@@ -3,12 +3,13 @@
 
 #include <vector>
 #include <Eigen/Dense>
-#include <Eigen/LU>
+#include <Eigen/Cholesky>
 #include <gsl/gsl_vector.h>
 
 #include <math.h>
 #include <cassert>
 #include "analysis/gsl_addon.h"
+#include "base/MatrixUtil.h"
 
 class GaussDist 
 {
@@ -63,21 +64,22 @@ private:
 class MVGaussDist
 {
 public:  
-  typedef Eigen::VectorXf VectorType;
-  typedef Eigen::MatrixXf MatrixType;
+
 
   MVGaussDist()
-  : ndim_(2)
-  , m_(2)
-  , var_(2,2)
-  {  }
+    : ndim_(2)   
+    , vardet_(0.0)
+    { set_mean(Eigen::VectorXd::Random(2));
+      set_var(Eigen::MatrixXd::Identity(2, 2)); }
   
-  MVGaussDist(const VectorType& m, const MatrixType& c)
-  : ndim_(m.size())
-  {
-    set_mean(m);
-    set_var(c);
-  }
+  MVGaussDist(const Eigen::VectorXd& m, const Eigen::MatrixXd& c)
+    : ndim_(m.size())
+    , vardet_(0.0)
+    {
+      set_mean(m);
+      set_var(c);
+    }
+
   virtual ~MVGaussDist(){}
   
   void set_ndim(int n)
@@ -86,45 +88,48 @@ public:
   const int ndim() const
   { return ndim_; }
   
-  void set_mean(const VectorType& m)
+  void set_mean(const Eigen::VectorXd& m)
   { m_ = m; }
   
-  VectorType mean()
+  Eigen::VectorXd mean()
   { return m_; }
   
-  void set_var(const MatrixType& c)
-  { var_ = c; }
+  // precomputes varI_ and varDet_
+  void set_var(const Eigen::MatrixXd& c);
   
-  MatrixType var()
+  Eigen::MatrixXd var()
   { return var_; }
   
-  double Pdf(const VectorType& pt);
-  VectorType Sample(gsl_rng* r); 
+  double Pdf(const Eigen::VectorXd& pt);
+  Eigen::VectorXd Sample(gsl_rng* r); 
 
 private:
   int ndim_;
-  VectorType m_;
-  MatrixType var_;
+  double vardet_;
+  // cholfact_ is the upper triangular
+  // cholesky decomposition factor Sigma = R' R
+  Eigen::MatrixXd cholfact_;
+  Eigen::MatrixXd varI_;
+  Eigen::VectorXd m_;
+  Eigen::MatrixXd var_;
 };
 
 class MVStudentTDist
 {
 public:
-  typedef Eigen::VectorXf VectorType;
-  typedef Eigen::MatrixXf MatrixType;
 
   MVStudentTDist();
   virtual ~MVStudentTDist();
   
-  void set_loc(const VectorType& loc);
-  VectorType loc() const;
-  void set_scale(const MatrixType& scale);
-  MatrixType scale() const;
+  void set_loc(const Eigen::VectorXd& loc);
+  Eigen::VectorXd loc() const;
+  void set_scale(const Eigen::MatrixXd& scale);
+  Eigen::MatrixXd scale() const;
   void set_dof(int dof);
   const int dof() const;
   
-  double Pdf(VectorType pt);
-  VectorType Sample(gsl_rng* r);
+  double Pdf(Eigen::VectorXd pt);
+  Eigen::VectorXd Sample(gsl_rng* r);
 
 private:
   gsl_vector* location_;
@@ -136,13 +141,11 @@ private:
 class WishartDist
 {
 public:
-  typedef Eigen::VectorXf VectorType;
-  typedef Eigen::MatrixXf MatrixType;
 
   WishartDist();
   virtual ~WishartDist();
   
-  double Pdf(const VectorType& pt);
+  double Pdf(const Eigen::VectorXd& pt);
 };
 
 class MultiDist
@@ -236,18 +239,17 @@ private:
 class DirichletDist
 {
 public:
-  typedef Eigen::VectorXd VectorType;
   
   DirichletDist();
   DirichletDist(int K);
   virtual ~DirichletDist() 
   { delete[] alpha_; }
   
-  void set_alpha(const VectorType& alpha);
-  VectorType alpha();
+  void set_alpha(const Eigen::VectorXd& alpha);
+  Eigen::VectorXd alpha();
   
-  VectorType Sample(gsl_rng* r);
-  double Pdf(const VectorType& x);
+  Eigen::VectorXd Sample(gsl_rng* r);
+  double Pdf(const Eigen::VectorXd& x);
   
 private:
   double* alpha_;
@@ -258,8 +260,6 @@ private:
 class MixGaussDist 
 {
 public:
-  typedef Eigen::Matrix<float, Eigen::Dynamic, 1> VectorType;
-  typedef Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> MatrixType;
 
   MixGaussDist() {}
   virtual ~MixGaussDist() {
@@ -273,8 +273,8 @@ public:
  
 private:
   int nmix_; // num of mixture components
-  std::vector<VectorType> means_;
-  std::vector<MatrixType> covs_;
+  std::vector<Eigen::VectorXd> means_;
+  std::vector<Eigen::MatrixXd> covs_;
 };
 
 

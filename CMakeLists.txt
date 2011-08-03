@@ -8,7 +8,8 @@ set(CMAKE_C_COMPILER "clang")
 set(CMAKE_CXX_COMPILER "clang++")
 project(Seqwill)
 
-set(CMAKE_CXX_FLAGS "-g")
+set(CMAKE_CXX_FLAGS "-O3")
+#set(CMAKE_CXX_FLAGS "-g")
 #set(cxx_exception_flags "-fexceptions")
 #set(cxx_no_exception_flags "-fnoexceptions")
 
@@ -45,6 +46,7 @@ set(UTIL_SRCS util/SComm.h
     util/FastaParser.h)
 
 set(BASE_SRCS base/BEDelement.h
+   base/MatrixUtil.h
     base/ProgressBar.h 
     base/ProgressBar.cc
     base/WIG.h
@@ -81,6 +83,8 @@ set(DATA_SRCS data/TrackData.h
 set(ANALYSIS_SRCS analysis/Genome.cc
     analysis/gsl_addon.cc
     analysis/gsl_addon.h 
+    analysis/Kmeans.h
+    analysis/Kmeans.cc
     analysis/HMM.h
     analysis/HMM.cc
     analysis/Dist.h
@@ -128,3 +132,4 @@ endfunction()
 cxx_test(HDFTrackTest)
 cxx_test(LoadDataTest)
 cxx_test(HMMTest)
+cxx_test(DistTest)

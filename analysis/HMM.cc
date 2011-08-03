@@ -477,18 +477,22 @@ GaussHMM::UpdateEmissionDistGibbs(Rng& r, const StateVectorType& states)
 
 GaussMultiTrackHMM::GaussMultiTrackHMM()
 : GaussHMM()
+, emits_(1)
+, tracks_(0)
 {
 }
 
 GaussMultiTrackHMM::GaussMultiTrackHMM(int num_states)
 : GaussHMM(num_states)
+, emits_(num_states)
+, tracks_(0)
 {
 }
 
 void
 GaussMultiTrackHMM::NumStatesChanged()
 {
-  emit_.resize(num_states_);
+  emits_.resize(num_states_);
 }
 
 void
@@ -497,17 +501,21 @@ GaussMultiTrackHMM::add_track(GaussMultiTrackHMM::TrackInPtr input)
   if (tracks_.size() == 0) 
     input_ = input;
   tracks_.push_back(input);
+  for (int i = 0; i < num_states_; ++i) {
+    emits_[i] = std::vector<GaussDist>(tracks_.size()); 
+  }
 }
 
 void 
 GaussMultiTrackHMM::UpdateEmissionDistEM(const MatrixType& weights)
 {
   int tnum = tracks_.size();
-  MVGaussDist::VectorType v(tnum);
+  Eigen::VectorXd v(tnum);
+  std::vector<GaussDist> temp;  
   for (int k = 0; k < num_states_; ++k) {    
     double norm = weights.row(k).sum();
-    MVGaussDist::VectorType mean = MVGaussDist::VectorType::Zero(tnum);
-    MVGaussDist::MatrixType stddev = MVGaussDist::MatrixType::Zero(tnum, tnum);
+    Eigen::VectorXd mean = Eigen::VectorXd::Zero(tnum);
+    Eigen::VectorXd stddev = Eigen::VectorXd::Zero(tnum);
     for (size_t i = 0; i < input_->size(); ++i) {
       for (int tr = 0; tr < tracks_.size(); ++tr) {
         v(tr) = (double) tracks_[tr]->get(i);
@@ -515,16 +523,20 @@ GaussMultiTrackHMM::UpdateEmissionDistEM(const MatrixType& weights)
       mean += weights(k,i) * v;
     }
     mean /= norm;
+    // make sure variance is a diagonal matrix -- assumes tracks are independent.
     for (size_t i = 0; i < input_->size(); ++i) {
       for (int tr = 0; tr < tracks_.size(); ++tr) {
-        v(tr) = (double) tracks_[tr]->get(i);
+	stddev(tr) += weights(k,i) * pow((double)tracks_[tr]->get(i) - mean(tr),2);
       }
-      stddev += weights(k,i) * (v - mean) * (v - mean).transpose();
     }
     stddev /= norm;    
-    emits_[k].set_mean(mean);
-    emits_[k].set_var(stddev);
-    std::cerr << "State " << k << " mean " << mean << " std " << stddev << std::endl;
+    for (int tr = 0; tr < tracks_.size(); ++tr) {
+      temp = emits_[k];
+      temp[tr].set_mean(mean(tr));
+      temp[tr].set_stddev(sqrt(stddev(tr)));
+      std::cerr << "Track " << tr  << " Mean: " << temp[tr].mean() << " Stddev: " << temp[tr].stddev() << std::endl;
+      emits_[k] = temp;
+    }
   }        
 }
 
@@ -540,7 +552,97 @@ GaussMultiTrackHMM::UpdateSoftEvidence(MatrixType& softev)
   if (softev.rows() != num_states_ || softev.cols() != (int)input_->size())
     softev.resize(num_states_, input_->size());
   int nt = tracks_.size();
-  MVGaussDist::VectorType v(nt);
+  std::vector<GaussDist> temp;
+  Eigen::VectorXd v(nt);
+  for (int i = 0; i < softev.cols(); ++i) {
+    for (int j = 0; j < softev.rows(); ++j) {
+      softev(j, i) = 1.0;
+      temp = emits_[j];
+      for (int k = 0; k < nt; ++k) {
+        softev(j,i) *= temp[k].Pdf((double)tracks_[k]->get(i)) + 1.11e-16;
+      }
+    }
+  }
+}
+
+
+
+
+
+
+//-----------------------------------------------------------------
+
+MVGaussMultiTrackHMM::MVGaussMultiTrackHMM()
+: GaussHMM()
+{
+}
+
+MVGaussMultiTrackHMM::MVGaussMultiTrackHMM(int num_states)
+: GaussHMM(num_states)
+{
+}
+
+void
+MVGaussMultiTrackHMM::NumStatesChanged()
+{
+  emits_.resize(num_states_);
+}
+
+void
+MVGaussMultiTrackHMM::add_track(GaussMultiTrackHMM::TrackInPtr input)
+{
+  if (tracks_.size() == 0) 
+    input_ = input;
+  tracks_.push_back(input);
+}
+
+void 
+MVGaussMultiTrackHMM::UpdateEmissionDistEM(const MatrixType& weights)
+{
+  int tnum = tracks_.size();
+  double temp;
+  Eigen::VectorXd v(tnum);
+  Eigen::MatrixXd ident = Eigen::MatrixXd::Identity(tnum, tnum);
+  for (int k = 0; k < num_states_; ++k) {    
+    double norm = weights.row(k).sum();
+    Eigen::VectorXd mean = Eigen::VectorXd::Zero(tnum);
+    Eigen::MatrixXd stddev = Eigen::MatrixXd::Zero(tnum, tnum);
+    for (size_t i = 0; i < input_->size(); ++i) {
+      for (int tr = 0; tr < tracks_.size(); ++tr) {
+        v(tr) = (double) tracks_[tr]->get(i);
+      }
+      mean += weights(k,i) * v;
+    }
+    mean /= norm;
+    for (size_t i = 0; i < input_->size(); ++i) {
+      for (int tr = 0; tr < tracks_.size(); ++tr) {
+        v(tr) = (double) tracks_[tr]->get(i);
+
+      }
+      stddev += weights(k,i) * (v - mean) * (v - mean).transpose() ;
+    }
+    stddev /= norm;    
+    emits_[k].set_mean(mean);
+    emits_[k].set_var(stddev);
+    //    std::cerr << "State " << k << std::endl;
+    //    std::cerr << "Mean " << mean  << std::endl;
+    //    std::cerr << "Std " << stddev << std::endl;
+  }        
+}
+
+void 
+MVGaussMultiTrackHMM::UpdateEmissionDistGibbs(Rng& r, const StateVectorType& states)
+{
+  ERRORLOG("NOT IMPLMEENTED YET");
+}
+
+void
+MVGaussMultiTrackHMM::UpdateSoftEvidence(MatrixType& softev)
+{  
+  if (softev.rows() != num_states_ || softev.cols() != (int)input_->size())
+    softev.resize(num_states_, input_->size());
+  int nt = tracks_.size();
+  Eigen::VectorXd v(nt);
   for (int i = 0; i < softev.cols(); ++i) {
     for (int j = 0; j < softev.rows(); ++j) {
       for (int k = 0; k < nt; ++k) {
@@ -550,4 +652,6 @@ GaussMultiTrackHMM::UpdateSoftEvidence(MatrixType& softev)
     }
   }
 }
+
+
 

@@ -42,17 +42,38 @@ BernDist::Sample(const gsl_rng* r)
 
 
 double
-MVGaussDist::Pdf(const VectorType& pt)
+MVGaussDist::Pdf(const Eigen::VectorXd& pt)
 {
-  double denom = sqrt(pow(2 * M_PI, ndim_) * var_.determinant());
-  double temp = (pt - m_).transpose() * var_.inverse() * (pt - m_);
-  double numer = exp(-(0.5 * temp));
-  return (numer / denom);
+  double quadform = (m_ - pt).transpose() * varI_ * (m_ - pt);
+  double logl = -0.5 * quadform - log(sqrt(vardet_)) - ndim_*log(2*M_PI)/2.0;
+  return exp(logl);
 }
 
-MVGaussDist::VectorType
+void
+MVGaussDist::set_var(const Eigen::MatrixXd& var) 
+{
+  assert(var.rows() == ndim_ && var.cols() == ndim_);
+  // var = U'U, where U is upper triangular
+  Eigen::MatrixXd cholfact_ = var.llt().matrixU(); 
+  Eigen::MatrixXd ttI = cholfact_.inverse();
+  varI_ = ttI * ttI.transpose();
+  vardet_ = 1.0;
+  // p 147 of MLaPP
+  // |Sigma| = \prod_{i=1}^D R_{i,i}^2
+  for (int i = 0; i < var.cols(); ++i) {
+    vardet_ *= cholfact_(i,i)*cholfact_(i,i);
+  }
+}
+
+Eigen::VectorXd
 MVGaussDist::Sample(gsl_rng* r)
 {
+  GaussDist g(0.0, 1.0);
+  Eigen::VectorXd temp(ndim_);
+  for (int i = 0; i < ndim_; ++i) {
+    temp(i) = g.Sample(r);
+  }
+  return (m_ + cholfact_.transpose() * temp);
 }
        
 //----------------------------------------------------------
@@ -157,7 +178,7 @@ DirichletDist::DirichletDist(int K) : K_(K)
 }
 
 void
-DirichletDist::set_alpha(const VectorType& alpha)
+DirichletDist::set_alpha(const Eigen::VectorXd& alpha)
 {
   if (K_ != alpha.size()) {
     K_ = alpha.size();
@@ -169,21 +190,21 @@ DirichletDist::set_alpha(const VectorType& alpha)
   }
 }
 
-DirichletDist::VectorType
+Eigen::VectorXd
 DirichletDist::alpha()
 {
-  VectorType v(K_);
+  Eigen::VectorXd v(K_);
   for (int i = 0; i < K_; ++i) {
     v(i) = alpha_[i];
   }
   return v;
 }
 
-DirichletDist::VectorType 
+Eigen::VectorXd 
 DirichletDist::Sample(gsl_rng* r)
 {
   double* temp = new double[K_];
-  VectorType ret(K_);
+  Eigen::VectorXd ret(K_);
   gsl_ran_dirichlet(r, (size_t)K_, alpha_, temp);
   for (int i = 0; i < K_; ++i) {
     ret(i) = temp[i];
@@ -193,7 +214,7 @@ DirichletDist::Sample(gsl_rng* r)
 }
 
 double 
-DirichletDist::Pdf(const VectorType& x)
+DirichletDist::Pdf(const Eigen::VectorXd& x)
 {
   assert(x.size() == K_);
   const double* d = x.data();

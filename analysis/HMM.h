@@ -193,6 +193,7 @@ protected:
 };
 
 
+
 class GaussMultiTrackHMM : public GaussHMM
 {
 public:
@@ -203,6 +204,39 @@ public:
   GaussMultiTrackHMM();
   GaussMultiTrackHMM(int num_states);
   virtual ~GaussMultiTrackHMM() {}
+  
+  virtual void UpdateSoftEvidence(MatrixType& softev);
+  virtual void UpdateEmissionDistEM(const MatrixType& weights);
+  virtual void UpdateEmissionDistGibbs(Rng& r, const StateVectorType& states);
+  virtual void NumStatesChanged();
+  
+  void set_emit(const std::vector<std::vector<GaussDist> >& emits)
+  { emits_ = emits; }    
+  const std::vector<std::vector<GaussDist> >& emit() const { return emits_; }
+  
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  
+  virtual void set_input(TrackInPtr input)
+  { input_ = input; tracks_[0] = input; }
+  
+  virtual void add_track(TrackInPtr input);
+  
+protected:
+  
+  std::vector<TrackInPtr> tracks_;
+  std::vector<std::vector<GaussDist> > emits_;
+};
+
+class MVGaussMultiTrackHMM : public GaussHMM
+{
+public:
+  using HMM::TrackInPtr;
+  using HMM::TrackOutPtr;
+  using Analysis<float, int>::Compute;
+  
+  MVGaussMultiTrackHMM();
+  MVGaussMultiTrackHMM(int num_states);
+  virtual ~MVGaussMultiTrackHMM() {}
   
   virtual void UpdateSoftEvidence(MatrixType& softev);
   virtual void UpdateEmissionDistEM(const MatrixType& weights);
@@ -225,7 +259,6 @@ protected:
   std::vector<TrackInPtr> tracks_;
   std::vector<MVGaussDist > emits_;
 };
-
 
 
 

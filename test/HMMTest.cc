@@ -15,6 +15,7 @@
 
 #include "analysis/Dist.h"
 #include "analysis/HMM.h"
+#include "analysis/Kmeans.h"
 
 using namespace std;
 namespace {
@@ -88,10 +89,80 @@ namespace {
     GaussHMM* h_;
     GaussHMM* h2_;
   };
-  
+
+  TEST_F(HMMTest, FitRealDataTest) {
+    GaussMultiTrackHMM hmm(5);
+    hmm.add_track(track2_);
+    hmm.add_track(track3_);
+    std::vector<std::vector<GaussDist> > g(5);
+    std::vector<GaussDist> temp(2);
+    Eigen::MatrixXd m = Eigen::MatrixXd::Random(5, 2);
+    for (int i = 0; i < 5; ++i) {
+      temp[0] = GaussDist(m(i, 0), 1.0);
+      temp[1] = GaussDist(m(i, 1), 1.);
+      g[i] = temp;
+    }
+    hmm.set_emit(g);
+    hmm.Init();
+      hmm.FitEM();
+    //h2_->FitBlockedGibbs();
+    HMM::StateVectorType path;
+    hmm.Decode(path);
+    int num = 0;
+    for (int i = 0; i < path.cols(); ++i) {
+      if (path(i) > 0) {
+        num++;
+      }
+    }
+    std::fstream f("/Users/admin/Documents/output_gauss.wig",std::fstream::out);
+    f << "fixedStep  chrom=chr6  start=0  step=50\n";
+    for (int i = 0; i < path.size(); ++i) {
+      f << path(i) << std::endl;
+    }
+  }
+    TEST_F(HMMTest, FitRealDataTestMV) {
+    //std::cerr << h2_->transition() << std::endl;
+      Kmeans k(10);
+
+      k.add_track(track2_);
+      k.add_track(track3_);
+
+      //std::vector<Eigen::VectorXd> means = k.Fit();
+      MVGaussMultiTrackHMM hmm(10);
+      hmm.add_track(track2_);
+      hmm.add_track(track3_);
+      std::vector<MVGaussDist> g;
+      Eigen::MatrixXd means = Eigen::MatrixXd::Random(10,2);
+      for (int i = 0; i < 10; ++i) {
+	std::cerr << "Mean " << i << " = " << means.row(i).cwiseAbs() << std::endl;
+	g.push_back(MVGaussDist(means.row(i).cwiseAbs(), Eigen::MatrixXd::Identity(2,2)));
+      }
+      hmm.set_emit(g);
+      hmm.Init();
+      hmm.FitEM();
+    //h2_->FitBlockedGibbs();
+    HMM::StateVectorType path;
+    hmm.Decode(path);
+    int num = 0;
+    for (int i = 0; i < path.cols(); ++i) {
+      if (path(i) > 0) {
+        num++;
+      }
+    }
+    std::fstream f("/Users/admin/Documents/output.wig",std::fstream::out);
+    f << "fixedStep  chrom=chr6  start=0  step=50\n";
+    for (int i = 0; i < path.size(); ++i) {
+      f << path(i) << std::endl;
+    }
+    std::cerr << "NUM GREATER THAN 0 " << num << std::endl;
+    std::cerr << (path == 0).count() << std::endl;
+    std::cerr << (path == 1).count() << std::endl;
+    std::cerr << (path == 2).count() << std::endl;
+  }
+
 
   TEST_F(HMMTest, MultiTrackTest) {
-    GaussMultiTrackHMM hmm(2);
+    MVGaussMultiTrackHMM hmm(2);
     hmm.add_track(track_);
     hmm.add_track(track4_);
     hmm.Init();
@@ -99,12 +170,16 @@ namespace {
     HMM::VectorType means = HMM::VectorType::Random(2);
 
     for (int i = 0; i < 2; ++i) {
-      g.push_back(MVGaussDist(MVGaussDist::VectorType::Random(2).cwiseAbs(),MVGaussDist::MatrixType::Constant(2,2,1.0)));
+      g.push_back(MVGaussDist(Eigen::VectorXd::Random(2).cwiseAbs(),Eigen::MatrixXd::Identity(2,2)));
       std::cerr << g[i].mean() << std::endl;
     }
     hmm.set_emit(g);
     hmm.FitEM();
-    
+    HMM::StateVectorType path;
+    h_->Decode(path);
+    ASSERT_EQ((path == 0).count(), 87480);
+    ASSERT_EQ((path == 1).count(), 12520 );
+    std::cerr << h_->transition() << std::endl;
   }
   
 
@@ -130,28 +205,6 @@ namespace {
     std::cerr << (path == 1).count() << " in state 1" << std::endl;
   }
   
-  TEST_F(HMMTest, FitRealDataTest) {
-    //std::cerr << h2_->transition() << std::endl;
-    h2_->FitBlockedGibbs();
-    HMM::StateVectorType path;
-    h2_->Decode(path);
-    std::cerr << h2_->transition() << std::endl;
-    int num = 0;
-    for (int i = 0; i < path.cols(); ++i) {
-      if (path(i) > 0) {
-        num++;
-      }
-    }
-    std::fstream f("/Users/admin/Documents/output.wig",std::fstream::out);
-    f << "fixedStep  chrom=chr6  start=0  step=50\n";
-    for (int i = 0; i < path.size(); ++i) {
-      f << path(i) << std::endl;
-    }
-    std::cerr << "NUM GREATER THAN 0 " << num << std::endl;
-    std::cerr << (path == 0).count() << std::endl;
-    std::cerr << (path == 1).count() << std::endl;
-    std::cerr << (path == 2).count() << std::endl;
-  }
 
   
 }//Namespace
