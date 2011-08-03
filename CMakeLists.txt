@@ -78,7 +78,9 @@ set(DATA_SRCS data/TrackData.h
     data/ChrData.h
     data/SeqData.h)
 
-set(ANALYSIS_SRCS analysis/Genome.cc 
+set(ANALYSIS_SRCS analysis/Genome.cc
+    analysis/gsl_addon.cc
+    analysis/gsl_addon.h 
     analysis/HMM.h
     analysis/HMM.cc
     analysis/Dist.h

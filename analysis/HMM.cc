@@ -174,12 +174,6 @@ HMM::FilterFwd(const MatrixType& transmat, const MatrixType& softev,
     alpha.col(t) = (at.matrix() * alpha.col(t-1).matrix()).array();
     alpha.col(t) *= softev.col(t);
     scale(t) = alpha.col(t).sum();
-    if (scale(t) <= 0) {
-      std::cerr << at << std::endl;
-      std::cerr << softev.col(t) << std::endl;
-      std::cerr << alpha.col(t-1) << std::endl;
-      std::cerr << t << std::endl;
-    }
     alpha.col(t) /= scale(t);
   }
   loglik = scale.log().sum();
@@ -427,7 +421,7 @@ GaussHMM::UpdateEmissionDistGibbs(Rng& r, const StateVectorType& states)
   // sample parameters of Gaussian dist from posterior distribution conditioned on current
   // assignment of the latent variables.
   //
-
+  
   for (int i = 0; i < num_states_; ++i) {
     int state_count = 0;
     float mean = 0.0;
@@ -448,7 +442,7 @@ GaussHMM::UpdateEmissionDistGibbs(Rng& r, const StateVectorType& states)
         mean_sum += input_->get(t);
       }
     }
-
+    
     mean = mean_sum / (double) state_count;
     for (int j = 0; j < 3; ++j) {
       // Sample each several times
@@ -464,7 +458,7 @@ GaussHMM::UpdateEmissionDistGibbs(Rng& r, const StateVectorType& states)
       
       //  sample var from it's posterior
       var = var_dist.Sample(r.rng());
-
+      
       // Sample mu_k | sigma_k ~ Gaussian(mean, var|data)
       mean_dist.set_stddev(1.0/(1.0/t0 + state_count / var));
       mean_dist.set_mean((m0 / t0 + 1.0 / var * mean_sum) / (1.0 / t0 + state_count/var));
@@ -472,78 +466,88 @@ GaussHMM::UpdateEmissionDistGibbs(Rng& r, const StateVectorType& states)
     }
     emit_[i].set_stddev(var);  
     emit_[i].set_mean(mean);
-
+    
     std::cerr << "State " << i << " mean " << emit_[i].mean() << " std " << emit_[i].stddev() << std::endl;
-  }
+  }  
 }
 
-//-----------------------------------------------------------------
 
 
 //-----------------------------------------------------------------
 
-BernHMM::BernHMM()
-: HMM()
-, emit_(1)
-{}
+GaussMultiTrackHMM::GaussMultiTrackHMM()
+: GaussHMM()
+{
+}
 
-BernHMM::BernHMM(int num_states)
-: HMM(num_states)
-, emit_(num_states)
-{}
+GaussMultiTrackHMM::GaussMultiTrackHMM(int num_states)
+: GaussHMM(num_states)
+{
+}
 
 void
-BernHMM::NumStatesChanged()
+GaussMultiTrackHMM::NumStatesChanged()
 {
   emit_.resize(num_states_);
 }
 
 void
-BernHMM::ComputeAnalysis()
+GaussMultiTrackHMM::add_track(GaussMultiTrackHMM::TrackInPtr input)
 {
-  DEBUGLOG("Fitting model by EM");
-  FitEM();
+  if (tracks_.size() == 0) 
+    input_ = input;
+  tracks_.push_back(input);
+}
+
+void 
+GaussMultiTrackHMM::UpdateEmissionDistEM(const MatrixType& weights)
+{
+  int tnum = tracks_.size();
+  MVGaussDist::VectorType v(tnum);
+  for (int k = 0; k < num_states_; ++k) {    
+    double norm = weights.row(k).sum();
+    MVGaussDist::VectorType mean = MVGaussDist::VectorType::Zero(tnum);
+    MVGaussDist::MatrixType stddev = MVGaussDist::MatrixType::Zero(tnum, tnum);
+    for (size_t i = 0; i < input_->size(); ++i) {
+      for (int tr = 0; tr < tracks_.size(); ++tr) {
+        v(tr) = (double) tracks_[tr]->get(i);
+      }
+      mean += weights(k,i) * v;
+    }
+    mean /= norm;
+    for (size_t i = 0; i < input_->size(); ++i) {
+      for (int tr = 0; tr < tracks_.size(); ++tr) {
+        v(tr) = (double) tracks_[tr]->get(i);
+      }
+      stddev += weights(k,i) * (v - mean) * (v - mean).transpose();
+    }
+    stddev /= norm;    
+    emits_[k].set_mean(mean);
+    emits_[k].set_var(stddev);
+    std::cerr << "State " << k << " mean " << mean << " std " << stddev << std::endl;
+  }        
+}
+
+void 
+GaussMultiTrackHMM::UpdateEmissionDistGibbs(Rng& r, const StateVectorType& states)
+{
+  ERRORLOG("NOT IMPLMEENTED YET");
 }
 
 void
-BernHMM::UpdateSoftEvidence(MatrixType& softev)
+GaussMultiTrackHMM::UpdateSoftEvidence(MatrixType& softev)
 {  
-  if (softev.cols() != (int) input_->size() || softev.rows() != num_states_) 
+  if (softev.rows() != num_states_ || softev.cols() != (int)input_->size())
     softev.resize(num_states_, input_->size());
+  int nt = tracks_.size();
+  MVGaussDist::VectorType v(nt);
   for (int i = 0; i < softev.cols(); ++i) {
     for (int j = 0; j < softev.rows(); ++j) {
-      softev(j, i) = emit_[j].Pdf((int)input_->get(i));
+      for (int k = 0; k < nt; ++k) {
+        v(k) = (double)tracks_[k]->get(i);
+      }
+      softev(j, i) = emits_[j].Pdf(v) + 1.11e-16;
     }
   }
 }
 
-void
-BernHMM::UpdateEmissionDistEM(const MatrixType& weights)
-{
-  float norm = weights.sum();
-  for (int k = 0; k < num_states_; ++k) {
-    double val = 0.0;
-    for (size_t i = 0; i < input_->size(); ++i) {
-      val += weights(k,i);
-    }
-    val /= norm;
-    emit_[k].set_prob(val);
-//    std::cerr << "State " << k << " prob " << val << std::endl;
-  }      
-}
-
-void
-BernHMM::UpdateEmissionDistGibbs(Rng& r, const StateVectorType& states)
-{
-
-  double alpha = 1.0;
-  for (int k = 0; k < num_states_; ++k) {
-    int count = 0;
-    for (size_t i = 0; i < input_->size(); ++i) {
-      if ((int) input_->get(i) == k)  
-        count++;
-    }
-    emit_[k].set_prob(count / input_->size());
-    std::cerr << "State " << k << " prob " << (float)count / (float)input_->size() << std::endl;
-  }      
-}

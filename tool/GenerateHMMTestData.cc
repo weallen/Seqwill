@@ -16,6 +16,7 @@ int main(int argc, char** argv) {
   gsl_rng* rng = r.rng();
   std::vector<float> trueval(100000);
   std::vector<float> v(100000);
+  std::vector<float> v2(100000);
   int num_1 = 0;
   int num_2 = 0;
     
@@ -28,10 +29,12 @@ int main(int argc, char** argv) {
   for (int i = 0; i < 100000; ++i) {
     if (curr_state == 0) {
       v[i] = g1.Sample(rng);
+      v2[i] = -v[i];
       num_1++;
     }
     else if (curr_state == 1) {
       v[i] = g2.Sample(rng);
+      v2[i] = -v[i];
       num_2++;
     }
     trueval[i] = curr_state;
@@ -45,16 +48,23 @@ int main(int argc, char** argv) {
   }
   
   Track<float> t;
+  Track<float> t2;
   t.set_resolution(1);
+  t2.set_resolution(1);
   t.set_extends(0, 100000);
+  t2.set_extends(0, 100000);
   t.set_trackname(std::string("testdata"));
+  t2.set_trackname(std::string("testdata"));
   t.set_subtrackname(std::string("test1"));
+  t2.set_subtrackname(std::string("test2"));
   for (size_t j = 0; j < v.size(); ++j) {
     t.set(j,v[j]);
+    t2.set(j,v2[j]);
   }
   TrackFile f;
   f.Open(out);
   f.WriteSubTrack<float>(t);
+  f.WriteSubTrack<float>(t2);
   std::cerr << "Num 1 " << num_1 << std::endl;
   std::cerr << "Num 2 " << num_2 << std::endl;
   

@@ -3,17 +3,12 @@
 
 #include <vector>
 #include <Eigen/Dense>
-#include <gsl/gsl_randist.h>
-#include <gsl/gsl_rng.h>
+#include <Eigen/LU>
+#include <gsl/gsl_vector.h>
+
+#include <math.h>
 #include <cassert>
-
-typedef Eigen::VectorXf VectorType;
-typedef Eigen::MatrixXf MatrixType;
-
-float SampleGauss(float m, float s);
-int SampleMulti(Eigen::VectorXf vals);
-VectorType SampleMultiVarGauss(VectorType m, MatrixType cov);
-
+#include "analysis/gsl_addon.h"
 
 class GaussDist 
 {
@@ -65,48 +60,95 @@ private:
   double p_;
 };
 
-class MultiVarGaussDist
+class MVGaussDist
 {
-public:
-  MultiVarGaussDist()
-  : ndim_(0)
-  {}
-  virtual ~MultiVarGaussDist() {}
+public:  
+  typedef Eigen::VectorXf VectorType;
+  typedef Eigen::MatrixXf MatrixType;
+
+  MVGaussDist()
+  : ndim_(2)
+  , m_(2)
+  , var_(2,2)
+  {  }
   
-  void set_ndim(int n) 
-  { ndim_ = n; }
-
-  int ndim() const 
+  MVGaussDist(const VectorType& m, const MatrixType& c)
+  : ndim_(m.size())
+  {
+    set_mean(m);
+    set_var(c);
+  }
+  virtual ~MVGaussDist(){}
+  
+  void set_ndim(int n)
+  { ndim_ = n; m_.resize(n); var_.resize(n,n); }
+  
+  const int ndim() const
   { return ndim_; }
-
-  void set_mean(const VectorType& m) 
+  
+  void set_mean(const VectorType& m)
   { m_ = m; }
   
-  const VectorType& mean() const 
+  VectorType mean()
   { return m_; }
-
-  void set_cov(const MatrixType& c) 
-  { cov_ = c; }
-
-  const MatrixType& cov() const
-  { return cov_; }
-
-  double pdf(VectorType pt) { return 0.0; }
-
-  VectorType Sample() 
-  { VectorType v(10);  return v; }
   
-  std::vector<VectorType> sample(int n);
+  void set_var(const MatrixType& c)
+  { var_ = c; }
+  
+  MatrixType var()
+  { return var_; }
+  
+  double Pdf(const VectorType& pt);
+  VectorType Sample(gsl_rng* r); 
 
 private:
   int ndim_;
   VectorType m_;
-  MatrixType cov_;
+  MatrixType var_;
+};
+
+class MVStudentTDist
+{
+public:
+  typedef Eigen::VectorXf VectorType;
+  typedef Eigen::MatrixXf MatrixType;
+
+  MVStudentTDist();
+  virtual ~MVStudentTDist();
+  
+  void set_loc(const VectorType& loc);
+  VectorType loc() const;
+  void set_scale(const MatrixType& scale);
+  MatrixType scale() const;
+  void set_dof(int dof);
+  const int dof() const;
+  
+  double Pdf(VectorType pt);
+  VectorType Sample(gsl_rng* r);
+
+private:
+  gsl_vector* location_;
+  gsl_matrix* scale_;
+  int dof_;
+};
+
+// Just for sampling for now
+class WishartDist
+{
+public:
+  typedef Eigen::VectorXf VectorType;
+  typedef Eigen::MatrixXf MatrixType;
+
+  WishartDist();
+  virtual ~WishartDist();
+  
+  double Pdf(const VectorType& pt);
 };
 
 class MultiDist
 {
 public:
+
   MultiDist();
   MultiDist(int n);
   virtual ~MultiDist()

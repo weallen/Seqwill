@@ -25,13 +25,14 @@ namespace {
       track_ = Track<float>::Ptr(new Track<float>);
       track2_ = Track<float>::Ptr(new Track<float>);
       track3_ = Track<float>::Ptr(new Track<float>);
+      track4_ = Track<float>::Ptr(new Track<float>);
       h_ = new GaussHMM(2);
       h2_ = new GaussHMM(6);
       TrackFile f;
       TrackFile f2;
-      f.Open(std::string("/Users/admin/Documents/test_hmm.trk"));
+      f.Open(std::string("/Users/admin/Documents/test2.trk"));
       f.ReadSubTrack<float>(std::string("testdata"), std::string("test1"), *track_);
-
+      f.ReadSubTrack<float>(std::string("testdata"), std::string("test2"), *track4_);
       f2.Open(std::string("/Users/admin/Documents/test.trk"));
       f2.ReadSubTrack<float>(std::string("moe_d3a_hmc_raw"), std::string("chr6"), *track2_);          
       f2.ReadSubTrack<float>(std::string("moe_wt_hmc_raw"), std::string("chr6"), *track3_);
@@ -87,6 +88,25 @@ namespace {
     GaussHMM* h_;
     GaussHMM* h2_;
   };
+  
+
+  TEST_F(HMMTest, MultiTrackTest) {
+    GaussMultiTrackHMM hmm(2);
+    hmm.add_track(track_);
+    hmm.add_track(track4_);
+    hmm.Init();
+    std::vector<MVGaussDist> g(2);
+    HMM::VectorType means = HMM::VectorType::Random(2);
+
+    for (int i = 0; i < 2; ++i) {
+      g.push_back(MVGaussDist(MVGaussDist::VectorType::Random(2).cwiseAbs(),MVGaussDist::MatrixType::Constant(2,2,1.0)));
+      std::cerr << g[i].mean() << std::endl;
+    }
+    hmm.set_emit(g);
+    hmm.FitEM();
+    
+  }
+  
 
   TEST_F(HMMTest, FitEMTest) {
     h_->FitEM();
@@ -100,7 +120,6 @@ namespace {
     std::cerr << h_->transition() << std::endl;
   }
 
-  
   
 
   TEST_F(HMMTest, FitGibbsTest) {

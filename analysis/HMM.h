@@ -186,41 +186,46 @@ public:
   const std::vector<GaussDist>& emit() const { return emit_; }
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   
-private:
-  
+protected:
   ChiSqDist var_prior;
   StudentTDist mean_prior;
   std::vector<GaussDist> emit_;
 };
 
 
-class BernHMM : public HMM
+class GaussMultiTrackHMM : public GaussHMM
 {
-public:  
+public:
   using HMM::TrackInPtr;
   using HMM::TrackOutPtr;
   using Analysis<float, int>::Compute;
   
-  BernHMM();
-  BernHMM(int num_states);
-  virtual ~BernHMM() {}
+  GaussMultiTrackHMM();
+  GaussMultiTrackHMM(int num_states);
+  virtual ~GaussMultiTrackHMM() {}
   
-  virtual void ComputeAnalysis();
   virtual void UpdateSoftEvidence(MatrixType& softev);
-  virtual void Compute() { ComputeAnalysis(); }
   virtual void UpdateEmissionDistEM(const MatrixType& weights);
   virtual void UpdateEmissionDistGibbs(Rng& r, const StateVectorType& states);
   virtual void NumStatesChanged();
   
-  void set_emit(const std::vector<BernDist>& emits)
-  { emit_ = emits; }
+  void set_emit(const std::vector<MVGaussDist>& emits)
+  { emits_ = emits; }    
+  const std::vector<MVGaussDist>& emit() const { return emits_; }
   
-  const std::vector<BernDist>& emit() const { return emit_; }
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   
-private:
-  std::vector<BernDist> emit_;
+  virtual void set_input(TrackInPtr input)
+  { input_ = input; tracks_[0] = input; }
+  
+  virtual void add_track(TrackInPtr input);
+  
+protected:
+  
+  std::vector<TrackInPtr> tracks_;
+  std::vector<MVGaussDist > emits_;
 };
+
 
 
 

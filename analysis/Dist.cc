@@ -39,6 +39,30 @@ BernDist::Sample(const gsl_rng* r)
 
 //----------------------------------------------------------
 
+
+
+double
+MVGaussDist::Pdf(const VectorType& pt)
+{
+  double denom = sqrt(pow(2 * M_PI, ndim_) * var_.determinant());
+  double temp = (pt - m_).transpose() * var_.inverse() * (pt - m_);
+  double numer = exp(-(0.5 * temp));
+  return (numer / denom);
+}
+
+MVGaussDist::VectorType
+MVGaussDist::Sample(gsl_rng* r)
+{
+}
+       
+//----------------------------------------------------------
+
+
+//----------------------------------------------------------
+
+//----------------------------------------------------------
+
+
 MultiDist::MultiDist()
 : n_(1)
 , lookup(NULL)
@@ -115,6 +139,7 @@ InvChiSqDist::Sample(gsl_rng* r)
 {
   return (base_dist_.df() * s2_) / base_dist_.Sample(r);
 }
+
 
 //----------------------------------------------------------
 
