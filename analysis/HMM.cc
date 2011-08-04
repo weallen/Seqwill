@@ -404,7 +404,7 @@ GaussHMM::UpdateEmissionDistEM(const MatrixType& weights)
     stddev /= norm;    
     emit_[k].set_mean(mean);
     emit_[k].set_stddev(sqrt(stddev));
-    std::cerr << "State " << k << " mean " << mean << " std " << stddev << std::endl;
+    //    std::cerr << "State " << k << " mean " << mean << " std " << stddev << std::endl;
   }      
 }
 

@@ -37,6 +37,9 @@ namespace {
       f2.Open(std::string("/Users/admin/Documents/test.trk"));
       f2.ReadSubTrack<float>(std::string("moe_d3a_hmc_raw"), std::string("chr6"), *track2_);          
       f2.ReadSubTrack<float>(std::string("moe_wt_hmc_raw"), std::string("chr6"), *track3_);
+      f2.ReadSubTrack<float>(std::string("moe_wt_mc_raw"), std::string("chr6"), *track5_);
+      f2.ReadSubTrack<float>(std::string("moe_d3a_mc_raw"), std::string("chr6"), *track6_);
+
       h_->set_input(track_);
       
       int num = 0;
@@ -86,6 +89,8 @@ namespace {
     Track<float>::Ptr track2_;
     Track<float>::Ptr track3_;
     Track<float>::Ptr track4_;
+    Track<float>::Ptr track5_;
+    Track<float>::Ptr track6_;
     GaussHMM* h_;
     GaussHMM* h2_;
   };
@@ -94,6 +99,8 @@ namespace {
     GaussMultiTrackHMM hmm(5);
     hmm.add_track(track2_);
     hmm.add_track(track3_);
+    hmm.add_track(track5_);
+    hmm.add_track(track6_);
     std::vector<std::vector<GaussDist> > g(5);
     std::vector<GaussDist> temp(2);
     Eigen::MatrixXd m = Eigen::MatrixXd::Random(5, 2);
