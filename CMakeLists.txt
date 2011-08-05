@@ -126,6 +126,8 @@ tool(GenerateHMMTestData)
 
 tool(ReadStartPileup)
 
+tool(Phasogram)
+
 # testing
 function(cxx_test name)
   add_executable(${name} "test/${name}.cc")

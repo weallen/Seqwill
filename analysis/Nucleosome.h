@@ -23,7 +23,7 @@ public:
   void set_num_bins(int n)
   { n_ = n; }
   
-  const void num_bins() const
+  const int num_bins() const
   { return n_; }
   
   void add_to_bin(int i, int val) 
@@ -34,7 +34,7 @@ public:
   
   const int get_bin(int i) const
   { return counts_[i]; }
-
+  
 private:
   int n_; // num bins
   Eigen::ArrayXi counts_;

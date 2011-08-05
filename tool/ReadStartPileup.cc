@@ -34,39 +34,49 @@ int main(int argc, char** argv) {
   BamTools::BamAlignment al;
   BamTools::BamReader b;
   PlusMinusDataInt data;
+
   data.plus = 0;
   data.minus = 0;
   if (!b.Open(bamname)) {
     std::cerr << "Couldn't open input BAM file." << std::endl;
     return -1;
   }
+  BamTools::RefVector refs = b.GetReferenceData();
   TrackFile tio(trackfilename);
 
   LoadGenomeInfoFromChr(genome, std::string("mm9"), &g);
   std::vector<std::string> chrnames = g.chr_names();
-  for (std::vector<std::string>::iterator it = chrnames.begin();
-       it != chrnames.end(); ++it) {
-    std::cerr << "Loading chr " << *it << std::endl;
-    int refid = b.GetReferenceID(*it);
-    BamTools::BamRegion region(refid, 0, refid, g.chr_size(*it));
+  for (BamTools::RefVector::iterator it = refs.begin();
+     it != refs.end(); ++it) {
+    std::string chrname = it->RefName;
+    data.plus = 0;
+    data.minus = 0;
+    std::cerr << "Loading chr " << chrname << std::endl;
+    int refid = b.GetReferenceID(chrname);
+    BamTools::BamRegion region(refid, 0, refid, g.chr_size(chrname));
     t = new Track<PlusMinusDataInt>;
     t->set_trackname(trackname);
-    t->set_subtrackname(*it);
-    t->set_extends(0, g.chr_size(*it));
+    t->set_subtrackname(chrname);
+    t->set_extends(0, g.chr_size(chrname));
     t->set_resolution(1);
     for (size_t i = 0; i < t->size(); ++i) {
       t->set(i, data);
     }
     b.SetRegion(region);
-    while (b.GetNextAlignmentCore(al)) {
-      data = t->get((int)al.Position);
+    
+    int num_reads = 0;
+   while (b.GetNextAlignmentCore(al)) {
+
+     data = t->get((size_t)al.Position);
       if (al.IsReverseStrand()) {
-	data.minus += 1;
+	data.minus += 1;	
       } else {
 	data.plus += 1;
       }
-      t->set((int)al.Position, data);
+      t->set((size_t)al.Position, data);
     }
+    b.Rewind();
+
     tio.WriteSubTrack<PlusMinusDataInt>(*t);
     delete t;
   }
