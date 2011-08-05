@@ -23,7 +23,7 @@
 #include "common/Track.h"
 #include "io/Traits.h"
 #include "common/TrackMetadata.h"
-
+#include "base/Types.h"
 
 class TrackFile;
 
@@ -138,9 +138,18 @@ bool TrackFile::WriteSubTrack(Track<DataT>& subtrack)
     // Create dataset creation plist, and set chunk size
     dcpl = H5Pcreate(H5P_DATASET_CREATE);
     //status = H5Pset_chunk(dcpl, 1, chunk);
-    dataset = H5Dcreate2(track_group, subtrack.subtrackname().c_str(),
-                        DataTypeTraits<DataT>::H5Type(), space,
+    if (DataTypeTraits<DataT>::IsCompound()) {
+      hid_t type = DataTypeTraits<DataT>::H5Type();
+      assert(type > 0);
+      dataset = H5Dcreate2(track_group, subtrack.subtrackname().c_str(),
+                        type, space,
                         H5P_DEFAULT, dcpl, H5P_DEFAULT);
+      H5Tclose(type);
+    } else {
+      dataset = H5Dcreate2(track_group, subtrack.subtrackname().c_str(),
+			   DataTypeTraits<DataT>::H5Type(), space, H5P_DEFAULT,
+			   dcpl, H5P_DEFAULT);
+    }
   } else {
     
     dataset = H5Dopen2(track_group, subtrack.subtrackname().c_str(), H5P_DEFAULT);
@@ -278,11 +287,21 @@ TrackFile::ReadSubTrack(const std::string& trackname,
   subtrack.set_extends(start, stop);
   subtrack.set_trackname(trackname);
   subtrack.set_subtrackname(subtrackname);
-  if (H5Dread(dataset, DataTypeTraits<DataT>::H5Type(), H5S_ALL, H5S_ALL,
-              H5P_DEFAULT, &(*subtrack.begin())) < 0) {
+  herr_t status;
+
+  hid_t type = DataTypeTraits<DataT>::H5Type();
+  if (DataTypeTraits<DataT>::IsCompound()) {
+    status = H5Dread(dataset, type, H5S_ALL, H5S_ALL,
+		     H5P_DEFAULT, &(*subtrack.begin()));
+    H5Tclose(type);
+  }  else {
+    status  = H5Dread(dataset, DataTypeTraits<DataT>::H5Type(), H5S_ALL, H5S_ALL,
+		      H5P_DEFAULT, &(*subtrack.begin()));
+  }
+  if (status < 0) {
     ERRORLOG("Can't read dataset " + subtrackname);
     H5Dclose(dataset);
-    return false;
+    return false;  
   }
   H5Dclose(dataset);
   return true;

@@ -21,6 +21,17 @@
 
 typedef unsigned long ULong;
 
+typedef struct PlusMinusDataFloat
+{
+  float plus;
+  float minus;
+}; 
+
+typedef struct PlusMinusDataInt
+{
+  int plus;
+  int minus;
+};
 
 //
 // Add definitions to handle 64/32 bit computing environments

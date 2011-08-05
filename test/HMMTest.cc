@@ -27,6 +27,8 @@ namespace {
       track2_ = Track<float>::Ptr(new Track<float>);
       track3_ = Track<float>::Ptr(new Track<float>);
       track4_ = Track<float>::Ptr(new Track<float>);
+      track5_ = Track<float>::Ptr(new Track<float>);
+      track6_ = Track<float>::Ptr(new Track<float>);
       h_ = new GaussHMM(2);
       h2_ = new GaussHMM(6);
       TrackFile f;
@@ -35,10 +37,10 @@ namespace {
       f.ReadSubTrack<float>(std::string("testdata"), std::string("test1"), *track_);
       f.ReadSubTrack<float>(std::string("testdata"), std::string("test2"), *track4_);
       f2.Open(std::string("/Users/admin/Documents/test.trk"));
-      f2.ReadSubTrack<float>(std::string("moe_d3a_hmc_raw"), std::string("chr6"), *track2_);          
-      f2.ReadSubTrack<float>(std::string("moe_wt_hmc_raw"), std::string("chr6"), *track3_);
-      f2.ReadSubTrack<float>(std::string("moe_wt_mc_raw"), std::string("chr6"), *track5_);
-      f2.ReadSubTrack<float>(std::string("moe_d3a_mc_raw"), std::string("chr6"), *track6_);
+      f2.ReadSubTrack<float>(std::string("moe_d3a_hmc_50_raw"), std::string("chr6"), *track2_);          
+      f2.ReadSubTrack<float>(std::string("moe_wt_hmc_50_raw"), std::string("chr6"), *track3_);
+      f2.ReadSubTrack<float>(std::string("moe_wt_mc_50_raw"), std::string("chr6"), *track5_);
+      f2.ReadSubTrack<float>(std::string("moe_d3a_mc_50_raw"), std::string("chr6"), *track6_);
 
       h_->set_input(track_);
       
@@ -102,8 +104,8 @@ namespace {
     hmm.add_track(track5_);
     hmm.add_track(track6_);
     std::vector<std::vector<GaussDist> > g(5);
-    std::vector<GaussDist> temp(2);
-    Eigen::MatrixXd m = Eigen::MatrixXd::Random(5, 2);
+    std::vector<GaussDist> temp(4);
+    Eigen::MatrixXd m = Eigen::MatrixXd::Random(5, 4);
     for (int i = 0; i < 5; ++i) {
       temp[0] = GaussDist(m(i, 0), 1.0);
       temp[1] = GaussDist(m(i, 1), 1.);
@@ -139,7 +141,7 @@ namespace {
       hmm.add_track(track2_);
       hmm.add_track(track3_);
       std::vector<MVGaussDist> g;
-      Eigen::MatrixXd means = Eigen::MatrixXd::Random(10,2);
+      Eigen::MatrixXd means = Eigen::MatrixXd::Random(10,4);
       for (int i = 0; i < 10; ++i) {
 	std::cerr << "Mean " << i << " = " << means.row(i).cwiseAbs() << std::endl;
 	g.push_back(MVGaussDist(means.row(i).cwiseAbs(), Eigen::MatrixXd::Identity(2,2)));

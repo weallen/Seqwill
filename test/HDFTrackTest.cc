@@ -14,6 +14,8 @@
 #include "common/Track.h"
 #include "io/TrackIO.h"
 #include "analysis/Chromosome.h"
+#include "io/Traits.h"
+#include "base/Types.h"
 
 using namespace std;
 namespace {
@@ -34,6 +36,33 @@ class HDFTrackTest : public ::testing::Test {
     }  
   TrackFile tio_;
 };
+
+  TEST_F(HDFTrackTest, WriteCompoundTrackTest) {
+    std::string s = DataTypeTraits<PlusMinusDataFloat>::Name();
+    ASSERT_EQ(s, "PlusMinusDataFloat");
+    Track<PlusMinusDataFloat>::Ptr t(new Track<PlusMinusDataFloat>());
+    t->set_extends(0,100);
+    t->set_resolution(1);
+    t->set_trackname("test");
+    t->set_subtrackname("test_compound");
+    PlusMinusDataFloat d;
+    for (int i = 0; i < 100; ++i) {
+      d.plus = 1.0;
+      d.minus = 0.0;
+      t->set(i, d);
+    }
+    ASSERT_TRUE(tio_.WriteSubTrack<PlusMinusDataFloat>(*t));
+  }
+
+  TEST_F(HDFTrackTest, ReadCompoundTrackTest) {
+    Track<PlusMinusDataFloat>::Ptr t(new Track<PlusMinusDataFloat>());
+    tio_.ReadSubTrack<PlusMinusDataFloat>(std::string("test"), std::string("test_compound"),
+					  *t);
+    PlusMinusDataFloat d = t->get(0);
+    ASSERT_EQ(d.plus, 1.0);
+    ASSERT_EQ(d.minus, 0.0);
+  }
+
 TEST_F(HDFTrackTest, WriteTrackTest) {
   Track<float>::Ptr t(new Track<float>());
   t->set_extends(0, 100);

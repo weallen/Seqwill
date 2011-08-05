@@ -534,7 +534,7 @@ GaussMultiTrackHMM::UpdateEmissionDistEM(const MatrixType& weights)
       temp = emits_[k];
       temp[tr].set_mean(mean(tr));
       temp[tr].set_stddev(sqrt(stddev(tr)));
-      std::cerr << "Track " << tr  << " Mean: " << temp[tr].mean() << " Stddev: " << temp[tr].stddev() << std::endl;
+//      std::cerr << "Track " << tr  << " Mean: " << temp[tr].mean() << " Stddev: " << temp[tr].stddev() << std::endl;
       emits_[k] = temp;
     }
   }        

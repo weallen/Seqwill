@@ -11,15 +11,15 @@ const int ERROR = 2;
 const int FATAL = 3;
 
 #define ERRORLOG(__Msg)                                                     \
-    std::cerr << "Error: " << "[" << __FILE__  << ":" << __func__ << ":" << __LINE__ << "] "    \
+    std::cerr << "Error: " << "[" << __func__ << ":" << __LINE__ << "] "    \
     << __Msg << std::endl
 
 #define WARNLOG(__Msg)                                                      \
-    std::cerr << "Warning: " << "[" << __FILE__ << ":" << __func__ << ":" << __LINE__ << "] "  \
+    std::cerr << "Warning: " << "[" << __func__ << ":" << __LINE__ << "] "  \
     << __Msg << std::endl
 
 #define DEBUGLOG(__Msg)\
-    std::cout << "Debug: " << "[" << __FILE__ << ":" << __func__ << ":" << __LINE__ << "] " \
+    std::cout << "Debug: " << "[" << __func__ << ":" << __LINE__ << "] " \
     << __Msg << std::endl;\
 
 #endif
