@@ -94,8 +94,8 @@ set(ANALYSIS_SRCS analysis/Genome.cc
     analysis/Genome.h
     analysis/Chromosome.h
     analysis/Chromosome.cc
-    analysis/GenomeSeq.h
-    analysis/GenomeSeq.cc
+    analysis/KDE.h
+    analysis/KDE.cc
     analysis/AnalysisBase.h)
 
 SOURCE_GROUP(Util FILES ${UTIL_SRCS})
@@ -112,14 +112,19 @@ add_library(SWLib ${COMMON_SRCS} ${IO_SRCS} ${HDF5_SRCS} ${UTIL_SRCS} ${BASE_SRC
 target_link_libraries(SWLib hdf5 bamtools tbb gsl)
 # binaries
 
-add_executable(LoadData tool/LoadData.cc)
-target_link_libraries(LoadData SWLib)
+function(tool name) 
+  add_executable(${name} tool/${name}.cc)
+  target_link_libraries(${name} SWLib)
+endfunction()
 
-add_executable(LoadSeq tool/LoadSeq.cc)
-target_link_libraries(LoadSeq SWLib)
 
-add_executable(GenerateHMMTestData tool/GenerateHMMTestData.cc)
-target_link_libraries(GenerateHMMTestData SWLib)
+tool(LoadData)
+
+tool(LoadSeq)
+
+tool(GenerateHMMTestData)
+
+tool(ReadStartPileup)
 
 # testing
 function(cxx_test name)
@@ -133,3 +138,4 @@ cxx_test(HDFTrackTest)
 cxx_test(LoadDataTest)
 cxx_test(HMMTest)
 cxx_test(DistTest)
+cxx_test(BamIOTest)

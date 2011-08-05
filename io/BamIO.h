@@ -108,13 +108,14 @@ public:
   typedef std::map<std::string, uint64_t> InvChrMap;
   typedef std::map<uint64_t, std::string> ChrMap;
 
-  ReadTable() {}
+  ReadTable()
+    : num_reads_(0)
+  {}
   virtual ~ReadTable() {}
 
   void Init(const std::vector<std::string>& chrs);
-  void SetReads(SingleReadFactory& sreads);
-
-
+  void AddReads(SingleReadFactory* sreads);
+  
 private:
 
   void Clear();
@@ -127,7 +128,6 @@ private:
   ReadMap reads_;
   ChrMap chrs_;
   InvChrMap inv_chrs_;
-
 };
 
 // ------------------------------------------
@@ -183,33 +183,31 @@ class BamIO
   typedef boost::shared_ptr<BamIO> Ptr;
 
   BamIO()  {}
-  
+  BamIO(const std::string& fname) 
+    { Init(fname); }
+
   virtual ~BamIO() {
     Close();
   }
 
   void Init(const std::string& fname);
 
-  void ReadBamFile();
-
-  void LoadRefSeqInfo();
+  SingleReadFactory* LoadAllSingleReads();
+  SingleReadFactory* LoadChrSingleReads(const std::string& chr);
 
   bool is_open() const { return isopen_; }
+
   std::map<std::string, int> chrlens() const { return chrlens_; }
   std::vector<std::string> ref_seqs() const { return refseqs_; }
-  ReadTable::Ptr hit_table() const { return table_; }
 
  private:
   DISALLOW_COPY_AND_ASSIGN(BamIO)
+  void LoadRefSeqInfo();
 
   bool Open(const std::string& fname);
   void Close();
 
-  void DoPairedRead(const BamTools::BamAlignment& read);
-  void DoUnpairedRead(const BamTools::BamAlignment& read);
-
   bool isopen_;
-  ReadTable::Ptr table_;
   BamTools::BamReader reader_;  
   std::map<std::string, int> chrlens_;
   std::vector<std::string> refseqs_;

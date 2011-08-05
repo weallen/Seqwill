@@ -39,7 +39,11 @@ public:
   TrackFile()
     : h5file_(-1)
   {}
-   
+  
+  TrackFile(const std::string& name) 
+    : h5file_(-1)
+  { Open(name); }
+
   virtual ~TrackFile() {
     Close();
   }

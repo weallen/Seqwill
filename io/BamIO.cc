@@ -15,14 +15,14 @@ ReadTable::Init(const std::vector<std::string>& chrnames)
 // Goes through SingleReads, finds the mate for each,
 // And combines them into a single ReadHit
 void
-ReadTable::SetReads(SingleReadFactory& sreads)
+ReadTable::AddReads(SingleReadFactory* sreads)
 {
   std::map<uint32_t, SingleRead> first_reads;
   std::map<uint32_t, SingleRead> second_reads;
   SingleRead currs;
 
-  for (SingleReadFactory::iterator i = sreads.begin();
-       i != sreads.end(); ++i) {
+  for (SingleReadFactory::iterator i = sreads->begin();
+       i != sreads->end(); ++i) {
     currs = static_cast<SingleRead>(i->second);
   }
 }
@@ -84,7 +84,7 @@ SingleReadFactory::MemUsage() const
 }
 
 
-std::vector<SingleRead>
+std::vector<SingleRead> 
 SingleReadFactory::GetReadsAtRefID(RefID id)
 {
   std::vector<SingleRead> reads;
@@ -153,30 +153,44 @@ void BamIO::Init(const std::string& fname)
 }
 
 // Assumes for now that paired reads are on same chromosome
-void BamIO::ReadBamFile()
+SingleReadFactory*
+BamIO::LoadAllSingleReads()
 {
-  if (!reader_.IsOpen()) {
-    ERRORLOG("Must init BamReader before read file.");
-    return;
-  }
+  SingleReadFactory* factory = new SingleReadFactory;
+  factory->Init(refseqs_);
   BamTools::BamAlignment align;
-  while (reader_.GetNextAlignment(align)) {
-    if (align.IsPaired()) {
-      DoPairedRead(align);
-    } else {
-      DoUnpairedRead(align);
-    }    
+  for (std::vector<std::string>::const_iterator it = refseqs_.begin();
+       it != refseqs_.end(); ++it) {
+    int refid = reader_.GetReferenceID(*it);
+    reader_.SetRegion(refid, 0, refid, chrlens_[*it]);
+    while (reader_.GetNextAlignment(align)) {
+      factory->AddRead(align);
+    }
+    reader_.Rewind();    
   }
+  return factory;
 }
 
-void BamIO::LoadRefSeqInfo()
+SingleReadFactory* 
+BamIO::LoadChrSingleReads(const std::string& chr)
+{
+  SingleReadFactory* factory = new SingleReadFactory;
+  BamTools::BamAlignment align;
+  factory->Init(refseqs_);
+  int refid = reader_.GetReferenceID(chr);
+  reader_.SetRegion(refid, 0, refid, chrlens_[chr]);
+  while (reader_.GetNextAlignment(align)) {
+    factory->AddRead(align);
+  }
+  reader_.Rewind();
+  return factory;
+}
+
+void 
+BamIO::LoadRefSeqInfo()
 {
   chrlens_.clear();
   refseqs_.clear();
-  if (!isopen_) {
-    ERRORLOG("Must int BamReader before reading");
-    return;
-  }
   BamTools::SamHeader header = reader_.GetHeader();
   if (header.HasSequences()) {
     BamTools::SamSequenceDictionary seqs = header.Sequences;
@@ -190,15 +204,4 @@ void BamIO::LoadRefSeqInfo()
       }
     }   
   }
-  return;
-}
-
-void BamIO::DoPairedRead(const BamTools::BamAlignment& read)
-{
- return;
-}
-
-void BamIO::DoUnpairedRead(const BamTools::BamAlignment& read)
-{
-  return;
 }
