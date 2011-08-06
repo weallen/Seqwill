@@ -111,7 +111,6 @@ string m_chr;
 int m_start,m_end;
 string m_name;
 
-
 };
 
 
