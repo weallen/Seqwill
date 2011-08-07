@@ -35,9 +35,9 @@ int main(int argc, char** argv) {
   std::string datapath = P.GetStringValueFor(oDataPath);
   std::string trackfilename = P.GetStringValueFor(iTrackfile);
   std::string trackname = P.GetStringValueFor(tTrackName);
+  std::string bedfile = P.GetStringValueFor(bBed);
   int threshold = P.GetIntValueFor(nThreshold);
   int length = P.GetIntValueFor(lLength);
-  std::string bedfile = P.GetStringValueFor(bBed);
 
   Track<PlusMinusDataInt>* t;
   TrackFile tio(trackfilename);
@@ -45,13 +45,14 @@ int main(int argc, char** argv) {
   Histogram h(length);
   std::map<std::string, std::vector<BEDelement> > chrs;
   std::vector<BEDelement> bedelems;
+
   std::cerr << "Loading bedfile " << bedfile << std::endl;
-  LoadBEDfile(bedfile, bedelems);
-  
+  LoadBEDfile(bedfile, bedelems);  
   for (std::vector<BEDelement>::iterator it = bedelems.begin();
        it != bedelems.end(); ++it) {
     chrs[it->GetName()].push_back(*it);
   }
+
   std::cerr << "Computing phasogram" << std::endl;
   std::vector<std::string> chrnames = tio.GetSubTrackNames(trackname);  
   for (std::vector<std::string>::iterator it = chrnames.begin();
@@ -72,12 +73,15 @@ int main(int argc, char** argv) {
 	  }
 	}
       }
-      delete t;
     }
+    delete t;
   }
+
   std::fstream outfile;
   outfile.open(datapath.c_str(), std::fstream::out);
   for (int i = 0; i < h.num_bins(); ++i) {
     outfile << h.get_bin(i) << std::endl;
   }    
+  outfile.close();
+
 }
