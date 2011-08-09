@@ -23,7 +23,7 @@ int main(int argc, char** argv) {
   std::string trackfile = P.GetStringValueFor(iTrackfile);
   std::string track = P.GetStringValueFor(tTrackName);
   std::string subtrack = P.GetStringValueFor(sSubTrack);
-  std::string wig = P.GetStringValueFor(oWig);
+  std::string wig = P.GetStringValueFor(oWig); 
 
   Track<PlusMinusDataInt> t;
   TrackFile tio(trackfile);
