@@ -68,11 +68,18 @@ public:
   : output_()
   {}
 
-  TrackOutConstPtr const output() const { return output_; }
   virtual ~Analysis() {}
+
+  TrackOutPtr output() { return output_; }
 
   virtual void Compute()
   { ComputeAnalysis(); }
+
+  void set_out_track_name(const std::string& tname)
+  { tname_ = tname; }
+
+  void set_out_subtrack_name(const std::string& stname)
+  { stname_ = stname; }
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
