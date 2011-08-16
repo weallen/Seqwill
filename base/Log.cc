@@ -1,0 +1,3 @@
+#include "base/Log.h"
+
+// Does nothing so far...

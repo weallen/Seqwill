@@ -14,7 +14,7 @@
 #include "base/Log.h"
 #include "io/Traits.h"
 
-template<typename DataT> class Track;
+//template<typename DataT> class Track;
 
 //
 // Provide Read Only access to data.

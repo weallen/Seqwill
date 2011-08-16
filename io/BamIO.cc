@@ -129,10 +129,13 @@ SingleReadFactory::AddRead(const BamTools::BamAlignment& read)
 
 bool BamIO::Open(const std::string& fname)
 {
-  if (!FileExists(fname))
+  if (!FileExists(fname)) {
     ERRORLOG("File doesn't exist " + fname);
+    return false;
+  }
   reader_.Open(fname);
   isopen_ = true;
+  return true;
 }
 
 void BamIO::Close()

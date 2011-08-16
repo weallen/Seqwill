@@ -46,9 +46,9 @@ public:
   { return bandwidth_; }
 
 private:
-  float bandwidth_;
-  KernFnType kernfn_;
   Eigen::VectorXf data_;
+  KernFnType kernfn_;
+  float bandwidth_;
 };
 
 boost::function<float (float x, float b)> GaussKernFn;

@@ -11,6 +11,40 @@
 #include "analysis/gsl_addon.h"
 #include "base/MatrixUtil.h"
 
+class BetaDist
+{
+public:
+  BetaDist()
+  : alpha_(0.0), beta_(0.0)
+  {}
+  
+  BetaDist(double alpha, double beta)
+  : alpha_(alpha), beta_(beta)
+  {}
+  
+  virtual ~BetaDist() {}
+  
+  void set_alpha(double alpha)
+  { alpha_ = alpha; }
+  
+  double alpha()
+  { return alpha_; }
+  
+  void set_beta(double beta)
+  { beta_ = beta; }
+  
+  double beta()
+  { return beta_; }
+  
+  double Pdf(double val);
+  double Sample(const gsl_rng* r);
+  double Mode();
+  
+private:
+  double alpha_;
+  double beta_;
+};
+
 class GaussDist 
 {
 public:

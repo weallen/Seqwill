@@ -21,13 +21,13 @@
 
 typedef unsigned long ULong;
 
-typedef struct PlusMinusDataFloat
+struct PlusMinusDataFloat
 {
   float plus;
   float minus;
 }; 
 
-typedef struct PlusMinusDataInt
+struct PlusMinusDataInt
 {
   int plus;
   int minus;

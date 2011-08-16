@@ -25,7 +25,7 @@ int main(int argc, char** argv) {
   std::string subtrack = P.GetStringValueFor(sSubTrack);
   std::string wig = P.GetStringValueFor(oWig); 
 
-  Track<PlusMinusDataInt> t;
+  Track<float> t;
   TrackFile tio(trackfile);
 
   std::vector<std::string> tnames = tio.GetTrackNames();
@@ -40,23 +40,23 @@ int main(int argc, char** argv) {
     return -1;
   }
 
-  tio.ReadSubTrack<PlusMinusDataInt>(track, subtrack, t);
-  PlusMinusDataInt d;
+  tio.ReadSubTrack<float>(track, subtrack, t);
+  float d;
 
   std::fstream plus;
   std::fstream minus;
-
+  
   plus.open((wig + "_plus.wig").c_str(), std::fstream::out);
-  minus.open((wig + "_minus.wig").c_str(), std::fstream::out);
+//  minus.open((wig + "_minus.wig").c_str(), std::fstream::out);
 
   plus << "fixedStep chrom=" << subtrack  << " start=0 step=" << t.resolution() << std::endl;
-  minus << "fixedStep chrom=" << subtrack  << " start=0 step=" << t.resolution() << std::endl;
+//  minus << "fixedStep chrom=" << subtrack  << " start=0 step=" << t.resolution() << std::endl;
   for (size_t i = 0; i < t.size(); ++i) {
     d = t.get(i);
-    plus << d.plus << std::endl;
-    minus << d.minus << std::endl;
+    plus << d << std::endl;
+  //  minus << d.minus << std::endl;
   }
   plus.close();
-  minus.close();
+//  minus.close();
   return 1;
 }

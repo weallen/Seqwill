@@ -1,6 +1,27 @@
 #include "analysis/Dist.h"
 
 double
+BetaDist::Pdf(double val)
+{
+  return gsl_ran_beta_pdf(val, alpha_, beta_);
+}
+
+double 
+BetaDist::Sample(const gsl_rng* r)
+{
+  return gsl_ran_beta(r, alpha_, beta_);
+}
+
+double
+BetaDist::Mode()
+{
+  assert(alpha_ > 1 && beta_ > 1);
+  return ((alpha_ - 1) / (alpha_ + beta_ - 2));
+}
+
+//----------------------------------------------------------
+
+double
 GaussDist::Pdf(double val)
 {
   return (gsl_ran_gaussian_pdf(val - m_, stddev_));

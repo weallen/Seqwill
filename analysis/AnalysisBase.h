@@ -10,9 +10,9 @@ template <typename TypeT>
 class AnalysisBase
 {
 public:
-  typedef Track<TypeT> Track;
-  typedef typename Track::Ptr TrackPtr;
-  typedef typename Track::ConstPtr TrackConstPtr;
+//  typedef Track<TypeT> Track;
+  typedef typename Track<TypeT>::Ptr TrackPtr;
+  typedef typename Track<TypeT>::ConstPtr TrackConstPtr;
 
   AnalysisBase()
     : input_()
@@ -86,11 +86,12 @@ public:
 protected:
   // Set this is the leaf classes
   std::string analysis_name_;
-
+  std::string tname_;
+  std::string stname_;
   inline const std::string&
   ClassName() const { return analysis_name_; }
 
-private:
+protected:
   virtual void ComputeAnalysis() = 0;
   TrackOutPtr output_;
 };

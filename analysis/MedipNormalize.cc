@@ -7,12 +7,12 @@
 // for all
 
 void
-MedipNormalize::Calibrate()
+MedipNormalize::ComputeCoupling()
 {
   assert(frag_len_ != -1);
   
   // compute coupling factors
-  coupling_ = Eigen::VectorXf::Zero(input_->size());
+  coupling_ = Eigen::VectorXd::Zero(input_->size());
   int chrlen = chr_->stop();
   int res = input_->resolution();
   for (size_t i = 0; i < input_->size(); ++i) {
@@ -20,56 +20,88 @@ MedipNormalize::Calibrate()
     int absmin = i * res;
     int maxpos = std::min(absmax + frag_len_ - 1, chrlen-1);
     int minpos = std::max(absmin - frag_len_ + 1, 0);
-    int total = 0;
+    double total = 0.0;
     for (int j = minpos; j <= maxpos; ++j) {
-      if (chr_->get(j) == 'C' && chr_->get(j+1) == 'G') {
-	total++;
+      unsigned char curr = chr_->get(j);
+      unsigned char next = chr_->get(j+1);
+      if ((curr == 'C' && next == 'G')
+          || (curr == 'c' && next == 'g')) {
+        total++;
       }
     }
-    coupling_(i) = (float)total;
+    coupling_(i) = total;
   }
 }
 
 void
 MedipNormalize::ComputeAnalysis()
 {
-  assert(!isnan(beta_) && !isnan(alpha_) && frag_len_ != -1);
+//  assert(!isnan(beta_) && !isnan(alpha_) && frag_len_ != -1);
   DEBUGLOG("Calibrating MedipNormalize...");
-  Calibrate();
+  ComputeCoupling();
   DEBUGLOG("Fitting linear regression...");
-  FitLinear();  
+//  FitLinear();  
 }
+
+void
+MedipNormalize::Sample()
+{
+  int N = (int)input_->size();
+  double* array = new double[N];
+  #pragma omp parallel for shared(array) private(i,j,b,calls)
+  for (int i = 0; i < N; ++i) {
+    std::vector<double> calls(100);
+    for (int j = 0; j < 100; ++j) {
+      calls[j] = SampleMethState(input_->get(i), coupling_(i));
+    }
+    BetaDist b;
+    FitBeta(calls, b);
+    array[i] = b.Mode();
+  }  
+}
+
 // A_p = number of reads overlapping a particular bin
 // A_base = A_p-intercept of linreg
 // r is slope of model
 // sample from f(A|m) = \Pi_p G(A_p|A_base + r*C_cp, v^-1)
-void
-MedipNormalize::Sample()
+//
+// NESTED SAMPLING
+// rewrite Z = \int p(D|\theta)p(\theta) d\theta
+// as \int_0^1 L(\theta(x)) dx
+// then use samples from prior with nested
+// set of constraints of likelihood to evaluate that integral
+// 1. sample elements from parameters space (sample from prior)
+// 2. sort these elements by likelihood
+// 3. 
+double
+MedipNormalize::SampleMethState(double methval, double coupling)
 {
+  
+}
+
+void 
+MedipNormalize::FitBeta(const std::vector<double>& calls, BetaDist& b)
+{
+  
 }
 
 void
-MedipNormalize::FitLinear(float& alpha, float& beta)
+MedipNormalize::FitLinear()
 {
   // find local maxima of 
-  Eigen::VectorXf predict;
-  Eigen::VectorXf response;
+  Eigen::VectorXd predict;
+  Eigen::VectorXd response;
 
   // count number with coupling factors greater
   // than 10
   int count = 0;
   
   // Do LinReg
-  SimpleLinReg(predict, response, beta);
-  alpha = response.sum()/((float)response.size());
+  SimpleLinReg(predict, response, beta_);
+  alpha_ = response.sum()/((float)response.size());
 }
 
 //------------------------------------------------------------------------------
-
-void
-FindCouplingFactors::ComputeAnalysis()
-{
-}
 
 //------------------------------------------------------------------------------
 
@@ -82,8 +114,8 @@ CpGCounter::ComputeAnalysis()
   output_->set_extends(floor(((float)input_->start()) / res_), floor(((float)input_->stop())/res_));
   output_->set_trackname(tname_);
   output_->set_subtrackname(stname_);
-  unsigned char curr_char = '';
-  unsigned char prev_char = '';
+  unsigned char curr_char; 
+  unsigned char prev_char;
   for (size_t i = 0; i < output_->size(); ++i) {
     output_->set(i, 0);
   }
@@ -92,7 +124,7 @@ CpGCounter::ComputeAnalysis()
   for (size_t i = 0; i < input_->size(); i += res_) {
     curr_count = 0;
     prev_char = input_->get(i);
-    for (size_t j = 1; j < res_; ++j) {
+    for (int j = 1; j < res_; ++j) {
       curr_char = input_->get(i+j);
       if (curr_char == 'G' && prev_char == 'C') 
 	curr_count++;

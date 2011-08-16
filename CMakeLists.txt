@@ -3,9 +3,9 @@ if(COMMAND cmake_policy)
   cmake_policy(SET CMP0003 NEW)
 endif(COMMAND cmake_policy)
 
-#set(CMAKE_C_COMPILER "clang")
+set(CMAKE_C_COMPILER "clang")
 
-#set(CMAKE_CXX_COMPILER "clang++")
+set(CMAKE_CXX_COMPILER "clang++")
 project(Seqwill)
 
 set(CMAKE_CXX_FLAGS "-O3")
@@ -47,6 +47,7 @@ set(UTIL_SRCS util/SComm.h
 
 set(BASE_SRCS base/BEDelement.h
    base/MatrixUtil.h
+   base/MatrixUtil.cc
     base/ProgressBar.h 
     base/ProgressBar.cc
     base/WIG.h
@@ -81,6 +82,8 @@ set(DATA_SRCS data/TrackData.h
     data/SeqData.h)
 
 set(ANALYSIS_SRCS analysis/Genome.cc
+    analysis/MedipNormalize.cc
+    analysis/MedipNormalize.h
     analysis/gsl_addon.cc
     analysis/gsl_addon.h 
     analysis/Kmeans.h
@@ -142,3 +145,4 @@ cxx_test(LoadDataTest)
 cxx_test(HMMTest)
 cxx_test(DistTest)
 cxx_test(BamIOTest)
+cxx_test(MedipNormTest)
