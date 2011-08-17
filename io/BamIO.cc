@@ -129,11 +129,12 @@ SingleReadFactory::AddRead(const BamTools::BamAlignment& read)
 
 bool BamIO::Open(const std::string& fname)
 {
+  reader_ = new BamTools::BamReader;
   if (!FileExists(fname)) {
     ERRORLOG("File doesn't exist " + fname);
     return false;
   }
-  reader_.Open(fname);
+  reader_->Open(fname);
   isopen_ = true;
   return true;
 }
@@ -141,15 +142,16 @@ bool BamIO::Open(const std::string& fname)
 void BamIO::Close()
 {
   isopen_ = false;
-  reader_.Close();
+  reader_->Close();
+  delete reader_;
 }
 
 void BamIO::Init(const std::string& fname)
 {
-  if (!reader_.IsOpen())
+  if (!reader_->IsOpen())
     Open(fname);
-  if (!reader_.LocateIndex()) {
-    reader_.CreateIndex();
+  if (!reader_->LocateIndex()) {
+    reader_->CreateIndex();
     DEBUGLOG("Creating index for " + fname + "...");
   }
   LoadRefSeqInfo();
@@ -164,12 +166,12 @@ BamIO::LoadAllSingleReads()
   BamTools::BamAlignment align;
   for (std::vector<std::string>::const_iterator it = refseqs_.begin();
        it != refseqs_.end(); ++it) {
-    int refid = reader_.GetReferenceID(*it);
-    reader_.SetRegion(refid, 0, refid, chrlens_[*it]);
-    while (reader_.GetNextAlignment(align)) {
+    int refid = reader_->GetReferenceID(*it);
+    reader_->SetRegion(refid, 0, refid, chrlens_[*it]);
+    while (reader_->GetNextAlignment(align)) {
       factory->AddRead(align);
     }
-    reader_.Rewind();    
+    reader_->Rewind();    
   }
   return factory;
 }
@@ -180,12 +182,12 @@ BamIO::LoadChrSingleReads(const std::string& chr)
   SingleReadFactory* factory = new SingleReadFactory;
   BamTools::BamAlignment align;
   factory->Init(refseqs_);
-  int refid = reader_.GetReferenceID(chr);
-  reader_.SetRegion(refid, 0, refid, chrlens_[chr]);
-  while (reader_.GetNextAlignment(align)) {
+  int refid = reader_->GetReferenceID(chr);
+  reader_->SetRegion(refid, 0, refid, chrlens_[chr]);
+  while (reader_->GetNextAlignment(align)) {
     factory->AddRead(align);
   }
-  reader_.Rewind();
+  reader_->Rewind();
   return factory;
 }
 
@@ -194,7 +196,7 @@ BamIO::LoadRefSeqInfo()
 {
   chrlens_.clear();
   refseqs_.clear();
-  BamTools::SamHeader header = reader_.GetHeader();
+  BamTools::SamHeader header = reader_->GetHeader();
   if (header.HasSequences()) {
     BamTools::SamSequenceDictionary seqs = header.Sequences;
     BamTools::SamSequence currseq;

@@ -1,105 +1,95 @@
 #include "analysis/MedipNormalize.h"
 
 
-// 1. find maxima of CpG amounts
-// Do linear regression only up to maxima
-// Use linear regression values to sample true values
-// for all
+MedipNormalize::~MedipNormalize() {
+    delete bio_; 
+    for (size_t i = 0; i < frags_.size(); ++i) {
+      delete[] frags_[i].cpgs;
+      delete[] frags_[i].cpg_probs;
+    }
+}
 
 void
-MedipNormalize::ComputeCoupling()
+MedipNormalize::ReadsToFrags()
 {
-  assert(frag_len_ != -1);
+  SingleReadFactory* reads = bio_->LoadChrSingleReads(chr_->subtrackname());
+  // index frags by position of first mate
   
-  // compute coupling factors
-  coupling_ = Eigen::VectorXd::Zero(input_->size());
-  int chrlen = chr_->stop();
-  int res = input_->resolution();
-  for (size_t i = 0; i < input_->size(); ++i) {
-    int absmax = (i+1) * res;
-    int absmin = i * res;
-    int maxpos = std::min(absmax + frag_len_ - 1, chrlen-1);
-    int minpos = std::max(absmin - frag_len_ + 1, 0);
-    double total = 0.0;
-    for (int j = minpos; j <= maxpos; ++j) {
-      unsigned char curr = chr_->get(j);
-      unsigned char next = chr_->get(j+1);
-      if ((curr == 'C' && next == 'G')
-          || (curr == 'c' && next == 'g')) {
-        total++;
+  for (SingleReadFactory::iterator it = reads->begin();
+       it != reads->end(); ++it) {
+    if (it->second.is_first) {  
+      Frag f;
+      if (frag_len_ > 0) {
+        if (it->second.strand == kFwd) {
+          f.start = it->second.pos;
+          f.stop = it->second.pos + frag_len_ - 1;
+        } else if (it->second.strand == kRev) {
+          f.start = it->second.pos + it->second.len - frag_len_;
+          f.stop = it->second.pos + it->second.len - 1;
+        }
+      } else {
+        //XXX may need to fix this
+        if (it->second.partner_ref == it->second.ref_id) {
+          if (it->second.pos > it->second.partner_pos) {
+            f.start = it->second.pos;
+            f.stop = it->second.partner_pos;
+          } else {
+            f.start = it->second.partner_pos;
+            f.stop = it->second.pos;
+          }          
+        }
       }
+      frags_.push_back(f);
     }
-    coupling_(i) = total;
   }
+}
+
+void
+MedipNormalize::FindCpG()
+{  
+  // initialize bins  
+  cpgs_ = std::vector<std::vector<CpG> >(ceil((float)chr_->asize() / bin_size_));  
+  
+  for (size_t i = 0; i < input_->size() - 1; ++i) {
+    unsigned char curr = chr_->get(i);
+    unsigned char next = chr_->get(i+1);
+    if ((curr == 'C' && next == 'G')
+        || (curr == 'c' && next == 'g')) {
+      CpG cpg;
+      cpg.pos = i;
+      cpg.weight = 1.0;
+      cpgs_[PosToBinIdx(i)].push_back(cpg);
+    }
+  }
+}
+
+void
+MedipNormalize::AssignCpGToFrags()
+{
+  for (std::vector<Frag>::iterator it = frags_.begin();
+       it != frags_.end(); ++it) {
+    
+  }    
+}
+
+
+int
+MedipNormalize::PosToBinIdx(int pos) 
+{
+  return floor(((float)pos) / bin_size_);
 }
 
 void
 MedipNormalize::ComputeAnalysis()
 {
 //  assert(!isnan(beta_) && !isnan(alpha_) && frag_len_ != -1);
-  DEBUGLOG("Calibrating MedipNormalize...");
-  ComputeCoupling();
+  DEBUGLOG("Finding CpGs...");
+  FindCpG();
   DEBUGLOG("Fitting linear regression...");
 //  FitLinear();  
 }
 
-void
-MedipNormalize::Sample()
-{
-  int N = (int)input_->size();
-  double* array = new double[N];
-  #pragma omp parallel for shared(array) private(i,j,b,calls)
-  for (int i = 0; i < N; ++i) {
-    std::vector<double> calls(100);
-    for (int j = 0; j < 100; ++j) {
-      calls[j] = SampleMethState(input_->get(i), coupling_(i));
-    }
-    BetaDist b;
-    FitBeta(calls, b);
-    array[i] = b.Mode();
-  }  
-}
 
-// A_p = number of reads overlapping a particular bin
-// A_base = A_p-intercept of linreg
-// r is slope of model
-// sample from f(A|m) = \Pi_p G(A_p|A_base + r*C_cp, v^-1)
-//
-// NESTED SAMPLING
-// rewrite Z = \int p(D|\theta)p(\theta) d\theta
-// as \int_0^1 L(\theta(x)) dx
-// then use samples from prior with nested
-// set of constraints of likelihood to evaluate that integral
-// 1. sample elements from parameters space (sample from prior)
-// 2. sort these elements by likelihood
-// 3. 
-double
-MedipNormalize::SampleMethState(double methval, double coupling)
-{
-  
-}
-
-void 
-MedipNormalize::FitBeta(const std::vector<double>& calls, BetaDist& b)
-{
-  
-}
-
-void
-MedipNormalize::FitLinear()
-{
-  // find local maxima of 
-  Eigen::VectorXd predict;
-  Eigen::VectorXd response;
-
-  // count number with coupling factors greater
-  // than 10
-  int count = 0;
-  
-  // Do LinReg
-  SimpleLinReg(predict, response, beta_);
-  alpha_ = response.sum()/((float)response.size());
-}
 
 //------------------------------------------------------------------------------
 

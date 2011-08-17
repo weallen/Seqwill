@@ -42,7 +42,7 @@ struct SingleRead
   ReadID insert_id;
   RefID ref_id;
   int32_t pos;
-
+  
   RefID partner_ref;
   int32_t partner_pos;
 
@@ -132,6 +132,9 @@ private:
 
 // ------------------------------------------
 
+
+// ------------------------------------------
+
 // Convert raw BamAlignments into single reads
 // Store the single reads by
 class SingleReadFactory
@@ -195,6 +198,9 @@ class BamIO
   SingleReadFactory* LoadAllSingleReads();
   SingleReadFactory* LoadChrSingleReads(const std::string& chr);
 
+  BamTools::BamReader* reader() 
+  { return reader_; }
+  
   bool is_open() const { return isopen_; }
 
   std::map<std::string, int> chrlens() const { return chrlens_; }
@@ -208,7 +214,7 @@ class BamIO
   void Close();
 
   bool isopen_;
-  BamTools::BamReader reader_;  
+  BamTools::BamReader* reader_;  
   std::map<std::string, int> chrlens_;
   std::vector<std::string> refseqs_;
 };

@@ -7,12 +7,17 @@
 #include <math.h>
 
 #include <Eigen/Dense>
+#include <api/BamReader.h>
+#include <api/BamAlignment.h>
+#include <api/SamSequenceDictionary.h>
+#include <api/SamSequence.h>
 
 #include "base/MatrixUtil.h"
 
 #include "analysis/AnalysisBase.h"
 #include "common/Track.h"
 #include "analysis/Dist.h"
+#include "io/BamIO.h"
 
 /*
  * 1. set all cpgs to 1
@@ -22,6 +27,20 @@
  * for each fragment
  */
 
+struct Frag
+{  
+  int start;
+  int stop;
+  int* cpgs;
+  float* cpg_probs;
+  int num_cpgs;
+};
+
+struct CpG
+{
+  int pos;
+  float weight;
+};
 
 class MedipNormalize : public Analysis<float, float>
 {
@@ -30,11 +49,10 @@ public:
   
   MedipNormalize()    
   : frag_len_(-1) 
-  , alpha_(std::numeric_limits<double>::quiet_NaN())
-  , beta_(std::numeric_limits<double>::quiet_NaN())
+  , bin_size_(10000)
   { analysis_name_ = std::string("MedipNormalize"); }
 
-  virtual ~MedipNormalize() {}
+  virtual ~MedipNormalize();
 
   void set_frag_len(int frag_len)
   { frag_len_ = frag_len; }
@@ -42,24 +60,25 @@ public:
   void set_chr(Track<unsigned char>::Ptr chr)
   { chr_ = chr; }
   
-  const Eigen::VectorXd& coupling() const
-  { return coupling_; }
+  void set_bam(BamIO* b) 
+  { bio_ = b; }
   
 private:  
-  void ComputeCoupling();
+  void ReadsToFrags();  
+  void FindCpG();
+  void AssignCpGToFrags();
+  
+  int PosToBinIdx(int pos);
+  
   virtual void ComputeAnalysis();
-  void Sample();
-  void FitBeta(const std::vector<double>& calls, BetaDist& b);
-  void FitLinear();
-  double SampleMethState(double methval, double coupling);
                          
   Track<unsigned char>::Ptr chr_;
   int frag_len_;
-  // Phi(i) = alpha_ + beta_*X(i)
-  double alpha_;
-  double beta_;
-
-  Eigen::VectorXd coupling_;
+  std::vector<Frag> frags_;
+  // size of bin to order CpGs by
+  int bin_size_;
+  std::vector<std::vector<CpG> > cpgs_;
+  BamIO* bio_;
 };
 
 
