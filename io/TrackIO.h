@@ -102,7 +102,7 @@ bool TrackFile::WriteSubTrack(Track<DataT>& subtrack)
 
   hsize_t best_chunk_size = 4096*16;
   hsize_t memsize[1] = {(hsize_t) subtrack.size()};
-  const hsize_t chunk_size = std::min(best_chunk_size, memsize[0] / 2);
+  //const hsize_t chunk_size = std::min(best_chunk_size, memsize[0] / 2);
   //hsize_t chunk[1] = {chunk_size};
   //DataT buff[chunk_size];
   

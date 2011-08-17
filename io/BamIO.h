@@ -185,12 +185,16 @@ class BamIO
  public:
   typedef boost::shared_ptr<BamIO> Ptr;
 
-  BamIO()  {}
+  BamIO()  {
+    reader_ = new BamTools::BamReader;
+  }
   BamIO(const std::string& fname) 
-    { Init(fname); }
+  {   reader_ = new BamTools::BamReader;
+      Init(fname); }
 
   virtual ~BamIO() {
     Close();
+    delete reader_;
   }
 
   void Init(const std::string& fname);
