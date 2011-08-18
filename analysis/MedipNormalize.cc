@@ -198,31 +198,23 @@ CpGCounter::ComputeAnalysis()
 {
   assert(tname_ != "" && stname_ != "");
   output_ = TrackOutPtr(new Track<int>);
+  output_->set_extends(0, floor(((float)input_->stop())/res_));
   output_->set_resolution(res_);
-  output_->set_extends(floor(((float)input_->start()) / res_), floor(((float)input_->stop())/res_));
   output_->set_trackname(tname_);
   output_->set_subtrackname(stname_);
-  unsigned char curr_char; 
-  unsigned char prev_char;
   for (size_t i = 0; i < output_->size(); ++i) {
     output_->set(i, 0);
   }
   
-  int curr_count;
-  for (size_t i = 0; i < input_->size(); i += res_) {
-    curr_count = 0;
-    prev_char = input_->get(i);
-    for (int j = 1; j < res_; ++j) {
-      curr_char = input_->get(i+j);
-      if (curr_char == 'G' && prev_char == 'C') 
-	curr_count++;
-      if (do_cpa_) {
-	if (curr_char == 'A' && prev_char == 'C') {
-	  curr_count++;
-	}
-      }
-      prev_char = curr_char;
+  
+  for (size_t i = 0; i < input_->size() - 1; ++i) {
+    int curr_bin = floor((float) i / res_);
+    unsigned char curr = input_->get(i);
+    unsigned char next = input_->get(i+1);
+    if ((curr == 'C' && next == 'G')
+        || (curr == 'c' && next == 'g')) {
+      int old = output_->get(curr_bin);
+      output_->set(curr_bin, old+1);
     }
-    output_->set(i, curr_count);
   }
 }

@@ -47,8 +47,25 @@ namespace {
     BamIO* bio_;
   };
   
+  TEST_F(MedipNormTest, CpGTest) {
+    CpGCounter counter;
+    counter.set_input(chr6_);
+    counter.set_resolution(100);
+    counter.set_out_track_name(std::string("cpg"));
+    counter.set_out_subtrack_name(std::string("chr6"));
+    counter.Compute();
+    
+    Track<int>::Ptr out = counter.output();
+    std::fstream outfile;
+    outfile.open("/Users/admin/Documents/chr6_cpg_100.wig", std::fstream::out);
+    outfile << "fixedStep chrom=chr6 start=0 step=100 span=100" << std::endl;
+    for (size_t i = 0; i < out->size(); ++i) {
+      outfile << out->get(i) << std::endl;
+    }
+    outfile.close();
+  }
   TEST_F(MedipNormTest, ComputeTest) {
-    TrackFile tio(std::string());
+//    TrackFile tio(std::string());
     
     norm_.set_out_track_name(std::string("d3a_wt_mc"));
     norm_.set_out_subtrack_name(std::string("chr6"));
@@ -56,7 +73,7 @@ namespace {
     Track<float>::Ptr t = norm_.output();
     std::fstream outfile;
     outfile.open("/Users/admin/Documents/norm_mc_test.wig", std::fstream::out);
-    outfile << "fixedStep chrom=chr6 start=0 step=100" << std::endl;
+    outfile << "fixedStep chrom=chr6 start=0 step=50 span=50" << std::endl;
     for (size_t i = 0; i < t->size(); ++i) {
       outfile << t->get(i) << std::endl;
     }    

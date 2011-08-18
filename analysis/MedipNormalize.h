@@ -58,7 +58,7 @@ public:
   , num_bins_(0)
   , cpgs_(NULL)
   , bio_(NULL)
-  , res_(100)
+  , res_(50)
   { analysis_name_ = std::string("MedipNormalize"); }
 
   virtual ~MedipNormalize();
