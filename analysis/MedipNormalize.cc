@@ -167,9 +167,13 @@ void
 MedipNormalize::ComputeAnalysis()
 {
 //  assert(!isnan(beta_) && !isnan(alpha_) && frag_len_ != -1);
+  DEBUGLOG("Finding CpGs...");
   FindCpG();
+  DEBUGLOG("Assigning reads to frags...");
   ReadsToFrags();
+  DEBUGLOG("Assinging cpgs to frags...");
   AssignCpGToFrags();
+  DEBUGLOG("Iteratively reweighting cpgs...");
   IterativelyReweightCpGs();
   
   output_ = TrackOutPtr(new Track<float>);
@@ -198,8 +202,9 @@ CpGCounter::ComputeAnalysis()
 {
   assert(tname_ != "" && stname_ != "");
   output_ = TrackOutPtr(new Track<int>);
-  output_->set_extends(0, floor(((float)input_->stop())/res_));
   output_->set_resolution(res_);
+  output_->set_abs_extends(0, input_->stop());
+  output_->set_extends(0, floor(((float)input_->stop())/res_));
   output_->set_trackname(tname_);
   output_->set_subtrackname(stname_);
   for (size_t i = 0; i < output_->size(); ++i) {

@@ -8,7 +8,7 @@
 class KDE 
 {
 public:
-  typedef boost::function<float (float x, float x)> KernFnType;
+  typedef boost::function2<float,float,float> KernFnType;
 
   KDE()
     : bandwidth_(1.0)
@@ -51,7 +51,7 @@ private:
   float bandwidth_;
 };
 
-boost::function<float (float x, float b)> GaussKernFn;
+boost::function2<float,float, float> GaussKernFn;
 
 float GaussianKernel(float x, float b);
 

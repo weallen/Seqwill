@@ -3,13 +3,13 @@ if(COMMAND cmake_policy)
   cmake_policy(SET CMP0003 NEW)
 endif(COMMAND cmake_policy)
 
-set(CMAKE_C_COMPILER "clang")
+#set(CMAKE_C_COMPILER "clang")
 
-set(CMAKE_CXX_COMPILER "clang++")
+#set(CMAKE_CXX_COMPILER "clang++")
 project(Seqwill)
 
-set(CMAKE_CXX_FLAGS "-O3")
-#set(CMAKE_CXX_FLAGS "-g")
+#set(CMAKE_CXX_FLAGS "-O3")
+set(CMAKE_CXX_FLAGS "-g")
 #set(cxx_exception_flags "-fexceptions")
 #set(cxx_no_exception_flags "-fnoexceptions")
 
@@ -132,6 +132,11 @@ tool(ReadStartPileup)
 tool(Phasogram)
 
 tool(TrackToWig)
+
+tool(CountCpGs)
+
+tool(DipNormalize)
+
 # testing
 function(cxx_test name)
   add_executable(${name} "test/${name}.cc")
