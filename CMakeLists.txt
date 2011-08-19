@@ -3,9 +3,12 @@ if(COMMAND cmake_policy)
   cmake_policy(SET CMP0003 NEW)
 endif(COMMAND cmake_policy)
 
-#set(CMAKE_C_COMPILER "clang")
+set(CC "gcc")
+set(CXX "g++")
 
-#set(CMAKE_CXX_COMPILER "clang++")
+#set(CMAKE_C_COMPILER ${CC})
+
+#set(CMAKE_CXX_COMPILER ${CXX})
 project(Seqwill)
 
 #set(CMAKE_CXX_FLAGS "-O3")
@@ -14,15 +17,8 @@ set(CMAKE_CXX_FLAGS "-g")
 #set(cxx_no_exception_flags "-fnoexceptions")
 
 set(EXECUTABLE_OUTPUT_PATH bin)
+include("DevSettings.txt")
 
-include_directories(".")
-include_directories("/usr/local/include/bamtools")
-include_directories("/usr/local/include")
-include_directories("/usr/include")
-include_directories("/usr/local/include/eigen3")
-
-# include Google Test
-set(gtest_SOURCE_DIR "~/src/gtest")
 include_directories("${gtest_SOURCE_DIR}/include" ${gtest_SOURCE_DIR})
 link_directories("${gtest_SOURCE_DIR}")
 
@@ -120,6 +116,14 @@ function(tool name)
   target_link_libraries(${name} SWLib)
 endfunction()
 
+function(mpi_tool name)
+  set(CMAKE_C_COMPILER mpicc)
+  set(CMAKE_CXX_COMPILER mpicxx)		
+  add_executable(${name} tool/${name}.cc)
+  target_link_libraries(${name} SWLib boost_mpi boost_serialization mpi)
+  set(CMAKE_C_COMPILER ${CC})
+  set(CMAKE_CXX_COMPILE ${CXX})
+endfunction()
 
 tool(LoadData)
 
@@ -136,6 +140,8 @@ tool(TrackToWig)
 tool(CountCpGs)
 
 tool(DipNormalize)
+
+mpi_tool(DipNormalizeParallel)
 
 # testing
 function(cxx_test name)
