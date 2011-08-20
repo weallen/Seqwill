@@ -9,7 +9,13 @@ MedipNormalize::~MedipNormalize() {
 void
 MedipNormalize::ReadsToFrags()
 {
-  SingleReadFactory* reads = bio_->LoadChrSingleReads(chr_->subtrackname());
+  SingleReadFactory* reads;
+
+  #pragma omp critical 
+  {
+    reads = bio_->LoadChrSingleReads(chr_->subtrackname());
+  }
+
   int nfrags = 0;
   // index frags by position of first mate
   if (frag_len_ > 0) {
@@ -91,7 +97,7 @@ MedipNormalize::AssignCpGToFrags()
   }
   num_bins_ = ceil(chr_->asize() / (float)bin_size_);
   std::vector<int> index(num_bins_);
-  std::cerr << index.size() << std::endl;
+  //std::cerr << index.size() << std::endl;
   for (int frag_idx = 0; frag_idx < num_frags_; ++frag_idx) {   
     Frag f = frags_[frag_idx];
     f.num_cpgs = 0;
@@ -128,7 +134,7 @@ MedipNormalize::IterativelyReweightCpGs()
 
   while (delta_loglik > 0.01) {
     n++;
-    DEBUGLOG("REWEIGHT STEP " + Stringify(n));
+    //DEBUGLOG("REWEIGHT STEP " + Stringify(n));
     // zero all the CpGs
     for (int i = 0; i < num_cpgs_; ++i) {
       cpgs_[i].weight = 0.0;
@@ -159,7 +165,7 @@ MedipNormalize::IterativelyReweightCpGs()
     }
     delta_loglik = abs(old_loglik - ll);
     old_loglik = ll;
-    std::cerr << ll << std::endl;
+//std::cerr << ll << std::endl;
   }
 }
 
@@ -167,14 +173,14 @@ void
 MedipNormalize::ComputeAnalysis()
 {
 //  assert(!isnan(beta_) && !isnan(alpha_) && frag_len_ != -1);
-  DEBUGLOG("Finding CpGs...");
+  DEBUGLOG("Finding CpGs " + stname_ + "...");
   FindCpG();
-  DEBUGLOG("Assigning reads to frags...");
+  DEBUGLOG("Assigning reads to frags " + stname_ + "...");
   ReadsToFrags();
-  DEBUGLOG("Assinging cpgs to frags...");
+  DEBUGLOG("Assinging cpgs to frags " + stname_ + "...");
   AssignCpGToFrags();
-  DEBUGLOG("Iteratively reweighting cpgs...");
-  IterativelyReweightCpGs();
+  DEBUGLOG("Iteratively reweighting cpgs " + stname_ + "...");
+//  IterativelyReweightCpGs();
   
   output_ = TrackOutPtr(new Track<float>);
   output_->set_resolution(res_);

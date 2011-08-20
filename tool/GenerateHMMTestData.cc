@@ -3,7 +3,7 @@
 #include <Eigen/Dense>
 #include <gsl/gsl_rng.h>
 #include <fstream>
-#include "analysis/dist.h"
+#include "analysis/Dist.h"
 #include "common/Track.h"
 #include "io/TrackIO.h"
 #include "analysis/Random.h"
