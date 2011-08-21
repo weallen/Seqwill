@@ -28,10 +28,12 @@ namespace {
       chr_.Open("/Users/admin/Documents/chromosomes.trk");
       chr_.ReadSubTrack(std::string("mm9"), std::string("chr6"), *chr6_);
       norm_.set_chr(chr6_);
-      norm_.set_bam(bio_);
+      SingleReadFactory* reads = bio_->LoadChrSingleReads(chr6_->subtrackname());
+      norm_.set_reads(reads);
     }
     
     virtual ~MedipNormTest() {
+      delete norm_.reads();
       delete bio_;
     }
     

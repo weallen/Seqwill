@@ -9,18 +9,13 @@ MedipNormalize::~MedipNormalize() {
 void
 MedipNormalize::ReadsToFrags()
 {
-  SingleReadFactory* reads;
-
-  #pragma omp critical 
-  {
-    reads = bio_->LoadChrSingleReads(chr_->subtrackname());
-  }
+  assert(reads_ != NULL);
 
   int nfrags = 0;
   // index frags by position of first mate
   if (frag_len_ > 0) {
-    for (SingleReadFactory::iterator it = reads->begin();
-         it != reads->end(); ++it) {
+    for (SingleReadFactory::iterator it = reads_->begin();
+         it != reads_->end(); ++it) {
       Frag f;
       f.num_cpgs = 0;
       if (it->second.strand == kFwd) {
@@ -34,8 +29,8 @@ MedipNormalize::ReadsToFrags()
       nfrags++;
     }    
   } else {
-    for (SingleReadFactory::iterator it = reads->begin();
-         it != reads->end(); ++it) {
+    for (SingleReadFactory::iterator it = reads_->begin();
+         it != reads_->end(); ++it) {
       Frag f;
       f.num_cpgs = 0;
       //XXX may need to fix this

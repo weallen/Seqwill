@@ -57,7 +57,7 @@ public:
   , num_cpgs_(0)
   , num_bins_(0)
   , cpgs_(NULL)
-  , bio_(NULL)
+  , reads_(NULL)
   , res_(50)
   { analysis_name_ = std::string("MedipNormalize"); }
 
@@ -68,10 +68,13 @@ public:
   
   void set_chr(Track<unsigned char>::Ptr chr)
   { chr_ = chr; }
-  
-  void set_bam(BamIO* b) 
-  { bio_ = b; }
-  
+
+  void set_reads(SingleReadFactory* reads)
+  { reads_ = reads; }
+
+  SingleReadFactory* reads() 
+    { return reads_; }
+
   void set_bin_size(int bin) 
   { bin_size_ = bin; }
     
@@ -109,7 +112,7 @@ protected:
   int num_cpgs_;
   int num_bins_;
   CpG* cpgs_;
-  BamIO* bio_;
+  SingleReadFactory* reads_;
   int res_;
 };
 

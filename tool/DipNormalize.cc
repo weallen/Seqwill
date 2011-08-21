@@ -57,7 +57,8 @@ int main(int argc, char** argv) {
   }
 
   BamIO* b = new BamIO(bamname);
-  
+  SingleReadFactory* reads = b->LoadChrSingleReads(chrname);
+
   BamTools::RefVector refs = b->reader()->GetReferenceData();
   bool has_chr = false;
   for (BamTools::RefVector::iterator it = refs.begin();
@@ -88,13 +89,15 @@ int main(int argc, char** argv) {
   if (extend > -1) {
     norm.set_frag_len(extend);
   }
+  norm.set_reads(reads);
   norm.set_resolution(res);
   norm.set_out_track_name(trackname);
   norm.set_out_subtrack_name(chrname);
   norm.Compute();
   Track<float>::Ptr out = norm.output();
   tio.WriteSubTrack<float>(*out);
-  
+
+  delete reads;
   delete b;
   return 1;
 }

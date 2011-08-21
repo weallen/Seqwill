@@ -11,13 +11,13 @@ set(CXX "g++")
 #set(CMAKE_CXX_COMPILER ${CXX})
 project(Seqwill)
 
-set(CMAKE_CXX_FLAGS "-g -fopenmp")
+set(CMAKE_CXX_FLAGS "-O3 -fopenmp")
 #set(CMAKE_CXX_FLAGS "-g")
 #set(cxx_exception_flags "-fexceptions")
 #set(cxx_no_exception_flags "-fnoexceptions")
 
 set(EXECUTABLE_OUTPUT_PATH bin)
-include("DevSettings.txt")
+include("ClusterSettings.txt")
 
 include_directories("${gtest_SOURCE_DIR}/include" ${gtest_SOURCE_DIR})
 link_directories("${gtest_SOURCE_DIR}")
@@ -108,7 +108,7 @@ set(ALL_SRCS ${COMMON_SRCS} ${IO_SRCS} ${HDF5_SRCS} ${UTIL_SRCS} ${BASE_SRCS})
 
 # libraries
 add_library(SWLib ${COMMON_SRCS} ${IO_SRCS} ${HDF5_SRCS} ${UTIL_SRCS} ${BASE_SRCS} ${DATA_SRCS} ${ANALYSIS_SRCS})
-target_link_libraries(SWLib hdf5 bamtools gsl gslcblas pthread)
+target_link_libraries(SWLib hdf5 bamtools gsl gslcblas tbb)
 # binaries
 
 function(tool name) 
@@ -141,7 +141,8 @@ tool(CountCpGs)
 
 tool(DipNormalize)
 
-tool(DipNormalizeOMP)
+tool(DipNormalizeTBB)
+#tool(DipNormalizeOMP)
 #mpi_tool(DipNormalizeParallel)
 
 # testing
