@@ -12,6 +12,8 @@ set(HDF5PAR "/gpfs/runtime/opt/hdf5/1.8.5")
 set(BAMTOOLS "/gpfs/home/wallen/src/bamtools")
 set(GSL "/gpfs/home/wallen/")
 
+link_directories("/gpfs/runtime/opt/hoard/3.8/lib")
+
 include_directories("~/src/eigen")
 
 include_directories("${BAMTOOLS}/include")

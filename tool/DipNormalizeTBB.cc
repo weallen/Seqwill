@@ -6,6 +6,7 @@
 #include <tbb/concurrent_queue.h>
 #include <tbb/task_scheduler_init.h>
 #include <tbb/mutex.h>
+#include <tbb/atomic.h>
 
 #include <api/BamReader.h>
 #include <api/BamAlignment.h>
@@ -20,19 +21,54 @@
 
 
 tbb::concurrent_queue<Track<float>::Ptr> result_queue;
+tbb::atomic<bool> done;
+
+class WriteDataTask : public tbb::task
+{
+public:
+  WriteDataTask(const std::string& tfilename, int num_chrs) 
+    : chrs_done_(0)
+    , tio_(tfilename)
+    , nchrs_(num_chrs)
+  { }
+
+  tbb::task* execute()
+  {
+    while(1) {
+      if (!result_queue.empty()) {
+	Track<float>::Ptr tr;
+	result_queue.try_pop(tr);
+	std::cout << "Saving track " << tr->subtrackname() << std::endl;
+	tio_.WriteSubTrack<float>(*tr);
+	chrs_done_++;
+      }
+      if (chrs_done_ == nchrs_) {
+	return NULL;
+      }
+    }
+  }
+
+private:
+  int n_;
+  TrackFile tio_;
+  int nchrs_;
+  int chrs_done_;
+};
 
 class NormalizeTask : public tbb::task
 {
 public:
   NormalizeTask(int extend, int res, const std::string& trackname, 
-	    std::string chrname, Track<unsigned char>::Ptr chr,
-	    SingleReadFactory* reads)
+		const std::string& chrname, TrackFile* chrio,
+		BamIO* b, tbb::mutex& lck)
+    : chrname_(chrname)
+    , b_(b)
+    , lck_(lck)
+    , chrio_(chrio)
   {
     if (extend > -1) {
       norm_.set_frag_len(extend);
     }
-    norm_.set_reads(reads);
-    norm_.set_chr(chr);
     norm_.set_resolution(res);
     norm_.set_out_track_name(trackname);
     norm_.set_out_subtrack_name(chrname);
@@ -40,13 +76,25 @@ public:
 
   tbb::task* execute()
   {
+    Track<unsigned char>::Ptr chr(new Track<unsigned char>);   
+
+    lck_.lock();
+    chrio_->ReadSubTrack<unsigned char>(std::string("mm9"), chrname_, *chr);
+    SingleReadFactory* reads = b_->LoadChrSingleReads(chr->subtrackname());                 
+    lck_.unlock();
+    norm_.set_reads(reads);
+    norm_.set_chr(chr);
     norm_.Compute();
     result_queue.push(norm_.output());
-    delete norm_.reads();
+    delete reads;
     return NULL;
   }
 
 private:
+  std::string chrname_;
+  BamIO* b_;
+  tbb::mutex& lck_;
+  TrackFile* chrio_;
   MedipNormalize norm_;
 };
 
@@ -109,44 +157,33 @@ int main(int argc, char** argv) {
     }
   }
 
-  TrackFile chrio(genome);
+  TrackFile* chrio = new TrackFile(genome);
   int num_chrs = (int) shared_chrs.size();
 
+
+  tbb::empty_task& a = *new(tbb::task::allocate_root()) tbb::empty_task();
+  a.set_ref_count(1);
+  WriteDataTask& writer = *new(a.allocate_additional_child_of(a)) WriteDataTask(trackfilename, num_chrs);
+  a.spawn(writer);
 
   for (size_t i = 0; i < shared_chrs.size(); ++i) {
     std::string chrname = shared_chrs[i];
 
-    Track<unsigned char>::Ptr chr(new Track<unsigned char>);   
-
-    lck.lock();
-    chrio.ReadSubTrack<unsigned char>(std::string("mm9"), chrname, *chr);
-    SingleReadFactory* reads = b->LoadChrSingleReads(chr->subtrackname());                 
-    lck.unlock();
-
-    NormalizeTask* task = new(tbb::task::allocate_root()) NormalizeTask(extend, res, trackname, chrname, chr, reads);
-    tbb::task::enqueue(*task);
+    NormalizeTask& task = *new(a.allocate_additional_child_of(a)) NormalizeTask(extend, res, trackname, chrname, chrio, b, lck);
+    a.spawn(task);
   }
-
   std::cout << "All tasks enqueued." << std::endl;
-
-  TrackFile tio(trackfilename);
-
-  int i = 0;
-  for(;;) {
-    if (!result_queue.empty()) {
-      Track<float>::Ptr tr;
-      result_queue.try_pop(tr);
-      std::cout << "Saving track " << tr->subtrackname() << std::endl;
-      lck.lock();
-      tio.WriteSubTrack<float>(*tr);
-      lck.unlock();
-      i++;
-    }
-    if (i == num_chrs)
-      break;
-  }
+  a.wait_for_all();
+  a.destroy(a);
+  std::cout << "Cleaning up" << std::endl;
+  done = false;
+  //  chrs_done = 0;
+  //while(!done) {
+    // do nothing
+  //}
 
   delete b;
+  delete chrio;
   return 1;
 }
 

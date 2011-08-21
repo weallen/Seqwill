@@ -140,12 +140,13 @@ MedipNormalize::IterativelyReweightCpGs()
       for (size_t j = 0; j < frags_[i].cpgs.size(); ++j) {
         frags_[i].cpgs[j]->weight += frags_[i].cpg_probs[j];
       }
-    }
-    
+   }
+ 
     // Update per frag cpg probs by weights
     float ll = 0.0;
-    
+   
     for (int i = 0; i < num_frags_; ++i) {
+      float frag_ll = 0.0;
       float sum = 0.0;
       for (int j = 0; j < frags_[i].num_cpgs; ++j) {
         float temp = frags_[i].cpgs[j]->weight;
@@ -160,7 +161,7 @@ MedipNormalize::IterativelyReweightCpGs()
     }
     delta_loglik = abs(old_loglik - ll);
     old_loglik = ll;
-//std::cerr << ll << std::endl;
+    //    std::cerr << ll << std::endl;
   }
 }
 
@@ -168,14 +169,14 @@ void
 MedipNormalize::ComputeAnalysis()
 {
 //  assert(!isnan(beta_) && !isnan(alpha_) && frag_len_ != -1);
-  DEBUGLOG("Finding CpGs " + stname_ + "...");
+  //DEBUGLOG("Finding CpGs " + stname_ + "...");
   FindCpG();
-  DEBUGLOG("Assigning reads to frags " + stname_ + "...");
+  //DEBUGLOG("Assigning reads to frags " + stname_ + "...");
   ReadsToFrags();
-  DEBUGLOG("Assinging cpgs to frags " + stname_ + "...");
+  //DEBUGLOG("Assinging cpgs to frags " + stname_ + "...");
   AssignCpGToFrags();
   DEBUGLOG("Iteratively reweighting cpgs " + stname_ + "...");
-//  IterativelyReweightCpGs();
+  IterativelyReweightCpGs();
   
   output_ = TrackOutPtr(new Track<float>);
   output_->set_resolution(res_);

@@ -5,6 +5,8 @@
 #include <api/BamReader.h>
 #include <api/BamAlignment.h>
 
+#include <omp.h>
+
 #include "base/CommandLineParser.h"
 #include "base/FileUtil.h"
 #include "base/Types.h"
@@ -14,6 +16,9 @@
 #include "analysis/MedipNormalize.h"
 
 int main(int argc, char** argv) {
+   
+  omp_set_num_threads(25);
+
   commandArg<std::string> gGenome("-g", "Genome information");
   commandArg<std::string> bBam("-b", "In BAM file");
   commandArg<std::string> cChr("-c", "Chromosome name");
@@ -89,6 +94,7 @@ int main(int argc, char** argv) {
   if (extend > -1) {
     norm.set_frag_len(extend);
   }
+  norm.set_chr(chr);
   norm.set_reads(reads);
   norm.set_resolution(res);
   norm.set_out_track_name(trackname);
