@@ -137,6 +137,8 @@ tool(Phasogram)
 
 tool(TrackToWig)
 
+tool(SubTrackToWig)
+
 tool(CountCpGs)
 
 tool(DipNormalize)
