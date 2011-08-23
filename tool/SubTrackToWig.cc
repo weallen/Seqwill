@@ -48,7 +48,7 @@ int main(int argc, char** argv) {
   plus.open((wig + ".wig").c_str(), std::fstream::out);
 //  minus.open((wig + "_minus.wig").c_str(), std::fstream::out);
 
-  plus << "fixedStep chrom=" << subtrack  << " start=0 step=" << t.resolution() << std::endl;
+  plus << "fixedStep chrom=" << subtrack  << " start=0 step=" << t.resolution() << " span=" << t.resolution() << std::endl;
 //  minus << "fixedStep chrom=" << subtrack  << " start=0 step=" << t.resolution() << std::endl;
   for (size_t i = 0; i < t.size(); ++i) {
     d = t.get(i);
