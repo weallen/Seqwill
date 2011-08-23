@@ -36,14 +36,14 @@ public:
   {
     while(1) {
       if (!result_queue.empty()) {
-	Track<float>::Ptr tr;
-	result_queue.try_pop(tr);
-	std::cout << "Saving track " << tr->subtrackname() << std::endl;
-	tio_.WriteSubTrack<float>(*tr);
-	chrs_done_++;
+	      Track<float>::Ptr tr;
+        result_queue.try_pop(tr);
+        std::cout << "Saving track " << tr->subtrackname() << std::endl;
+        tio_.WriteSubTrack<float>(*tr);
+        chrs_done_++;
       }
       if (chrs_done_ == nchrs_) {
-	return NULL;
+      	return NULL;
       }
     }
   }
@@ -152,8 +152,12 @@ int main(int argc, char** argv) {
   std::vector<std::string> shared_chrs;
   for (BamTools::RefVector::iterator it = refs.begin(); it != refs.end();
        ++it) {
-    if (std::find(chrnames.begin(), chrnames.end(), it->RefName) != chrnames.end()) {      
-      shared_chrs.push_back(it->RefName);
+    if (std::find(chrnames.begin(), chrnames.end(), it->RefName) != chrnames.end()) {     
+      if (it->RefName.find("random") == std::string::npos
+          && it->RefName.find("NT") == std::string::npos
+          && it->RefName.find("chrM") == std::string::npos) {
+        shared_chrs.push_back(it->RefName);
+      }
     }
   }
 

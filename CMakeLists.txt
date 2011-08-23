@@ -17,7 +17,7 @@ set(CMAKE_CXX_FLAGS "-O3 -fopenmp")
 #set(cxx_no_exception_flags "-fnoexceptions")
 
 set(EXECUTABLE_OUTPUT_PATH bin)
-include("ClusterSettings.txt")
+include("DevSettings.txt")
 
 include_directories("${gtest_SOURCE_DIR}/include" ${gtest_SOURCE_DIR})
 link_directories("${gtest_SOURCE_DIR}")

@@ -5,7 +5,10 @@ include_directories("/usr/local/include/bamtools")
 include_directories("/usr/local/include")
 include_directories("/usr/include")
 include_directories("/usr/local/include/eigen3")
+include_directories("~/src/tbb3/include")
+link_directories("~/src/tbb3/lib")
 
+link_directories("~/src/hoard/src")
 # include Google Test
 set(gtest_SOURCE_DIR "~/src/gtest")
 
