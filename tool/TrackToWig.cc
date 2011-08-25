@@ -50,7 +50,8 @@ int main(int argc, char** argv) {
         stname != curr_subtracknames.end(); ++stname) { 
         Track<float>::Ptr track(new Track<float>);
         curr_file.ReadSubTrack<float>(trackname, *stname, *track);
-        out << "fixedStep chrom=" << *stname  << " start=0 step=" << track->resolution() " span=" << track->resolution() << std::endl;
+        std::cout << "Writing chr " << *stname << std::endl;
+        out << "fixedStep chrom=" << *stname  << " start=0 step=" << track->resolution() << " span=" << track->resolution() << std::endl;
         for (size_t i = 0; i < track->stop(); ++i) {
             out << track->get(i) << std::endl;
         }

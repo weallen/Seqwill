@@ -21,39 +21,7 @@
 
 
 tbb::concurrent_queue<Track<float>::Ptr> result_queue;
-tbb::atomic<bool> done;
 
-class WriteDataTask : public tbb::task
-{
-public:
-  WriteDataTask(const std::string& tfilename, int num_chrs) 
-    : chrs_done_(0)
-    , tio_(tfilename)
-    , nchrs_(num_chrs)
-  { }
-
-  tbb::task* execute()
-  {
-    while(1) {
-      if (!result_queue.empty()) {
-	      Track<float>::Ptr tr;
-        result_queue.try_pop(tr);
-        std::cout << "Saving track " << tr->subtrackname() << std::endl;
-        tio_.WriteSubTrack<float>(*tr);
-        chrs_done_++;
-      }
-      if (chrs_done_ == nchrs_) {
-      	return NULL;
-      }
-    }
-  }
-
-private:
-  int n_;
-  TrackFile tio_;
-  int nchrs_;
-  int chrs_done_;
-};
 
 class NormalizeTask : public tbb::task
 {
@@ -167,8 +135,6 @@ int main(int argc, char** argv) {
 
   tbb::empty_task& a = *new(tbb::task::allocate_root()) tbb::empty_task();
   a.set_ref_count(1);
-  WriteDataTask& writer = *new(a.allocate_additional_child_of(a)) WriteDataTask(trackfilename, num_chrs);
-  a.spawn(writer);
 
   for (size_t i = 0; i < shared_chrs.size(); ++i) {
     std::string chrname = shared_chrs[i];
@@ -177,15 +143,27 @@ int main(int argc, char** argv) {
     a.spawn(task);
   }
   std::cout << "All tasks enqueued." << std::endl;
+  
+  TrackFile tio(trackfilename);
+
+  int chrs_done = 0;
+  while(1) {
+      if (!result_queue.empty()) {
+	      Track<float>::Ptr tr;
+        result_queue.try_pop(tr);
+        std::cout << "Saving track " << tr->subtrackname() << std::endl;
+        tio.WriteSubTrack<float>(*tr);
+        chrs_done++;
+      }
+      if (chrs_done == num_chrs) {
+        break;
+      }
+ }
+
   a.wait_for_all();
   a.destroy(a);
-  std::cout << "Cleaning up" << std::endl;
-  done = false;
-  //  chrs_done = 0;
-  //while(!done) {
-    // do nothing
-  //}
 
+  std::cout << "Cleaning up" << std::endl;
   delete b;
   delete chrio;
   return 1;
