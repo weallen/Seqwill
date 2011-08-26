@@ -77,7 +77,12 @@ set(DATA_SRCS data/TrackData.h
     data/ChrData.h
     data/SeqData.h)
 
-set(ANALYSIS_SRCS analysis/Genome.cc
+set(ANALYSIS_SRCS 
+	  analysis/Nucleosome.h
+		analysis/Nucleosome.cc
+		analysis/HSMM.cc
+		analysis/HSMM.h
+		analysis/Genome.cc
     analysis/MedipNormalize.cc
     analysis/MedipNormalize.h
     analysis/gsl_addon.cc
@@ -148,6 +153,8 @@ tool(DipNormalizeTBB)
 #mpi_tool(DipNormalizeParallel)
 
 tool(CombineTrackFiles)
+
+tool(RPMNormalize)
 
 # testing
 function(cxx_test name)
