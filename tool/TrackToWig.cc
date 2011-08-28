@@ -7,12 +7,14 @@
 #include <unistd.h>
 #include <vector>
 
+#include <hdf5.h>
+
 #include "analysis/Genome.h"
 #include "base/CommandLineParser.h"
 #include "base/FileParser.h"
 #include "base/StringUtil.h"
 #include "base/WIG.h"
-
+#include "io/Traits.h"
 #include "common/Track.h"
 #include "io/TrackIO.h"
 
@@ -44,16 +46,28 @@ int main(int argc, char** argv) {
 
     std::fstream out;
     out.open((wig + ".wig").c_str(), std::fstream::out);
+    
+    DataTypeEnum dtype = curr_file.GetTrackType(trackname);
 
     std::vector<std::string> curr_subtracknames = curr_file.GetSubTrackNames(trackname);
     for (std::vector<std::string>::const_iterator stname = curr_subtracknames.begin();
-        stname != curr_subtracknames.end(); ++stname) { 
-        Track<float>::Ptr track(new Track<float>);
-        curr_file.ReadSubTrack<float>(trackname, *stname, *track);
-        std::cout << "Writing chr " << *stname << std::endl;
-        out << "fixedStep chrom=" << *stname  << " start=0 step=" << track->resolution() << " span=" << track->resolution() << std::endl;
-        for (size_t i = 0; i < track->stop(); ++i) {
-            out << track->get(i) << std::endl;
+        stname != curr_subtracknames.end(); ++stname) {
+        if (dtype == kFloatType) {
+            Track<float>::Ptr track(new Track<float>);
+            curr_file.ReadSubTrack<float>(trackname, *stname, *track);
+            std::cout << "Writing chr " << *stname << std::endl;
+            out << "fixedStep chrom=" << *stname  << " start=0 step=" << track->resolution() << " span=" << track->resolution() << std::endl;
+            for (size_t i = 0; i < track->stop(); ++i) {
+                out << track->get(i) << std::endl;
+            }
+        } else if (dtype == kIntType) {
+            Track<int>::Ptr track(new Track<int>);
+            curr_file.ReadSubTrack<int>(trackname, *stname, *track);
+            std::cout << "Writing chr " << *stname << std::endl;
+            out << "fixedStep chrom=" << *stname  << " start=0 step=" << track->resolution() << " span=" << track->resolution() << std::endl;
+            for (size_t i = 0; i < track->stop(); ++i) {
+                out << track->get(i) << std::endl;
+            }
         }
     }
        

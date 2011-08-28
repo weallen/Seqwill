@@ -13,7 +13,7 @@
 int main(int argc, char** argv) {
   commandArg<std::string> gGenome("-g", "Genome information");
   commandArg<std::string> oDataPath("-o", "Out trackfile name");
-  commandArg<int> nRes("-n", "Resolution");
+  commandArg<int> nRes("-n", "Resolution", 100);
 
   commandLineParser P(argc, argv);
   P.SetDescription("Count CpGs in genome.");

@@ -156,6 +156,10 @@ tool(CombineTrackFiles)
 
 tool(RPMNormalize)
 
+tool(HMMCompare)
+
+tool(CpGAverage)
+
 # testing
 function(cxx_test name)
   add_executable(${name} "test/${name}.cc")

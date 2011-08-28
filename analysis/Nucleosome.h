@@ -1,6 +1,8 @@
 #ifndef NUCLEOSOME_H_
 #define NUCLEOSOME_H_
 
+#include <tbb/parallel_for.h>
+
 #include <Eigen/Dense>
 #include "io/BamIO.h"
 #include "io/TrackIO.h"
@@ -43,7 +45,7 @@ private:
 };
 
 
-class NucMapper : public AnalysisBase<PlusMinusDataInt>
+class NucMapper : public Analysis<PlusMinusDataInt, float>
 {
 public:
     NucMapper() {}
@@ -54,4 +56,21 @@ public:
 private:
     
 };
+
+class TBB_NucKernel
+{
+public: 
+    TBB_NucKernel(Track<PlusMinusDataInt>& track,
+                  Track<float>& output)
+    : track_(track)
+    , output_(output)
+    { }
+    
+    void operator()(const tbb::blocked_range<size_t>& r) const; 
+
+private:
+    Track<PlusMinusDataInt>& track_;
+    Track<float>& output_;
+};
+
 #endif
