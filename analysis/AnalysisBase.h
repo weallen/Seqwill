@@ -44,6 +44,36 @@ protected:
   TrackPtr input_;
 };
 
+template<typename TrackOutT>
+class Processor 
+{
+public:
+    typedef typename Track<TrackOutT>::Ptr TrackPtr;
+    typedef typename Track<TrackOutT>::ConstPtr TrackConstPtr;
+
+    Processor()
+    : output_()
+    {}
+    
+    TrackPtr output() { return output_; }
+    
+    virtual void Compute()
+    { ComputeProcess(); }
+    
+    void set_out_track_name(const std::string& tname)
+    { tname_ = tname; }
+    
+    void set_out_subtrack_name(const std::string& stname)
+    { stname_ = stname; }
+
+protected:
+    virtual void ComputeProcess() = 0;
+
+    std::string tname_;
+    std::string stname_;
+    TrackPtr output_;
+};
+
 template <typename TrackInT, typename TrackOutT>
 class Analysis : public AnalysisBase<TrackInT>
 {
@@ -95,7 +125,6 @@ protected:
   virtual void ComputeAnalysis() = 0;
   TrackOutPtr output_;
 };
-
 
 template <typename TrackInT>
 class Filter : public AnalysisBase<TrackInT>

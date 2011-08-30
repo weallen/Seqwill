@@ -1,14 +1,158 @@
 #ifndef NUCLEOSOME_H_
 #define NUCLEOSOME_H_
 
+#include <algorithm>
+#include <math.h>
+
 #include <tbb/parallel_for.h>
 
 #include <Eigen/Dense>
+
 #include "io/BamIO.h"
 #include "io/TrackIO.h"
 #include "common/Track.h"
 #include "base/Types.h"
 #include "analysis/AnalysisBase.h"
+#include "analysis/Dist.h"
+
+struct NucFrag
+{  
+    int start;
+    int stop;
+    std::vector<int> nucs;
+    std::vector<float> nuc_probs;
+};
+
+struct Event
+{
+    int pos;
+    float prob;
+};
+
+class NucPosFinder : public Processor<float>
+{
+public:
+    NucPosFinder()
+    : reads_(NULL)
+    , width_(75) 
+    {}
+    
+    virtual ~NucPosFinder() {}
+    
+    void set_reads(SingleReadFactory* reads)
+    { reads_ = reads; }
+
+    SingleReadFactory* reads() 
+    { return reads_; }    
+    
+    std::vector<NucFrag>& frags()
+    { return frags_; }
+    
+    std::vector<Event>& events()
+    { return events_; }
+    
+    void set_pileup(Track<int>::Ptr pileup)
+    { pileup_ = pileup; }
+    
+    void set_nuc_width(int w)
+    { width_ = w; }
+    
+private:    
+    void InitializeEvents();    
+    void FitEM();
+    
+    Eigen::VectorXd UpdateEmpiricalDist();
+
+    SingleReadFactory* reads_;
+    int width_;
+    std::vector<NucFrag> frags_;
+    std::vector<Event> events_;
+    Track<int>::Ptr pileup_;
+    MultiDist dist_;
+};
+
+class NucPileup : public Processor<int>
+{
+public:
+    NucPileup()
+    : mean_(-1.0)
+    , var_(0.0)
+    , start_(0)
+    , stop_(0)
+    , reads_(NULL)
+    , alpha_(-1)
+    { 
+        set_out_track_name(std::string("DEFAULT"));
+        set_out_subtrack_name(std::string("DEFAULT"));
+    }
+    
+    virtual ~NucPileup() {}
+    
+    void set_extends(int start, int stop)
+    { start_ = start; stop_ = stop; }
+    
+    const float fraglen_mean() const
+    { return mean_; }
+    
+    const float fraglen_var() const
+    { return var_; }
+    
+    void set_reads(SingleReadFactory* reads)
+    { reads_ = reads; }
+
+    SingleReadFactory* reads() 
+    { return reads_; }
+    
+    float prior()
+    { return alpha_; }
+    
+    void set_prior(float alpha)
+    { alpha_ = alpha; }
+    
+private:
+    virtual void ComputeProcess();
+    
+    float mean_;
+    float var_;
+    int start_;
+    int stop_;
+    SingleReadFactory* reads_;
+    float alpha_;
+};
+
+class NucKDE : public Analysis<int, float>
+{
+public:
+    NucKDE() {}
+    virtual ~NucKDE() {}
+
+    void set_bandwidth(int w)
+    { w_ = w; }
+    
+private:
+    virtual void ComputeAnalysis();
+    int w_;  
+};
+
+class TBB_NucKernel
+{
+public: 
+    TBB_NucKernel(Track<int>& track,
+                  Track<float>& output,
+                  int bandwidth)
+    : track_(track)
+    , output_(output)
+    , w_(bandwidth)
+    { }
+    
+    void operator()(const tbb::blocked_range<size_t>& r) const; 
+    float D(int pos) const;
+
+private:
+    Track<int>& track_;
+    Track<float>& output_;
+    int w_;
+};
 
 class Histogram
 {
@@ -43,34 +187,4 @@ private:
     int n_; // num bins
     Eigen::ArrayXi counts_;
 };
-
-
-class NucMapper : public Analysis<PlusMinusDataInt, float>
-{
-public:
-    NucMapper() {}
-    virtual ~NucMapper() {}
-    
-    virtual void Compute();
-
-private:
-    
-};
-
-class TBB_NucKernel
-{
-public: 
-    TBB_NucKernel(Track<PlusMinusDataInt>& track,
-                  Track<float>& output)
-    : track_(track)
-    , output_(output)
-    { }
-    
-    void operator()(const tbb::blocked_range<size_t>& r) const; 
-
-private:
-    Track<PlusMinusDataInt>& track_;
-    Track<float>& output_;
-};
-
 #endif
