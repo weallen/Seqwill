@@ -3,6 +3,8 @@
 
 #include <algorithm>
 #include <math.h>
+#include <vector>
+#include <list>
 
 #include <tbb/parallel_for.h>
 
@@ -14,19 +16,22 @@
 #include "base/Types.h"
 #include "analysis/AnalysisBase.h"
 #include "analysis/Dist.h"
+#include "base/Log.h"
 
-struct NucFrag
-{  
-    int start;
-    int stop;
-    std::vector<int> nucs;
-    std::vector<float> nuc_probs;
-};
 
 struct Event
 {
     int pos;
     float prob;
+    float weight;
+};
+
+struct NucFrag
+{  
+    int start;
+    int stop;
+    std::vector<Event*> nucs;
+    std::vector<float> nuc_probs;
 };
 
 class NucPosFinder : public Processor<float>
@@ -35,9 +40,18 @@ public:
     NucPosFinder()
     : reads_(NULL)
     , width_(75) 
+    , alpha_(2.0)
+    , num_frags_(0)
+    , bin_size_(1000)
     {}
     
-    virtual ~NucPosFinder() {}
+    virtual ~NucPosFinder() {
+        while (!events_.empty()) {
+            delete events_.front();
+            events_.pop_front();
+        }
+        delete reads_;
+    }
     
     void set_reads(SingleReadFactory* reads)
     { reads_ = reads; }
@@ -48,7 +62,7 @@ public:
     std::vector<NucFrag>& frags()
     { return frags_; }
     
-    std::vector<Event>& events()
+    std::list<Event*>& events()
     { return events_; }
     
     void set_pileup(Track<int>::Ptr pileup)
@@ -57,18 +71,36 @@ public:
     void set_nuc_width(int w)
     { width_ = w; }
     
+    void set_prior(double alpha)
+    { alpha_ = alpha; }
+    
+    const double prior() const
+    { return alpha_; }
+    
 private:    
     void InitializeEvents();    
     void FitEM();
+    void ReadsToFrags();
     
-    Eigen::VectorXd UpdateEmpiricalDist();
+    void UpdateEmpiricalDist();
+    
+    void AssignEventsToFrags();
+    
+    int PosToBinIdx(int pos)
+    {
+        return floor((float)pos / (float)bin_size_);
+    }
 
     SingleReadFactory* reads_;
     int width_;
     std::vector<NucFrag> frags_;
-    std::vector<Event> events_;
+    std::list<Event*> events_;
     Track<int>::Ptr pileup_;
     MultiDist dist_;
+    double alpha_;
+    int num_frags_;
+    int bin_size_;
+
 };
 
 class NucPileup : public Processor<int>
