@@ -6,9 +6,9 @@ endif(COMMAND cmake_policy)
 set(CC "gcc")
 set(CXX "g++")
 
-#set(CMAKE_C_COMPILER ${CC})
+set(CMAKE_C_COMPILER ${CC})
 
-#set(CMAKE_CXX_COMPILER ${CXX})
+set(CMAKE_CXX_COMPILER ${CXX})
 project(Seqwill)
 
 set(CMAKE_CXX_FLAGS "-O3 -fopenmp")

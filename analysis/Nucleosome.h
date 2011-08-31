@@ -7,6 +7,7 @@
 #include <list>
 
 #include <tbb/parallel_for.h>
+#include <omp.h>
 
 #include <Eigen/Dense>
 
@@ -133,7 +134,19 @@ public:
 
     SingleReadFactory* reads() 
     { return reads_; }
-     
+
+    void set_start(int start)
+    { start_ = start; }
+
+    int start() 
+    { return start_; }
+
+    void set_stop(int stop)
+    { stop_ = stop; }
+    
+    int stop()
+    { return stop_; }
+
 private:
     virtual void ComputeProcess();
     
@@ -152,6 +165,7 @@ public:
 
     void set_bandwidth(int w)
     { w_ = w; }
+    
     
 private:
     virtual void ComputeAnalysis();

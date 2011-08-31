@@ -23,7 +23,7 @@ namespace {
   class NucMapTest : public ::testing::Test {
   protected:
     NucMapTest() {
-      bio_ = new BamIO(std::string("/media/storage2/data/bam/sorted_cells/nuc/omp_nuc_060111.bam"));
+      bio_ = new BamIO(std::string("/Users/wea/Desktop/omp_nuc_060111.bam"));
         
     }
     
@@ -40,23 +40,46 @@ namespace {
     BamIO* bio_;
   };
   
-  TEST_F(NucMapTest, PileupTest) {
+  /*  TEST_F(NucMapTest, PileupTest) {
       NucPileup pileup;
       pileup.set_out_track_name(std::string("test"));
       pileup.set_out_subtrack_name(std::string("chr6"));
       SingleReadFactory* reads = bio_->LoadChrSingleReads(std::string("chr6"));
       pileup.set_reads(reads);
+      pileup.set_start(0);
+      pileup.set_stop(149517037);
       pileup.Compute();
-      TrackFile tio("/home/will/Documents/nuc_map_test.trk");
+			std::cerr << "Mean " << pileup.fraglen_mean() << std::endl;
+			std::cerr << "Stddev " << pileup.fraglen_var() << std::endl;
+      std::cerr << "Got here" << std::endl;
+      TrackFile tio("/Users/wea/Desktop/nuc_map_test.trk");
       Track<int>::Ptr track = pileup.output();
       tio.WriteSubTrack<int>(*track);
-      delete reads;
-      
+      delete reads; 
+			std::fstream out;
+		  out.open("/Users/wea/Desktop/nuc.wig", std::fstream::out);
+			out << "fixedStep chrom=chr6 start=0 step=25 span=25" << std::endl;
+			for (int i = 0; i < (int)track->size(); i += 25) {
+				int sum = 0;
+				for (int j = i; j < (i+25); ++j) {
+					sum += track->get(j);
+				}
+				out << sum << std::endl;
+			}
   }
 
   
-  
-  TEST_F(NucMapTest, AssignCpGToFragTest) {
+  */  
+  TEST_F(NucMapTest, KDETest) {
+    NucKDE kde;
+    Track<int>::Ptr track(new Track<int>);
+    TrackFile tio("/Users/wea/Desktop/nuc_map_test.trk");
+    tio.ReadSubTrack<int>(std::string("test"), std::string("chr6"), *track);
+    
+    kde.set_input(track);
+    kde.Compute();
+    Track<float>::Ptr out = kde.output();
+    tio.WriteSubTrack<float>(*out);
   }
   
 

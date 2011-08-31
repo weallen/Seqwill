@@ -179,10 +179,12 @@ NucPosFinder::UpdateEmpiricalDist()
 void
 NucPileup::ComputeProcess()
 {
+    assert(stop_ != 0);
     output_ = Track<int>::Ptr(new Track<int>);
     output_->set_trackname(tname_);
     output_->set_subtrackname(stname_);
     output_->set_extends(start_, stop_);
+
     for (size_t i = 0; i < output_->size(); ++i) {
         output_->set(i, 0);
     }
@@ -222,11 +224,27 @@ NucPileup::ComputeProcess()
 void
 NucKDE::ComputeAnalysis()
 {
+    output_ = Track<float>::Ptr(new Track<float>);
     output_->set_extends(0, input_->size());
     output_->set_trackname(tname_);
     output_->set_subtrackname(stname_);
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, input_->size()),
-                      TBB_NucKernel(*input_, *output_, w_));
+
+
+    tbb::parallel_for(tbb::blocked_range<size_t>(0, input_->size(), 1000),
+                          TBB_NucKernel(*input_, *output_, w_));
+
+    for (size_t pos = 0; pos < input_->size(); ++pos) {
+        float val = output_->get(pos);
+        int start = std::max(0, (int)pos - 150);
+        int stop = std::min(input_->size(), pos + 150);
+        float denom = 0.0;
+        for (int i = start; i < stop; ++i) {
+            denom +=  output_->get(i);
+        }
+        denom *= (1.09 / w_) * (stop - start);        
+        output_->set(pos, val / denom);
+    }
+
     
 }
 
@@ -236,16 +254,9 @@ void
 TBB_NucKernel::operator()(const tbb::blocked_range<size_t>& r) const
 {
     for (size_t pos = r.begin(); pos != r.end(); ++pos) {
-        float val = D(pos);
-        
-        int start = std::max(0, (int)pos - 150);
-        int stop = std::min(track_.size(), pos + 150);
-        float denom = 0.0;
-        for (int i = start; i < stop; ++i) {
-            denom +=  D(i);
-        }
-        denom *= (1.09 / w_) * (stop - start);        
-        output_.set(pos, val / denom); 
+        if (pos % 1000 == 0) {std::cerr << pos << std::endl;         }
+        float val = D(pos);        
+        output_.set(pos, val); 
     }
 }
 
