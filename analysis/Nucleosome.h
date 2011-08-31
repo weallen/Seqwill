@@ -112,7 +112,6 @@ public:
     , start_(0)
     , stop_(0)
     , reads_(NULL)
-    , alpha_(-1)
     { 
         set_out_track_name(std::string("DEFAULT"));
         set_out_subtrack_name(std::string("DEFAULT"));
@@ -137,10 +136,7 @@ public:
     
     float prior()
     { return alpha_; }
-    
-    void set_prior(float alpha)
-    { alpha_ = alpha; }
-    
+        
 private:
     virtual void ComputeProcess();
     
@@ -149,7 +145,6 @@ private:
     int start_;
     int stop_;
     SingleReadFactory* reads_;
-    float alpha_;
 };
 
 class NucKDE : public Analysis<int, float>
