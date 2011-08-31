@@ -133,10 +133,7 @@ public:
 
     SingleReadFactory* reads() 
     { return reads_; }
-    
-    float prior()
-    { return alpha_; }
-        
+     
 private:
     virtual void ComputeProcess();
     

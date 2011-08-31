@@ -178,7 +178,8 @@ NucPosFinder::UpdateEmpiricalDist()
 
 void
 NucPileup::ComputeProcess()
-{    
+{
+    output_ = Track<int>::Ptr(new Track<int>);
     output_->set_trackname(tname_);
     output_->set_subtrackname(stname_);
     output_->set_extends(start_, stop_);

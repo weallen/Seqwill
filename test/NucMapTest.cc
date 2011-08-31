@@ -48,7 +48,8 @@ namespace {
       pileup.set_reads(reads);
       pileup.Compute();
       TrackFile tio("/home/will/Documents/nuc_map_test.trk");
-      tio.WriteSubTrack<int>(pileup.output());
+      Track<int>::Ptr track = pileup.output();
+      tio.WriteSubTrack<int>(*track);
       delete reads;
       
   }
