@@ -229,23 +229,30 @@ NucKDE::ComputeAnalysis()
     output_->set_trackname(tname_);
     output_->set_subtrackname(stname_);
 
+    typename Track<float>::VectorType& data = input_->get_data();
+    float* ptr = &(data[0]);
+
+    Eigen::Map<Eigen::VectorXf> vect(ptr, input_->size());
+
+    Track<float>::Ptr temp(new Track<float>);
+    temp->set_extends(0, input_->size());
 
     tbb::parallel_for(tbb::blocked_range<size_t>(0, input_->size(), 1000),
-                          TBB_NucKernel(*input_, *output_, w_));
-
+                          TBB_NucKernel(*input_, *temp, w_));
+    
+    
     for (size_t pos = 0; pos < input_->size(); ++pos) {
-        float val = output_->get(pos);
+        float val = temp->get(pos);
         int start = std::max(0, (int)pos - 150);
         int stop = std::min(input_->size(), pos + 150);
         float denom = 0.0;
         for (int i = start; i < stop; ++i) {
-            denom +=  output_->get(i);
+            denom +=  temp->get(i);
         }
         denom *= (1.09 / w_) * (stop - start);        
         output_->set(pos, val / denom);
     }
-
-    
+    temp.reset();    
 }
 
 //-------------------------------------------------

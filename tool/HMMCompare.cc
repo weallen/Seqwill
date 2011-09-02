@@ -18,7 +18,6 @@
 
 tbb::concurrent_queue<Track<int>::Ptr> result_queue;
 
-
 class CompareTask : public tbb::task
 {
 public:

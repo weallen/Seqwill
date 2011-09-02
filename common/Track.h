@@ -26,7 +26,7 @@ public:
   typedef T DataT;
   typedef boost::shared_ptr<Track<DataT> > Ptr;
   typedef boost::shared_ptr<const Track<DataT> > ConstPtr;
-  typedef std::vector<DataT> VectorType;
+  typedef std::vector<DataT, Eigen::aligned_allocator<T> > VectorType;
   typedef typename VectorType::const_iterator const_iterator;
   typedef typename VectorType::iterator iterator;
 
@@ -121,8 +121,10 @@ public:
 
   virtual std::string DataType() const
   { return DataTypeTraits<DataT>::Name(); }
-
   
+  typename Track<T>::VectorType& get_data() 
+  { return data_; }
+
 private:
   void SizeChanged()
   {
@@ -137,7 +139,7 @@ private:
     int new_len = ceil(full_len / size);
     return new_len;
   }
-
+  
 protected:
   DISALLOW_COPY_AND_ASSIGN(Track)
 

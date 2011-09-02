@@ -3,8 +3,8 @@ if(COMMAND cmake_policy)
   cmake_policy(SET CMP0003 NEW)
 endif(COMMAND cmake_policy)
 
-set(CC "gcc")
-set(CXX "g++")
+set(CC "gcc-4.2")
+set(CXX "g++-4.2")
 
 set(CMAKE_C_COMPILER ${CC})
 
@@ -175,3 +175,4 @@ cxx_test(DistTest)
 cxx_test(BamIOTest)
 cxx_test(MedipNormTest)
 cxx_test(NucMapTest)
+cxx_test(KmeansTest)

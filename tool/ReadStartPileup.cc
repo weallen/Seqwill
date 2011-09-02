@@ -9,55 +9,56 @@
 #include "base/Types.h"
 #include "io/BamIO.h"
 #include "io/TrackIO.h"
-#include "analysis/Genome.h"
+#include "analysis/Nucleosome.h"
 
-int main(int argc, char** argv) {
-  commandArg<std::string> gGenome("-g", "Genome information");
-  commandArg<std::string> bBam("-b", "In BAM file");
-  commandArg<std::string> oDataPath("-o", "Trackfile name");
-  commandArg<std::string> tTrackName("-t", "Out trackname");
-  commandLineParser P(argc, argv);
-  P.SetDescription("Save pileup of read starts from BAM");
-  P.registerArg(gGenome);
-  P.registerArg(bBam);
-  P.registerArg(oDataPath);
-  P.registerArg(tTrackName);
-  P.parse();
+BamTools::RefVector refs;
+TrackFile tio;
+BamIO* bio;
 
-  std::string genome = P.GetStringValueFor(gGenome);
-  std::string bamname = P.GetStringValueFor(bBam);
-  std::string trackfilename = P.GetStringValueFor(oDataPath);
-  std::string trackname = P.GetStringValueFor(tTrackName);
+void DoPileup(const std::string& trackname, 
+	      const std::string& bamname) {
+  bio = new BamIO(bamname);
 
-  Track<PlusMinusDataInt>* t;
-  GenomeInfo g;
-  BamTools::BamAlignment al;
-  BamTools::BamReader b;
+  for (BamTools::RefVector::iterator it = refs.begin();
+       it != refs.end(); ++it) {
+    std::string chrname = it->RefName;
+    std::cerr << chrname << std::endl;
+    NucPileup pileup;
+    pileup.set_out_track_name(trackname);
+    pileup.set_out_subtrack_name(chrname);
+    SingleReadFactory* reads = bio->LoadChrSingleReads(chrname);
+    pileup.set_reads(reads);
+    pileup.set_start(0);
+    pileup.set_stop(it->RefLength);
+    pileup.Compute();
+    Track<int>::Ptr track = pileup.output();
+    tio.WriteSubTrack<int>(*track);
+    delete reads;
+  }
+  delete bio;
+}
+void DoPlusMinus(const std::string& trackname, 
+		  BamTools::BamReader& b) {
+
   PlusMinusDataInt data;
+
 
   data.plus = 0;
   data.minus = 0;
-  if (!b.Open(bamname)) {
-    std::cerr << "Couldn't open input BAM file." << std::endl;
-    return -1;
-  }
-  BamTools::RefVector refs = b.GetReferenceData();
-  TrackFile tio(trackfilename);
 
-  LoadGenomeInfoFromChr(genome, std::string("mm9"), &g);
-  std::vector<std::string> chrnames = g.chr_names();
   for (BamTools::RefVector::iterator it = refs.begin();
      it != refs.end(); ++it) {
+    BamTools::BamAlignment al;
     std::string chrname = it->RefName;
     data.plus = 0;
     data.minus = 0;
     std::cerr << "Loading chr " << chrname << std::endl;
     int refid = b.GetReferenceID(chrname);
-    BamTools::BamRegion region(refid, 0, refid, g.chr_size(chrname));
-    t = new Track<PlusMinusDataInt>;
+    BamTools::BamRegion region(refid, 0, refid, it->RefLength);
+    Track<PlusMinusDataInt>::Ptr t(new Track<PlusMinusDataInt>);
     t->set_trackname(trackname);
     t->set_subtrackname(chrname);
-    t->set_extends(0, g.chr_size(chrname));
+    t->set_extends(0, it->RefLength);
     t->set_resolution(1);
     for (size_t i = 0; i < t->size(); ++i) {
       t->set(i, data);
@@ -65,9 +66,8 @@ int main(int argc, char** argv) {
     b.SetRegion(region);
     
     int num_reads = 0;
-   while (b.GetNextAlignmentCore(al)) {
-
-     data = t->get((size_t)al.Position);
+    while (b.GetNextAlignmentCore(al)) {
+      data = t->get((size_t)al.Position);
       if (al.IsReverseStrand()) {
 	data.minus += 1;	
       } else {
@@ -75,9 +75,48 @@ int main(int argc, char** argv) {
       }
       t->set((size_t)al.Position, data);
     }
-    b.Rewind();
+    //    b.Rewind();
 
     tio.WriteSubTrack<PlusMinusDataInt>(*t);
-    delete t;
+    t.reset();
+  }
+}
+
+int main(int argc, char** argv) {
+
+  commandArg<std::string> bBam("-b", "In BAM file");
+  commandArg<std::string> oDataPath("-o", "Trackfile name");
+  commandArg<std::string> tTrackName("-t", "Out trackname");
+  commandArg<int> pPileup("-p", "Do paired end pileup", 1);
+
+  commandLineParser P(argc, argv);
+  P.SetDescription("Save pileup of read starts from BAM");
+
+  P.registerArg(bBam);
+  P.registerArg(oDataPath);
+  P.registerArg(tTrackName);
+  P.registerArg(pPileup);
+  P.parse();
+
+
+  std::string bamname = P.GetStringValueFor(bBam);
+  std::string trackfilename = P.GetStringValueFor(oDataPath);
+  std::string trackname = P.GetStringValueFor(tTrackName);
+  int do_pileup = P.GetIntValueFor(pPileup);
+  
+  BamTools::BamReader b;
+  if (!b.Open(bamname)) {
+    std::cerr << "Couldn't open input BAM file." << std::endl;
+    return -1;
+  }
+  
+  refs = b.GetReferenceData();
+  tio.Open(trackfilename);
+  
+  if (do_pileup == 1) {
+    b.Close();
+    DoPileup(trackname, bamname);
+  } else {
+    DoPlusMinus(trackname,b);
   }
 }

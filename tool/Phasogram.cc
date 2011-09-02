@@ -39,9 +39,9 @@ int main(int argc, char** argv) {
   int threshold = P.GetIntValueFor(nThreshold);
   int length = P.GetIntValueFor(lLength);
 
-  Track<PlusMinusDataInt>* t;
+  Track<int>* t;
   TrackFile tio(trackfilename);
-  PlusMinusDataInt data;
+  int data;
   Histogram h(length);
   std::map<std::string, std::vector<BEDelement> > chrs;
   std::vector<BEDelement> bedelems;
@@ -50,7 +50,7 @@ int main(int argc, char** argv) {
   LoadBEDfile(bedfile, bedelems);  
   for (std::vector<BEDelement>::iterator it = bedelems.begin();
        it != bedelems.end(); ++it) {
-    chrs[it->GetName()].push_back(*it);
+    chrs[it->GetChromosome()].push_back(*it);
   }
 
   std::cerr << "Computing phasogram" << std::endl;
@@ -60,16 +60,16 @@ int main(int argc, char** argv) {
     std::string chrname = *it;
     std::cerr << chrname << std::endl;
     bedelems = chrs[chrname];
-    t = new Track<PlusMinusDataInt>();
-    tio.ReadSubTrack<PlusMinusDataInt>(trackname, chrname, *t);
+    t = new Track<int>();
+    tio.ReadSubTrack<int>(trackname, chrname, *t);
     for (std::vector<BEDelement>::iterator it = bedelems.begin();
-	 it != bedelems.end(); ++it) {      
+	 it != bedelems.end(); ++it) {
       for (int i =it->GetStart() ; i < (it->GetEnd() - length); ++i) {
 	data = t->get(i);
-	if (data.plus > threshold) {
+	if (data > threshold) {
 	  for (int j = 0; j < length; ++j) {
 	    data = t->get(i + j);
-	    h.add_to_bin(j, data.plus);
+	    h.add_to_bin(j, data);
 	  }
 	}
       }
