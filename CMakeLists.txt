@@ -160,6 +160,7 @@ tool(RPMNormalize)
 
 tool(CpGAverage)
 
+tool(NucMap)
 # testing
 function(cxx_test name)
   add_executable(${name} "test/${name}.cc")
