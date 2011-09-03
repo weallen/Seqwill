@@ -24,19 +24,21 @@ int main(int argc, char** argv) {
     commandArg<string> tTrackfile("-i", "In trackfile");
     commandArg<string> oTrackfile("-o", "Out trackfile");
     commandArg<string> tTrack("-t", "Track name");
+    commandArg<int> wBandwidth("-w", "Bandwidth", 30);
 
     commandLineParser P(argc, argv);
     P.SetDescription("Find nucleosome positioning stringency.");
     P.registerArg(tTrackfile);
     P.registerArg(oTrackfile);
     P.registerArg(tTrack);
+    P.registerArg(wBandwidth);
     P.parse();
     
 
     string trackname = P.GetStringValueFor(tTrack);
     string in_trackfile = P.GetStringValueFor(tTrackfile);
     string out_trackfile = P.GetStringValueFor(oTrackfile);
-    
+    int w = P.GetIntValueFor(wBandwidth);
     
     TrackFile in_file(in_trackfile);
     TrackFile out_file(out_trackfile);
@@ -59,6 +61,7 @@ int main(int argc, char** argv) {
       kde.set_out_track_name(trackname);
       kde.set_out_subtrack_name(*stname);
       kde.set_input(track);
+      kde.set_bandwidth(w);
       Track<float>::Ptr out_track = kde.output();
       out_file.WriteSubTrack<float>(*out_track);
     }

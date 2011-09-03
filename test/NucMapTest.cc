@@ -83,6 +83,7 @@ namespace {
     std::cout << s << std::endl;
       kde.set_out_track_name("pos_test");
       kde.set_out_subtrack_name("chr19");
+      kde.set_bandwidth(100);
     kde.set_input(track);
     kde.Compute();
     Track<float>::Ptr out = kde.output();
