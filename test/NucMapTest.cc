@@ -23,7 +23,7 @@ namespace {
   class NucMapTest : public ::testing::Test {
   protected:
     NucMapTest() {
-      bio_ = new BamIO(std::string("/Users/wea/Desktop/omp_nuc_060111.bam"));
+      bio_ = new BamIO(std::string("/Users/wea/Desktop/icam_nuc_012.bam"));
         
     }
     
@@ -40,11 +40,11 @@ namespace {
     BamIO* bio_;
   };
   
-  /*  TEST_F(NucMapTest, PileupTest) {
+/*TEST_F(NucMapTest, PileupTest) {
       NucPileup pileup;
       pileup.set_out_track_name(std::string("test"));
-      pileup.set_out_subtrack_name(std::string("chr6"));
-      SingleReadFactory* reads = bio_->LoadChrSingleReads(std::string("chr6"));
+      pileup.set_out_subtrack_name(std::string("chr19"));
+      SingleReadFactory* reads = bio_->LoadChrSingleReads(std::string("chr19"));
       pileup.set_reads(reads);
       pileup.set_start(0);
       pileup.set_stop(149517037);
@@ -62,23 +62,35 @@ namespace {
 			for (int i = 0; i < (int)track->size(); i += 25) {
 				int sum = 0;
 				for (int j = i; j < (i+25); ++j) {
-					sum += track->get(j);
+					sum += (float)track->get(j);
 				}
 				out << sum << std::endl;
 			}
   }
-
   
-  */  
+  
+*/
   TEST_F(NucMapTest, KDETest) {
     NucKDE kde;
     Track<int>::Ptr track(new Track<int>);
+
     TrackFile tio("/Users/wea/Desktop/nuc_map_test.trk");
-    tio.ReadSubTrack<int>(std::string("test"), std::string("chr6"), *track);
-    
+    tio.ReadSubTrack<int>(std::string("test"), std::string("chr19"), *track);
+    int s = 0;
+    for (size_t i = 0; i < track->size(); ++i) {
+      s += track->get(i);
+    }
+    std::cout << s << std::endl;
+      kde.set_out_track_name("pos_test");
+      kde.set_out_subtrack_name("chr19");
     kde.set_input(track);
     kde.Compute();
     Track<float>::Ptr out = kde.output();
+	float sum = 0.0;
+	for (size_t i = 0; i < out->size(); ++i) {
+		sum += out->get(i);
+	}
+	std::cout << sum << std::endl;
     tio.WriteSubTrack<float>(*out);
   }
   

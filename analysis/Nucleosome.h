@@ -160,7 +160,10 @@ private:
 class NucKDE : public Analysis<int, float>
 {
 public:
-    NucKDE() {}
+    NucKDE()
+    : w_(30)
+    {}
+    
     virtual ~NucKDE() {}
 
     void set_bandwidth(int w)
@@ -175,19 +178,41 @@ private:
 class TBB_NucKernel
 {
 public: 
-    TBB_NucKernel(Track<int>& track,
+  TBB_NucKernel(const Track<int>& track,
                   Track<float>& output,
-                  int bandwidth)
+                float* dists,
+		int w)
     : track_(track)
     , output_(output)
-    , w_(bandwidth)
+    , dists_(dists)
+    , w_(w)
     { }
     
     void operator()(const tbb::blocked_range<size_t>& r) const; 
     float D(int pos) const;
 
 private:
-    Track<int>& track_;
+  const Track<int>& track_;
+  Track<float>& output_;
+  float* dists_;
+  int w_;
+};
+
+class TBB_NucPositioning
+{
+public:
+    TBB_NucPositioning(const Track<float>& temp,
+                       Track<float>& output,
+                       int w)
+    : temp_(temp)
+    , output_(output)
+    , w_(w)
+    {}
+
+    void operator()(const tbb::blocked_range<size_t>& r) const; 
+   
+private:
+    const Track<float>& temp_;
     Track<float>& output_;
     int w_;
 };

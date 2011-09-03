@@ -199,8 +199,8 @@ NucPileup::ComputeProcess()
             nfrags++;
             mean_fraglen += (float)abs(it->second.pos - it->second.partner_pos);
             int pos = (int)floor((float)(it->second.partner_pos + it->second.pos)/2.0);
-            int temp = output_->get(pos);
-            output_->set(pos, temp+1);
+            float temp = output_->get(pos);
+            output_->set(pos, temp+1.0);
         }        
     }
     mean_fraglen /= nfrags;
@@ -229,29 +229,28 @@ NucKDE::ComputeAnalysis()
     output_->set_trackname(tname_);
     output_->set_subtrackname(stname_);
 
-    typename Track<float>::VectorType& data = input_->get_data();
-    float* ptr = &(data[0]);
-
-    Eigen::Map<Eigen::VectorXf> vect(ptr, input_->size());
-
     Track<float>::Ptr temp(new Track<float>);
-    temp->set_extends(0, input_->size());
 
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, input_->size(), 1000),
-                          TBB_NucKernel(*input_, *temp, w_));
-    
-    
-    for (size_t pos = 0; pos < input_->size(); ++pos) {
-        float val = temp->get(pos);
-        int start = std::max(0, (int)pos - 150);
-        int stop = std::min(input_->size(), pos + 150);
-        float denom = 0.0;
-        for (int i = start; i < stop; ++i) {
-            denom +=  temp->get(i);
-        }
-        denom *= (1.09 / w_) * (stop - start);        
-        output_->set(pos, val / denom);
+    temp->set_extends(0, input_->size());
+    for (size_t i = 0; i < temp->size(); ++i) {
+      temp->set(i, 0.0);
     }
+
+    float* dists = new float[2*w_];
+    
+    int j = 0;
+    for (int i = -w_; i < w_; ++i) {
+      dists[j] = pow(1.0 - (i / (float)w_)*(i / (float)w_), 3);
+      j++;
+    }    
+
+    tbb::parallel_for(tbb::blocked_range<size_t>(w_, (input_->size()-w_), 1000),
+		      TBB_NucKernel(*input_, *temp, dists, w_));
+    
+   // std::cout << "Got here" << std::endl;
+    
+    tbb::parallel_for(tbb::blocked_range<size_t>(150, input_->size() - 150, 1000),
+                      TBB_NucPositioning(*temp, *output_, w_));
     temp.reset();    
 }
 
@@ -259,9 +258,8 @@ NucKDE::ComputeAnalysis()
 
 void
 TBB_NucKernel::operator()(const tbb::blocked_range<size_t>& r) const
-{
-    for (size_t pos = r.begin(); pos != r.end(); ++pos) {
-        if (pos % 1000 == 0) {std::cerr << pos << std::endl;         }
+{      
+    for (size_t pos = r.begin(); pos != r.end(); ++pos) {        
         float val = D(pos);        
         output_.set(pos, val); 
     }
@@ -273,12 +271,28 @@ float
 TBB_NucKernel::D(int i) const
 {
     float val = 0.0;
-    int start = std::max(0, (int)i - w_);
-    int stop = std::min((int)i + w_, track_.stop());
-    for (int j = start; j < stop; ++j) {
-        float temp = (float) i - j;
-        val += pow(1.0 - (temp / (float)w_)*(temp / (float)w_), 3);
-        val *= (float)track_[j];
+    for (int j = 0; j < 2 * w_; ++j) {
+        val += dists_[j] * (float)track_.get(i - w_ + j);
     }
     return val;
+}
+
+//-------------------------------------------------
+
+void
+TBB_NucPositioning::operator()(const tbb::blocked_range<size_t>& r) const
+{
+    for (size_t pos = r.begin(); pos != r.end(); ++pos) {        
+        float val = temp_.get(pos);
+        int start = pos - 150;
+        int stop = pos + 150;
+        float denom = 0.0;
+        for (int i = start; i < stop; ++i) {
+            denom +=  temp_.get(i);
+        }
+        denom *= (1.09 / w_);   
+	if (denom > 0) {
+	  output_.set(pos, val / denom);
+	}
+    }
 }

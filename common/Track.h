@@ -122,8 +122,8 @@ public:
   virtual std::string DataType() const
   { return DataTypeTraits<DataT>::Name(); }
   
-  typename Track<T>::VectorType& get_data() 
-  { return data_; }
+  T* data_ptr()
+  { return &(data_[0]); }
 
 private:
   void SizeChanged()

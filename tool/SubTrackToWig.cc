@@ -1,6 +1,7 @@
 #include <vector>
 #include <fstream>
 #include <iostream>
+#include <sstream>
 #include "common/Track.h"
 #include "io/TrackIO.h"
 #include "base/CommandLineParser.h"
@@ -49,12 +50,18 @@ int main(int argc, char** argv) {
 //  minus.open((wig + "_minus.wig").c_str(), std::fstream::out);
 
   plus << "fixedStep chrom=" << subtrack  << " start=0 step=" << t.resolution() << " span=" << t.resolution() << std::endl;
+
+  std::stringstream ss(std::stringstream::out);
+  
+  std::cout << "Buffering..." << std::endl;
 //  minus << "fixedStep chrom=" << subtrack  << " start=0 step=" << t.resolution() << std::endl;
   for (size_t i = 0; i < t.size(); ++i) {
     d = t.get(i);
-    plus << d << std::endl;
+    ss << d << std::endl;
   //  minus << d.minus << std::endl;
   }
+  std::cout << "Writing..." << std::endl;
+  plus.write(ss.str().c_str(), ss.str().size());
   plus.close();
 //  minus.close();
   return 1;
