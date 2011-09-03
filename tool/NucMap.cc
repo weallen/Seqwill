@@ -62,6 +62,7 @@ int main(int argc, char** argv) {
       kde.set_out_subtrack_name(*stname);
       kde.set_input(track);
       kde.set_bandwidth(w);
+      kde.Compute();
       Track<float>::Ptr out_track = kde.output();
       out_file.WriteSubTrack<float>(*out_track);
     }
