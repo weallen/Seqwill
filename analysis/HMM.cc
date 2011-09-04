@@ -527,7 +527,7 @@ GaussMultiTrackHMM::UpdateEmissionDistEM(const MatrixType& weights)
     Eigen::VectorXd mean = Eigen::VectorXd::Zero(tnum);
     Eigen::VectorXd stddev = Eigen::VectorXd::Zero(tnum);
     for (size_t i = 0; i < input_->size(); ++i) {
-      for (int tr = 0; tr < tracks_.size(); ++tr) {
+      for (size_t tr = 0; tr < tracks_.size(); ++tr) {
         v(tr) = (double) tracks_[tr]->get(i);
       }
       mean += weights(k,i) * v;
@@ -535,16 +535,16 @@ GaussMultiTrackHMM::UpdateEmissionDistEM(const MatrixType& weights)
     mean /= norm;
     // make sure variance is a diagonal matrix -- assumes tracks are independent.
     for (size_t i = 0; i < input_->size(); ++i) {
-      for (int tr = 0; tr < tracks_.size(); ++tr) {
+      for (size_t tr = 0; tr < tracks_.size(); ++tr) {
 	stddev(tr) += weights(k,i) * pow((double)tracks_[tr]->get(i) - mean(tr),2);
       }
     }
     stddev /= norm;    
-    for (int tr = 0; tr < tracks_.size(); ++tr) {
+    for (size_t tr = 0; tr < tracks_.size(); ++tr) {
       temp = emits_[k];
       temp[tr].set_mean(mean(tr));
       temp[tr].set_stddev(sqrt(stddev(tr)));
-//      std::cerr << "Track " << tr  << " Mean: " << temp[tr].mean() << " Stddev: " << temp[tr].stddev() << std::endl;
+      std::cerr << "Track " << tr  << " Mean: " << temp[tr].mean() << " Stddev: " << temp[tr].stddev() << std::endl;
       emits_[k] = temp;
     }
   }        

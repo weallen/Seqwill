@@ -11,8 +11,8 @@ set(CMAKE_C_COMPILER ${CC})
 set(CMAKE_CXX_COMPILER ${CXX})
 project(Seqwill)
 
-set(CMAKE_CXX_FLAGS "-O3 -fopenmp -msse -msse2 -msse3 -msse4.2 -m64 -mfpmath=sse")
-#set(CMAKE_CXX_FLAGS "-g")
+#set(CMAKE_CXX_FLAGS "-O3 -fopenmp -msse -msse2 -msse3 -msse4.2 -m64 -mfpmath=sse")
+set(CMAKE_CXX_FLAGS "-g")
 #set(cxx_exception_flags "-fexceptions")
 #set(cxx_no_exception_flags "-fnoexceptions")
 

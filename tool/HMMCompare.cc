@@ -24,15 +24,16 @@ tbb::concurrent_queue<Track<int>::Ptr> result_queue;
 class CompareTask : public tbb::task
 {
 public:
-    CompareTask(const std::vector<std::string>& inputs, 
-                const std::string& trackname,
-                const std::string& chrname, 
+    CompareTask(std::vector<std::string>& inputs, 
+                std::string& trackname,
+                std::string& chrname, 
                 TrackFile* tio, tbb::mutex& lck,
                 Rng* r, int num_states)
     : inputs_(inputs)
     , trackname_(trackname)
     , chrname_(chrname)
     , lck_(lck)
+    , tio_(tio)
     , r_(r)
     {
         cmp_.set_out_track_name(trackname);
@@ -67,13 +68,13 @@ public:
     }
     
 private:
-    std::vector<std::string> inputs_;
-    std::string trackname_;
-    std::string chrname_;
+    std::vector<std::string>& inputs_;
+    std::string& trackname_;
+    std::string& chrname_;
     tbb::mutex& lck_;
     TrackFile* tio_;
-    GaussMultiTrackHMM cmp_;
     Rng* r_;
+    GaussMultiTrackHMM cmp_;
 };
 
 int main(int argc, char** argv) {
@@ -107,25 +108,29 @@ int main(int argc, char** argv) {
     tbb::mutex lck;
     Rng* r = new Rng;
     int num_chrs = 0;
-    
+
+    std::cout << "Running HMM with " << nstates << std::endl;
     if (!FileExists(in_trackfile)) {
         std::cerr << "Couldn't find file " << in_trackfile << std::endl;
+        delete r;
         return -1;
     }    
     
-    TrackFile* tin = new TrackFile(in_trackfile); 
+    TrackFile tin(in_trackfile); 
 
-    std::vector<std::string> tnames = tin->GetTrackNames();
     
     for (std::vector<std::string>::const_iterator it = in_tracks.begin(); it != in_tracks.end();
          ++it) {
-        if (!tin->HasTrack(*it)) {     
+        if (!tin.HasTrack(*it)) {     
             std::cerr << "Couldn't find track " << *it << std::endl;
+            delete r;
             return -1;
+        } else {
+            std::cout << "Using track " << *it << std::endl;
         }
     }
     
-    std::vector<std::string> chrs = tin->GetSubTrackNames(tnames[0]);
+    std::vector<std::string> chrs = tin.GetSubTrackNames(in_tracks[0]);
     
     tbb::empty_task& a = *new(tbb::task::allocate_root()) tbb::empty_task();
     a.set_ref_count(1);
@@ -134,7 +139,7 @@ int main(int argc, char** argv) {
     for (size_t i = 0; i < chrs.size(); ++i) {
         std::string chrname = chrs[i];
         num_chrs++;
-        CompareTask& task = *new(a.allocate_additional_child_of(a)) CompareTask(in_tracks, trackname, chrname, tin, lck, r, nstates);
+        CompareTask& task = *new(a.allocate_additional_child_of(a)) CompareTask(in_tracks, trackname, chrname, &tin, lck, r, nstates);
         a.spawn(task);
     }
     std::cout << "All tasks enqueued." << std::endl;
@@ -159,7 +164,6 @@ int main(int argc, char** argv) {
     
     std::cout << "Cleaning up" << std::endl;
     
-    delete tin;
     delete r;
     return 1;
 }
