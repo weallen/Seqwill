@@ -37,6 +37,8 @@ int main(int argc, char** argv) {
     string in_trackfile = P.GetStringValueFor(tTrackfile);
     string out_file = P.GetStringValueFor(oFile);
     
+    std::cout << "Writing to " << out_file << std::endl;
+
     TrackFile in_file(in_trackfile);
 
     std::fstream out;

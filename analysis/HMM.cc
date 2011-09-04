@@ -317,7 +317,7 @@ HMM::FitEM()
   int n = 0;
   while (delta_loglik > 0.001) {
     n++;
-    DEBUGLOG("EM step " + Stringify(n));
+    //DEBUGLOG("EM step " + Stringify(n));
     //
     // E STEP  
     //
@@ -326,7 +326,7 @@ HMM::FitEM()
     loglik = FwdBack(trans, init, softev, alpha, beta, gamma);    
     trans_counts = TwoSliceSum(trans, softev, alpha, beta);
 
-    std::cerr << "LOGLIK: " << loglik << std::endl;
+    //std::cerr << "LOGLIK: " << loglik << std::endl;
     //
     // M STEP
     // 
@@ -369,8 +369,18 @@ GaussHMM::NumStatesChanged()
 void
 GaussHMM::ComputeAnalysis()
 {
-  DEBUGLOG("Fitting model by EM");
+  //DEBUGLOG("Fitting model by EM");
+  std::cout << "HMM for " << stname_ << std::endl;
   FitEM();
+  HMM::StateVectorType path;
+  Decode(path);
+  output_ = Track<int>::Ptr(new Track<int>);
+  output_->set_extends(0, path.size());
+  output_->set_trackname(tname_);
+  output_->set_subtrackname(stname_);
+  for (size_t i = 0; i < output_->size(); ++i) {
+    output_->set(i, path(i));
+  }
 }
 
 void

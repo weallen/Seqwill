@@ -168,7 +168,8 @@ public:
   using HMM::TrackInPtr;
   using HMM::TrackOutPtr;
   using Analysis<float, int>::Compute;
-  
+  using Analysis<float, int>::output_;
+
   GaussHMM();
   GaussHMM(int num_states);
   virtual ~GaussHMM() {}
@@ -200,7 +201,7 @@ public:
   using HMM::TrackInPtr;
   using HMM::TrackOutPtr;
   using Analysis<float, int>::Compute;
-  
+
   GaussMultiTrackHMM();
   GaussMultiTrackHMM(int num_states);
   virtual ~GaussMultiTrackHMM() {}

@@ -157,7 +157,7 @@ tool(CombineTrackFiles)
 
 tool(RPMNormalize)
 
-#tool(HMMCompare)
+tool(HMMCompare)
 
 tool(CpGAverage)
 
