@@ -11,6 +11,8 @@
 
 #include <Eigen/Dense>
 
+#include "base/StringUtil.h"
+#include "base/BEDelement.h"
 #include "io/BamIO.h"
 #include "io/TrackIO.h"
 #include "common/Track.h"
@@ -215,6 +217,60 @@ private:
     const Track<float>& temp_;
     Track<float>& output_;
     int w_;
+};
+
+
+struct Nuc
+{
+  int pos;
+  float weight;
+};
+
+class NucPositioner 
+{
+public:
+  NucPositioner() 
+    : period_(200)
+    , nuc_size_(147)
+  {}
+
+  virtual ~NucPositioner() {}
+  
+  
+  const std::vector<Nuc>& nucs() const
+  { return nucs_; }
+  
+  std::vector<BEDelement> NucPosAsBED();
+
+  void FindNucs() 
+  {
+    FindMaxima();
+    SelectNucs(); 
+  }
+
+  void set_chrname(const std::string& chrname) 
+  {
+    chrname_  = chrname;
+  }
+
+  const std::string& chrname() const
+  { return chrname_; }
+
+  void set_input(Track<float>::Ptr p)
+  { input_ = p; }
+
+  Track<float>::Ptr input()
+    { return input_; }
+
+private:
+  Track<float>::Ptr input_;
+  void FindMaxima();
+  void SelectNucs();
+  std::string chrname_;
+  int period_;
+  int nuc_size_;
+  std::vector<Nuc> nucs_;
+  std::vector<Nuc> nuc_maxima_;
 };
 
 class Histogram

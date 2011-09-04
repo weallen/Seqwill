@@ -44,6 +44,7 @@ protected:
   TrackPtr input_;
 };
 
+
 template<typename TrackOutT>
 class Processor 
 {
@@ -68,7 +69,6 @@ public:
 
 protected:
     virtual void ComputeProcess() = 0;
-
     std::string tname_;
     std::string stname_;
     TrackPtr output_;
@@ -102,14 +102,16 @@ public:
 
   TrackOutPtr output() { return output_; }
 
-  virtual void Compute()
-  { ComputeAnalysis(); }
-
   void set_out_track_name(const std::string& tname)
   { tname_ = tname; }
 
   void set_out_subtrack_name(const std::string& stname)
   { stname_ = stname; }
+
+  virtual void Compute()
+  { ComputeAnalysis(); }
+
+
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 

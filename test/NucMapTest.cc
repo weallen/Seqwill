@@ -83,7 +83,7 @@ namespace {
     std::cout << s << std::endl;
       kde.set_out_track_name("pos_test");
       kde.set_out_subtrack_name("chr19");
-      kde.set_bandwidth(100);
+      kde.set_bandwidth(75);
     kde.set_input(track);
     kde.Compute();
     Track<float>::Ptr out = kde.output();
@@ -93,8 +93,25 @@ namespace {
 	}
 	std::cout << sum << std::endl;
     tio.WriteSubTrack<float>(*out);
+    }
+
+  TEST_F(NucMapTest, NucPositionerTest) {
+    NucPositioner p;
+    TrackFile tio("/Users/wea/Desktop/nuc_map_test.trk");
+    Track<float>::Ptr track(new Track<float>);
+    tio.ReadSubTrack<float>(std::string("pos_test"), std::string("chr19"), *track);
+    p.set_input(track);
+    p.set_chrname(std::string("chr19"));
+    p.FindNucs();
+    std::vector<BEDelement> elems = p.NucPosAsBED();
+    std::fstream f;
+    f.open("/Users/wea/Desktop/nuc_pos.bed", std::fstream::out);
+    for (std::vector<BEDelement>::iterator it = elems.begin();
+	 it != elems.end(); ++it) {
+      f << *it << std::endl;
+    }
+    f.close();
   }
-  
 
 }//Namespace
 int main(int argc, char** argv) {

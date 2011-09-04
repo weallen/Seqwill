@@ -42,6 +42,7 @@ set(UTIL_SRCS util/SComm.h
     util/FastaParser.h)
 
 set(BASE_SRCS base/BEDelement.h
+	      base/BEDelement.cc
    base/MatrixUtil.h
    base/MatrixUtil.cc
     base/ProgressBar.h 
@@ -161,6 +162,9 @@ tool(RPMNormalize)
 tool(CpGAverage)
 
 tool(NucMap)
+
+tool(NucPosition)
+
 # testing
 function(cxx_test name)
   add_executable(${name} "test/${name}.cc")
@@ -176,4 +180,4 @@ cxx_test(DistTest)
 cxx_test(BamIOTest)
 cxx_test(MedipNormTest)
 cxx_test(NucMapTest)
-cxx_test(KmeansTest)
+#cxx_test(KmeansTest)

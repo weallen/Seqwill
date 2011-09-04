@@ -49,6 +49,20 @@ bool ContainsAt(string &s, string &t, int at);
 
 int PositionAfter(string &in, string& s, int startSearchAt);
 
+inline string Stringify(float x)
+{
+  std::ostringstream out;
+  out << x;
+  return (out.str());
+}
+
+inline string Stringify(double x)
+{
+  std::ostringstream out;
+  out << x;
+  return (out.str());
+}
+
 inline string Stringify(int x)
 {
   ostringstream out;

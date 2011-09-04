@@ -296,3 +296,62 @@ TBB_NucPositioning::operator()(const tbb::blocked_range<size_t>& r) const
 	}
     }
 }
+
+//-------------------------------------------------
+
+
+
+
+void
+NucPositioner::FindMaxima()
+{
+  for (size_t i = 5; i < input_->size()-5; ++i) {
+    if (input_->get(i) >= input_->get(i+1) 
+	&& input_->get(i) >= input_->get(i-1)
+	&& input_->get(i) >= input_->get(i+2)
+	&& input_->get(i) >= input_->get(i-2)
+	&& input_->get(i) >= input_->get(i+3)
+	&& input_->get(i) >= input_->get(i-3) &&
+	input_->get(i) > 0.0) {
+      Nuc n;
+      n.pos = i;
+      n.weight = input_->get(i);
+      nuc_maxima_.push_back(n);
+    }
+  }
+}
+
+void
+NucPositioner::SelectNucs()
+{
+  nucs_.clear();
+  int width = floor(nuc_size_/2.0);
+  size_t i = 0;
+  while (i < nuc_maxima_.size()-1) {
+    if (nuc_maxima_[i].pos + width + 10 > nuc_maxima_[i+1].pos - width) {
+      if (nuc_maxima_[i].weight > nuc_maxima_[i+1].weight) {
+	nucs_.push_back(nuc_maxima_[i]);
+      } else {
+	nucs_.push_back(nuc_maxima_[i+1]);
+      }
+      i += 2;
+    } else {
+      nucs_.push_back(nuc_maxima_[i]);
+      i++;
+    }
+  }
+}
+
+std::vector<BEDelement>
+NucPositioner::NucPosAsBED()
+{
+  std::vector<BEDelement> elems;
+  int width = floor(nuc_size_/2.0);
+  for (std::vector<Nuc>::iterator it = nucs_.begin();
+       it != nucs_.end(); ++it) {
+    elems.push_back(BEDelement(chrname_, 
+			       it->pos - width, it->pos + width, 
+			       Stringify(it->weight)));    
+  }
+  return elems;
+}
