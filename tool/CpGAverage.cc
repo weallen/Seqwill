@@ -63,8 +63,10 @@ int main(int argc, char** argv) {
       inio.ReadSubTrack<float>(trackname, *it, *out);
 
       for (size_t i = 0; i < in->size(); ++i) {
-	float temp = in->get(i) / static_cast<float>(cpg->get(i));
-	out->set(i, temp);
+        if (cpg->get(i) > 0) {
+          float temp = in->get(i) / static_cast<float>(cpg->get(i));
+          out->set(i, temp);
+      } else { out->set(i, 0); }
       }			
 
       outio.WriteSubTrack<float>(*out);

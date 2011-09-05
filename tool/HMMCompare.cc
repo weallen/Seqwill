@@ -52,12 +52,15 @@ public:
             cmp_.add_track(track);
         }
         
-        std::vector<std::vector<GaussDist> > dists(inputs_.size());
-        for (size_t i = 0; i < dists.size(); ++i) {
-            for (int j = 0; j < cmp_.num_states(); ++j) {          
+        std::vector<std::vector<GaussDist> > dists(cmp_.num_states());
+
+        for (size_t i = 0; i < cmp_.num_states(); ++i) {
+            for (int j = 0; j < inputs_.size(); ++j) {
                 lck_.lock();
-                dists[i].push_back(GaussDist(gsl_rng_uniform(r_->rng()),1.0));
+               double mean = 10*abs(gsl_rng_uniform(r_->rng()));
                 lck_.unlock();
+               std::cout << mean << std::endl;
+                dists[i].push_back(GaussDist(mean,1.0));
             }
         }
         cmp_.set_emit(dists);

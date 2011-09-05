@@ -4,7 +4,7 @@ void
 HMM::Init()
 {
   if (rand_init_probs_) {
-    init_ = VectorType::Random(num_states_).abs();    
+    init_ = VectorType::Random(num_states_).abs();
     init_ /= init_.sum();
         DEBUGLOG("Initializing HMM with random pi");    
   } if (rand_trans_probs_) {
@@ -317,16 +317,18 @@ HMM::FitEM()
   int n = 0;
   while (delta_loglik > 0.001) {
     n++;
-    //DEBUGLOG("EM step " + Stringify(n));
+    DEBUGLOG("EM step " + Stringify(n));
     //
     // E STEP  
     //
     UpdateSoftEvidence(softev);
-    
-    loglik = FwdBack(trans, init, softev, alpha, beta, gamma);    
-    trans_counts = TwoSliceSum(trans, softev, alpha, beta);
 
-    //std::cerr << "LOGLIK: " << loglik << std::endl;
+    std::cout << "SOFTEV HAS " << (softev == 0.0).sum() << std::endl;
+    loglik = FwdBack(trans, init, softev, alpha, beta, gamma);
+    //std::cout << "TRANS" << trans << std::endl;
+    //trans_counts = TwoSliceSum(trans, softev, alpha, beta);
+    std::cout << trans_counts << std::endl;
+    std::cerr << "LOGLIK: " << loglik << std::endl;
     //
     // M STEP
     // 

@@ -114,7 +114,7 @@ set(ALL_SRCS ${COMMON_SRCS} ${IO_SRCS} ${HDF5_SRCS} ${UTIL_SRCS} ${BASE_SRCS})
 
 # libraries
 add_library(SWLib ${COMMON_SRCS} ${IO_SRCS} ${HDF5_SRCS} ${UTIL_SRCS} ${BASE_SRCS} ${DATA_SRCS} ${ANALYSIS_SRCS})
-target_link_libraries(SWLib hdf5 bamtools gsl gslcblas tbb hoard)
+target_link_libraries(SWLib hdf5 bamtools gsl gslcblas tbb)
 # binaries
 
 function(tool name) 
