@@ -2,29 +2,33 @@
 #define KMEANS_H_
 #include <iostream>
 #include <Eigen/Dense>
+#include <gsl/gsl_rng.h>
+#include <math.h>
+
 #include "common/Track.h"
 #include "base/StringUtil.h"
 #include "analysis/AnalysisBase.h"
-
+#include "analysis/Random.h"
 class Kmeans
 {
 public:
-  Kmeans() : K_(1), num_tracks_(0), means_(K_), vars_(K_) {  }
-  Kmeans(int k) : K_(k), num_tracks_(0), means_(K_), vars_(K_) { }
-  virtual ~Kmeans() {}
+  Kmeans() : K_(1), means_(K_) {}
+  Kmeans(int k) : K_(k), means_(K_) {}
+  virtual ~Kmeans() { }
   
-  void add_track(Track<float>::Ptr track);
+  void set_track(Track<float>::Ptr track);
 
-  std::vector<Eigen::VectorXd> Fit();
+  void Fit();
+
+  std::vector<double> means()
+  { return means_; }
 
 private:
   void Init(); 
 
   int K_;
-  int num_tracks_;
-  std::vector<Eigen::VectorXd> means_;
-  std::vector<Eigen::MatrixXd> vars_; 
-  std::vector<Track<float>::Ptr> tracks_;
+  std::vector<double> means_;
+  Track<float>::Ptr track_;
 };
 
 #endif

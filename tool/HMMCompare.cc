@@ -18,6 +18,7 @@
 #include "analysis/HMM.h"
 #include "analysis/Dist.h"
 #include "analysis/Random.h"
+#include "analysis/Kmeans.h"
 
 tbb::concurrent_queue<Track<int>::Ptr> result_queue;
 
@@ -43,6 +44,7 @@ public:
     
     tbb::task* execute()
     {
+        std::vector<Track<float>::Ptr> tracks;
         for (std::vector<std::string>::iterator it = inputs_.begin();
              it != inputs_.end(); ++it) {
             Track<float>::Ptr track(new Track<float>);           
@@ -50,18 +52,30 @@ public:
             tio_->ReadSubTrack<float>(*it, chrname_, *track);
             lck_.unlock();
             cmp_.add_track(track);
+           tracks.push_back(track);
         }
         
         std::vector<std::vector<GaussDist> > dists(cmp_.num_states());
 
-        for (size_t i = 0; i < cmp_.num_states(); ++i) {
-            for (int j = 0; j < inputs_.size(); ++j) {
-                lck_.lock();
-               double mean = 10*abs(gsl_rng_uniform(r_->rng()));
-                lck_.unlock();
-               std::cout << mean << std::endl;
-                dists[i].push_back(GaussDist(mean,1.0));
-            }
+        for (int i = 0; i < cmp_.num_states(); ++i) {
+            std::vector<GaussDist> temp(tracks.size());
+            dists[i] = temp;
+        }
+        
+        for (int i = 0; i < tracks.size(); ++i) {
+            Kmeans kmeans(cmp_.num_states());
+           kmeans.set_track(tracks[i]);
+           kmeans.Fit() ;
+           std::vector<double> means = kmeans.means();
+           for (size_t j = 0; j < cmp_.num_states(); ++j) {
+              std::cout << means[j] << std::endl;
+               double mean = means[j];
+               GaussDist g = GaussDist(mean, 1.0);
+               std::cout << g.mean() << std::endl;
+               std::vector<GaussDist> temp = dists[j];
+               temp[i] =  g;
+               dists[j] = temp;
+           }
         }
         cmp_.set_emit(dists);
         cmp_.Init();

@@ -131,10 +131,10 @@ namespace {
   }
     TEST_F(HMMTest, FitRealDataTestMV) {
     //std::cerr << h2_->transition() << std::endl;
-      Kmeans k(10);
+      //Kmeans k(10);
 
-      k.add_track(track2_);
-      k.add_track(track3_);
+      //k.add_track(track2_);
+      //k.add_track(track3_);
 
       //std::vector<Eigen::VectorXd> means = k.Fit();
       MVGaussMultiTrackHMM hmm(10);

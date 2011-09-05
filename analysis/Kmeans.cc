@@ -1,61 +1,74 @@
 #include "analysis/Kmeans.h"
 
 void
-Kmeans::add_track(Track<float>::Ptr track)
+Kmeans::set_track(Track<float>::Ptr track)
 {
-  num_tracks_++;
-  tracks_.push_back(track);
+  track_ = track;
   Init();
 }
 
 void
 Kmeans::Init() 
 {
+  Rng* r = new Rng;
   for (int k = 0; k < K_; ++k) {    
-    means_[k] = Eigen::VectorXd::Random(num_tracks_);
-    vars_[k] = Eigen::MatrixXd::Identity(num_tracks_, num_tracks_);
+    means_[k] = gsl_rng_uniform(r->rng());
   }
+  delete r;
 }
 
-std::vector<Eigen::VectorXd>
+void
 Kmeans::Fit() 
 {
+  double* mean_sums = new double[K_];
+  int* mean_counts = new int[K_];
+  double* old_means = new double[K_];
 
-  double delta = INFINITY;
-  Eigen::VectorXd curr(num_tracks_);
-  Eigen::VectorXi assignments(tracks_[0]->size());
-  Eigen::VectorXd dists(K_);
-  int curr_assign;
-  Eigen::VectorXi curr_assign_count;
-  Eigen::MatrixXd curr_assign_sum;
-
-  int n = 0;
-  while (n < 10) {
-    n++;
-    curr_assign_count = Eigen::VectorXi::Zero(K_);
-    curr_assign_sum = Eigen::MatrixXd::Zero(num_tracks_, K_);
-    DEBUGLOG("Kmeans step " + Stringify(n));
-    for (int i = 0; i < (int)tracks_[0]->size(); ++i) {
-      for (int t = 0; t < num_tracks_; ++t) {
-	curr(t) = tracks_[t]->get(i);
-      }
-      for (int k = 0; k < K_; ++k) {
-	dists(k) = (curr - means_[k]).norm();
-      }
-      dists.minCoeff(&curr_assign);
-      assignments(i) = curr_assign;
-    }
-
-    for (int k = 0; k < K_; ++k) {
-      for (int t = 0; t < (int)tracks_[0]->size(); ++t) {
-	curr_assign_count(assignments(t)) += 1;
-	for (int i = 0; i < num_tracks_; ++i) {
-	  curr_assign_sum(i, k) += tracks_[i]->get(t);
-	}
-      }
-      means_[k] =  curr_assign_sum.col(k) / curr_assign_count(k);
-    }
+    // initialize with random paritions
+  for (size_t i = 0; i < track_->size(); ++i) {
+    int idx = rand() % K_;
+    mean_sums[idx] += track_->get(i);
+    mean_counts[i] += 1;
   }
 
-  return means_;
+  for (int i = 0; i < K_; ++i) {
+      means_[i] = mean_sums[i] / (double)mean_counts[i];
+      old_means[i] = 0.0;
+  }
+
+  // fit model
+  double delta = INFINITY;
+  int n = 0;
+  while (delta > 1e-4) {
+    n++;
+    for (int i = 0; i < K_; ++i) {
+      mean_sums[i] = 0.0;
+      mean_counts[i] = 1;
+    }
+    for (size_t i = 0; i < track_->size(); ++i) {
+      double min_dist = 1e50;
+      int min_idx = 0;
+      double temp_dist;
+        double curr = (double)track_->get(i);
+      for (int k = 0; k < K_; ++k) {
+        temp_dist = pow(curr - means_[k],2);
+        if (temp_dist < min_dist) {
+          min_dist = temp_dist;
+          min_idx = k;
+        }
+      }
+      mean_sums[min_idx] += curr;
+      mean_counts[min_idx] += 1;
+    }
+
+    delta = 0.0;
+    for (int i = 0; i < K_; ++i) {
+      means_[i] = mean_sums[i] / (double)mean_counts[i];
+      delta += abs(means_[i] - old_means[i]);
+        old_means[i] = means_[i];
+    }
+  }
+  delete old_means;
+  delete mean_sums;
+  delete mean_counts;
 }
