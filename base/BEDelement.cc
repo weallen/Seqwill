@@ -11,8 +11,8 @@ void LoadBEDfile(string &filename, vector<BEDelement> &elements)
     string name=fp.AsString(0);
     int start=fp.AsInt(1);
     int end = fp.AsInt(2);
-    //string indel = fp.AsString(3);
+    string genename = ""; //fp.AsString(3);
 
-    elements.push_back(BEDelement(name,start,end,""));
+    elements.push_back(BEDelement(name,start,end,genename));
   }
 }

@@ -6,20 +6,22 @@ HMM::Init()
   if (rand_init_probs_) {
     init_ = VectorType::Random(num_states_).abs();
     init_ /= init_.sum();
-        DEBUGLOG("Initializing HMM with random pi");    
+    //        DEBUGLOG("Initializing HMM with random pi");    
+    //	std::cout << init_ << std::endl;
   } if (rand_trans_probs_) {
-    DEBUGLOG("Initializing HMM with random trans probs");
+    //    DEBUGLOG("Initializing HMM with random trans probs");
     trans_ = MatrixType::Random(num_states_, num_states_).abs();
     for (int i = 0; i < trans_.rows(); ++i) {
       trans_.row(i) /= trans_.row(i).sum();
     }
+    //    std::cout << trans_ << std::endl;
   }
   if (!has_trans_prior_) {
-    DEBUGLOG("Initializing HMM with no transition prior");
+    //    DEBUGLOG("Initializing HMM with no transition prior");
     trans_prior_ = MatrixType::Zero(num_states_, num_states_);
   }
   if (!has_init_prior_) {
-    DEBUGLOG("Initializing HMM with no pi prior");
+    //    DEBUGLOG("Initializing HMM with no pi prior");
     init_prior_ = VectorType::Zero(num_states_);
   }
 }
@@ -315,20 +317,18 @@ HMM::FitEM()
   float delta_loglik = INFINITY;
   float old_loglik = 0.0;
   int n = 0;
-  while (delta_loglik > 0.001) {
+  while (delta_loglik > 0.001 && n < 10000) {
     n++;
-    DEBUGLOG("EM step " + Stringify(n));
+    //    DEBUGLOG("EM step " + Stringify(n));
     //
     // E STEP  
     //
     UpdateSoftEvidence(softev);
 
-    std::cout << "SOFTEV HAS " << (softev == 0.0).sum() << std::endl;
     loglik = FwdBack(trans, init, softev, alpha, beta, gamma);
-    //std::cout << "TRANS" << trans << std::endl;
-    //trans_counts = TwoSliceSum(trans, softev, alpha, beta);
-    std::cout << trans_counts << std::endl;
-    std::cerr << "LOGLIK: " << loglik << std::endl;
+    trans_counts = TwoSliceSum(trans, softev, alpha, beta);
+    //std::cout << trans_counts << std::endl;
+    //    std::cerr << "LOGLIK: " << loglik << std::endl;
     //
     // M STEP
     // 
@@ -374,12 +374,15 @@ GaussHMM::ComputeAnalysis()
   //DEBUGLOG("Fitting model by EM");
   std::cout << "HMM for " << stname_ << std::endl;
   FitEM();
+  std::cout << "TRANS" << std::endl;
+  std::cout << trans_ << std::endl;
   HMM::StateVectorType path;
   Decode(path);
   output_ = Track<int>::Ptr(new Track<int>);
   output_->set_extends(0, path.size());
   output_->set_trackname(tname_);
   output_->set_subtrackname(stname_);
+  output_->set_resolution(input_->resolution());
   for (size_t i = 0; i < output_->size(); ++i) {
     output_->set(i, path(i));
   }
@@ -479,7 +482,7 @@ GaussHMM::UpdateEmissionDistGibbs(Rng& r, const StateVectorType& states)
     emit_[i].set_stddev(var);  
     emit_[i].set_mean(mean);
     
-    std::cerr << "State " << i << " mean " << emit_[i].mean() << " std " << emit_[i].stddev() << std::endl;
+    //   std::cerr << "State " << i << " mean " << emit_[i].mean() << " std " << emit_[i].stddev() << std::endl;
   }  
 }
 
@@ -546,7 +549,7 @@ GaussMultiTrackHMM::UpdateEmissionDistEM(const MatrixType& weights)
       temp = emits_[k];
       temp[tr].set_mean(mean(tr));
       temp[tr].set_stddev(sqrt(stddev(tr)));
-      std::cerr << "Track " << tr  << " Mean: " << temp[tr].mean() << " Stddev: " << temp[tr].stddev() << std::endl;
+      //      std::cerr << "Track " << tr  << " Mean: " << temp[tr].mean() << " Stddev: " << temp[tr].stddev() << std::endl;
       emits_[k] = temp;
     }
   }        

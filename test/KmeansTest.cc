@@ -22,7 +22,7 @@ namespace {
   class KmeansTest : public ::testing::Test {
   protected:
     KmeansTest() {
-      fname_ = std::string("/Users/wea/Documents/expt/brad_hmc/all_dips_rpm_avg.trk");
+      fname_ = std::string("/media/storage2/data/h5/rpm_avg/all_dips_rpm_avg.trk");
         
     }
     

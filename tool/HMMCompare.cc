@@ -20,79 +20,6 @@
 #include "analysis/Random.h"
 #include "analysis/Kmeans.h"
 
-tbb::concurrent_queue<Track<int>::Ptr> result_queue;
-
-class CompareTask : public tbb::task
-{
-public:
-    CompareTask(std::vector<std::string>& inputs, 
-                std::string& trackname,
-                std::string& chrname, 
-                TrackFile* tio, tbb::mutex& lck,
-                Rng* r, int num_states)
-    : inputs_(inputs)
-    , trackname_(trackname)
-    , chrname_(chrname)
-    , lck_(lck)
-    , tio_(tio)
-    , r_(r)
-    {
-        cmp_.set_out_track_name(trackname);
-        cmp_.set_out_subtrack_name(chrname);
-        cmp_.set_num_states(num_states);
-    }
-    
-    tbb::task* execute()
-    {
-        std::vector<Track<float>::Ptr> tracks;
-        for (std::vector<std::string>::iterator it = inputs_.begin();
-             it != inputs_.end(); ++it) {
-            Track<float>::Ptr track(new Track<float>);           
-            lck_.lock();
-            tio_->ReadSubTrack<float>(*it, chrname_, *track);
-            lck_.unlock();
-            cmp_.add_track(track);
-           tracks.push_back(track);
-        }
-        
-        std::vector<std::vector<GaussDist> > dists(cmp_.num_states());
-
-        for (int i = 0; i < cmp_.num_states(); ++i) {
-            std::vector<GaussDist> temp(tracks.size());
-            dists[i] = temp;
-        }
-        
-        for (int i = 0; i < tracks.size(); ++i) {
-            Kmeans kmeans(cmp_.num_states());
-           kmeans.set_track(tracks[i]);
-           kmeans.Fit() ;
-           std::vector<double> means = kmeans.means();
-           for (size_t j = 0; j < cmp_.num_states(); ++j) {
-              std::cout << means[j] << std::endl;
-               double mean = means[j];
-               GaussDist g = GaussDist(mean, 1.0);
-               std::cout << g.mean() << std::endl;
-               std::vector<GaussDist> temp = dists[j];
-               temp[i] =  g;
-               dists[j] = temp;
-           }
-        }
-        cmp_.set_emit(dists);
-        cmp_.Init();
-        cmp_.Compute();
-        result_queue.push(cmp_.output());
-        return NULL;
-    }
-    
-private:
-    std::vector<std::string>& inputs_;
-    std::string& trackname_;
-    std::string& chrname_;
-    tbb::mutex& lck_;
-    TrackFile* tio_;
-    Rng* r_;
-    GaussMultiTrackHMM cmp_;
-};
 
 int main(int argc, char** argv) {
     
@@ -148,39 +75,53 @@ int main(int argc, char** argv) {
     }
     
     std::vector<std::string> chrs = tin.GetSubTrackNames(in_tracks[0]);
+   
     
-    tbb::empty_task& a = *new(tbb::task::allocate_root()) tbb::empty_task();
-    a.set_ref_count(1);
-    
-    
+    TrackFile tout(out_trackfile);    
     for (size_t i = 0; i < chrs.size(); ++i) {
         std::string chrname = chrs[i];
-        num_chrs++;
-        CompareTask& task = *new(a.allocate_additional_child_of(a)) CompareTask(in_tracks, trackname, chrname, &tin, lck, r, nstates);
-        a.spawn(task);
-    }
-    std::cout << "All tasks enqueued." << std::endl;
+	GaussMultiTrackHMM cmp(nstates);
+        cmp.set_out_track_name(trackname);
+        cmp.set_out_subtrack_name(chrname);
     
-    TrackFile tout(out_trackfile);
-    int chrs_done = 0;
-    while(1) {
-        if (!result_queue.empty()) {
-            Track<int>::Ptr tr;
-            result_queue.try_pop(tr);
-            std::cout << "Saving track " << tr->subtrackname() << std::endl;
-            tout.WriteSubTrack<int>(*tr);
-            chrs_done++;
+        std::vector<Track<float>::Ptr> chr_tracks;
+        for (std::vector<std::string>::iterator it = in_tracks.begin();
+             it != in_tracks.end(); ++it) {
+	  Track<float>::Ptr track(new Track<float>);           
+	  tin.ReadSubTrack<float>(*it, chrname, *track);
+	  cmp.add_track(track);
+	  chr_tracks.push_back(track);
         }
-        if (chrs_done == num_chrs) {
-            break;
+        
+        std::vector<std::vector<GaussDist> > dists(cmp.num_states());
+
+        for (int i = 0; i < cmp.num_states(); ++i) {
+            std::vector<GaussDist> temp(chr_tracks.size());
+            dists[i] = temp;
         }
+        
+        for (int i = 0; i < chr_tracks.size(); ++i) {
+	  Kmeans kmeans(cmp.num_states());
+	  kmeans.set_track(chr_tracks[i]);
+	  kmeans.Fit() ;
+	  std::vector<double> means = kmeans.means();
+	  for (size_t j = 0; j < cmp.num_states(); ++j) {
+	    double mean = means[j];
+	    GaussDist g = GaussDist(mean, 1.0);
+	    std::vector<GaussDist> temp = dists[j];
+	    temp[i] =  g;
+	    dists[j] = temp;
+	  }
+        }
+        cmp.set_emit(dists);
+        cmp.Init();
+        cmp.Compute();
+	Track<int>::Ptr tr = cmp.output();
+	std::cout << "Saving track " << tr->subtrackname() << std::endl;
+	tout.WriteSubTrack<int>(*tr);
     }
-    
-    a.wait_for_all();
-    a.destroy(a);
-    
-    std::cout << "Cleaning up" << std::endl;
-    
+
+     
     delete r;
     return 1;
 }

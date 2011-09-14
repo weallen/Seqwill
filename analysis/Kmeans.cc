@@ -28,7 +28,7 @@ Kmeans::Fit()
   for (size_t i = 0; i < track_->size(); ++i) {
     int idx = rand() % K_;
     mean_sums[idx] += track_->get(i);
-    mean_counts[i] += 1;
+    mean_counts[idx] += 1;
   }
 
   for (int i = 0; i < K_; ++i) {

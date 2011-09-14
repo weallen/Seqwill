@@ -66,7 +66,7 @@ int main(int argc, char** argv) {
 	 it != bedelems.end(); ++it) {
       for (int i =it->GetStart() ; i < (it->GetEnd() - length); ++i) {
 	data = t->get(i);
-	if (data > threshold) {
+	if (data >= threshold) {
 	  for (int j = 0; j < length; ++j) {
 	    data = t->get(i + j);
 	    h.add_to_bin(j, data);
