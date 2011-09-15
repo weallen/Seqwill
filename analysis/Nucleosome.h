@@ -159,6 +159,56 @@ private:
     SingleReadFactory* reads_;
 };
 
+class ExtendPileup : public Processor<int>
+{
+public:
+    ExtendPileup()
+      : fraglen_(-1)
+    , start_(0)
+    , stop_(0)
+    , reads_(NULL)
+    { 
+        set_out_track_name(std::string("DEFAULT"));
+        set_out_subtrack_name(std::string("DEFAULT"));
+    }
+    
+    virtual ~ExtendPileup() {}
+    
+    void set_extends(int start, int stop)
+    { start_ = start; stop_ = stop; }
+    
+    void set_reads(SingleReadFactory* reads)
+    { reads_ = reads; }
+
+    SingleReadFactory* reads() 
+    { return reads_; }
+
+    void set_start(int start)
+    { start_ = start; }
+
+    int start() 
+    { return start_; }
+
+    void set_stop(int stop)
+    { stop_ = stop; }
+    
+    int stop()
+    { return stop_; }
+
+    void set_fraglen(int f) 
+    { fraglen_ = f; }
+    
+    int fraglen()
+    { return fraglen_; }
+
+private:
+    virtual void ComputeProcess();
+    int fraglen_;
+    int start_;
+    int stop_;
+    SingleReadFactory* reads_;
+};
+
 class NucKDE : public Analysis<int, float>
 {
 public:

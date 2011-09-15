@@ -217,6 +217,36 @@ NucPileup::ComputeProcess()
     var_ = var_fraglen;
 }
  
+void
+ExtendPileup::ComputeProcess()
+{
+    assert(stop_ != 0);
+    output_ = Track<int>::Ptr(new Track<int>);
+    output_->set_trackname(tname_);
+    output_->set_subtrackname(stname_);
+    output_->set_extends(start_, stop_);
+
+    for (size_t i = 0; i < output_->size(); ++i) {
+        output_->set(i, 0);
+    }
+
+    for (SingleReadFactory::iterator it = reads_->begin();
+         it != reads_->end(); ++it) {
+      int start = -1;
+      int stop = -1;
+
+      if (it->second.strand == kFwd) {
+        start = it->second.pos;
+        stop = it->second.pos + fraglen_ - 1;
+      } else if (it->second.strand == kRev) {
+        start = it->second.pos + it->second.len - fraglen_;
+        stop = it->second.pos + it->second.len - 1;
+      }
+      int pos = floor(((float)start + stop)/2.0);
+      int temp = output_->get(pos);
+      output_->set(pos, temp+1);
+    }
+}
 
 
 //-------------------------------------------------

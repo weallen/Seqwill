@@ -15,6 +15,30 @@ BamTools::RefVector refs;
 TrackFile tio;
 BamIO* bio;
 
+void DoExtendPileup(const std::string& trackname,
+		    const std::string& bamname, int extend) {
+  bio = new BamIO(bamname);
+
+  for (BamTools::RefVector::iterator it = refs.begin();
+       it != refs.end(); ++it) {
+    std::string chrname = it->RefName;
+    std::cerr << chrname << std::endl;
+    ExtendPileup pileup;
+    pileup.set_fraglen(extend);
+    pileup.set_out_track_name(trackname);
+    pileup.set_out_subtrack_name(chrname);
+    SingleReadFactory* reads = bio->LoadChrSingleReads(chrname);
+    pileup.set_reads(reads);
+    pileup.set_start(0);
+    pileup.set_stop(it->RefLength);
+    pileup.Compute();
+    Track<int>::Ptr track = pileup.output();
+    tio.WriteSubTrack<int>(*track);
+    delete reads;
+  }
+  delete bio;
+}
+
 void DoPileup(const std::string& trackname, 
 	      const std::string& bamname) {
   bio = new BamIO(bamname);
@@ -87,7 +111,8 @@ int main(int argc, char** argv) {
   commandArg<std::string> bBam("-b", "In BAM file");
   commandArg<std::string> oDataPath("-o", "Trackfile name");
   commandArg<std::string> tTrackName("-t", "Out trackname");
-  commandArg<int> pPileup("-p", "Do paired end pileup", 1);
+  commandArg<int> pPileup("-p", "Do paired end pileup (p=1), or do plus minus start (p=0)", 1);
+  commandArg<int> eExtend("-e", "Extend read by length", -1);
 
   commandLineParser P(argc, argv);
   P.SetDescription("Save pileup of read starts from BAM");
@@ -96,6 +121,7 @@ int main(int argc, char** argv) {
   P.registerArg(oDataPath);
   P.registerArg(tTrackName);
   P.registerArg(pPileup);
+  P.registerArg(eExtend);
   P.parse();
 
 
@@ -103,7 +129,8 @@ int main(int argc, char** argv) {
   std::string trackfilename = P.GetStringValueFor(oDataPath);
   std::string trackname = P.GetStringValueFor(tTrackName);
   int do_pileup = P.GetIntValueFor(pPileup);
-  
+  int extend = P.GetIntValueFor(eExtend);
+
   BamTools::BamReader b;
   if (!b.Open(bamname)) {
     std::cerr << "Couldn't open input BAM file." << std::endl;
@@ -112,11 +139,16 @@ int main(int argc, char** argv) {
   
   refs = b.GetReferenceData();
   tio.Open(trackfilename);
-  
+
+  if (extend > 0) {
+    b.Close();
+    DoExtendPileup(trackname, bamname, extend);
+  }
+
   if (do_pileup == 1) {
     b.Close();
     DoPileup(trackname, bamname);
-  } else {
+  } else if (do_pileup == 0) {
     DoPlusMinus(trackname,b);
   }
 }
