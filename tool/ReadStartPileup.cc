@@ -21,20 +21,26 @@ void DoExtendPileup(const std::string& trackname,
 
   for (BamTools::RefVector::iterator it = refs.begin();
        it != refs.end(); ++it) {
-    std::string chrname = it->RefName;
-    std::cerr << chrname << std::endl;
-    ExtendPileup pileup;
-    pileup.set_fraglen(extend);
-    pileup.set_out_track_name(trackname);
-    pileup.set_out_subtrack_name(chrname);
-    SingleReadFactory* reads = bio->LoadChrSingleReads(chrname);
-    pileup.set_reads(reads);
-    pileup.set_start(0);
-    pileup.set_stop(it->RefLength);
-    pileup.Compute();
-    Track<int>::Ptr track = pileup.output();
-    tio.WriteSubTrack<int>(*track);
-    delete reads;
+      if (it->RefName.find("random") != std::string::npos
+          || it->RefName.find("NT") != std::string::npos
+          || it->RefName.find("chrM") != std::string::npos) {
+	continue;
+      } else {
+	std::string chrname = it->RefName;
+	std::cerr << chrname << std::endl;
+	ExtendPileup pileup;
+	pileup.set_fraglen(extend);
+	pileup.set_out_track_name(trackname);
+	pileup.set_out_subtrack_name(chrname);
+	SingleReadFactory* reads = bio->LoadChrSingleReads(chrname);
+	pileup.set_reads(reads);
+	pileup.set_start(0);
+	pileup.set_stop(it->RefLength);
+	pileup.Compute();
+	Track<int>::Ptr track = pileup.output();
+	tio.WriteSubTrack<int>(*track);
+	delete reads;
+      }
   }
   delete bio;
 }
@@ -45,19 +51,25 @@ void DoPileup(const std::string& trackname,
 
   for (BamTools::RefVector::iterator it = refs.begin();
        it != refs.end(); ++it) {
-    std::string chrname = it->RefName;
-    std::cerr << chrname << std::endl;
-    NucPileup pileup;
-    pileup.set_out_track_name(trackname);
-    pileup.set_out_subtrack_name(chrname);
-    SingleReadFactory* reads = bio->LoadChrSingleReads(chrname);
-    pileup.set_reads(reads);
-    pileup.set_start(0);
-    pileup.set_stop(it->RefLength);
-    pileup.Compute();
-    Track<int>::Ptr track = pileup.output();
-    tio.WriteSubTrack<int>(*track);
-    delete reads;
+    if (it->RefName.find("random") != std::string::npos
+	|| it->RefName.find("NT") != std::string::npos
+	|| it->RefName.find("chrM") != std::string::npos) {
+      continue;
+    } else {
+      std::string chrname = it->RefName;
+      std::cerr << chrname << std::endl;
+      NucPileup pileup;
+      pileup.set_out_track_name(trackname);
+      pileup.set_out_subtrack_name(chrname);
+      SingleReadFactory* reads = bio->LoadChrSingleReads(chrname);
+      pileup.set_reads(reads);
+      pileup.set_start(0);
+      pileup.set_stop(it->RefLength);
+      pileup.Compute();
+      Track<int>::Ptr track = pileup.output();
+      tio.WriteSubTrack<int>(*track);
+      delete reads;
+    }
   }
   delete bio;
 }
@@ -143,12 +155,15 @@ int main(int argc, char** argv) {
   if (extend > 0) {
     b.Close();
     DoExtendPileup(trackname, bamname, extend);
+    return -1;
   }
 
   if (do_pileup == 1) {
     b.Close();
     DoPileup(trackname, bamname);
+    return -1;
   } else if (do_pileup == 0) {
     DoPlusMinus(trackname,b);
+    return -1;
   }
 }
