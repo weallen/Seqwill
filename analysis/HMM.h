@@ -193,8 +193,6 @@ protected:
   std::vector<GaussDist> emit_;
 };
 
-
-
 class GaussMultiTrackHMM : public GaussHMM
 {
 public:
