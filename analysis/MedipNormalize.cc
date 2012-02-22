@@ -1,6 +1,8 @@
 #include "analysis/MedipNormalize.h"
 
 
+
+/* ------------------------------ */
 MedipNormalize::~MedipNormalize() {
   if (cpgs_ != NULL)
     delete[] cpgs_;

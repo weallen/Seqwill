@@ -80,17 +80,17 @@ int main(int argc, char** argv) {
     TrackFile tout(out_trackfile);    
     for (size_t i = 0; i < chrs.size(); ++i) {
         std::string chrname = chrs[i];
-	GaussMultiTrackHMM cmp(nstates);
+				GaussMultiTrackHMM cmp(nstates);
         cmp.set_out_track_name(trackname);
         cmp.set_out_subtrack_name(chrname);
     
         std::vector<Track<float>::Ptr> chr_tracks;
         for (std::vector<std::string>::iterator it = in_tracks.begin();
              it != in_tracks.end(); ++it) {
-	  Track<float>::Ptr track(new Track<float>);           
-	  tin.ReadSubTrack<float>(*it, chrname, *track);
-	  cmp.add_track(track);
-	  chr_tracks.push_back(track);
+						Track<float>::Ptr track(new Track<float>);           
+						tin.ReadSubTrack<float>(*it, chrname, *track);
+						cmp.add_track(track);
+						chr_tracks.push_back(track);
         }
         
         std::vector<std::vector<GaussDist> > dists(cmp.num_states());

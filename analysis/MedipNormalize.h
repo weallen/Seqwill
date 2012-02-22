@@ -20,14 +20,7 @@
 #include "analysis/Dist.h"
 #include "io/BamIO.h"
 
-/*
- * 1. set all cpgs to 1
- * repeat:
- *   2. assign fractions of fragments to CpGs based on scores
- *   3. sum fractions of reads for each CpG
- * for each fragment
- */
-
+#include <Eigen/Dense>
 
 struct CpG
 {
@@ -44,6 +37,19 @@ struct Frag
   int num_cpgs;
 };
 
+
+//
+// MedipNormalize uses a per-read deconvolution algorithm (sort of like EM)
+// to try to assign fractions of reads to the CpGs they overlap
+// However, it does not appear to provide a global normalization
+//
+/* Algorithm:
+ * 1. set all cpgs to 1
+ * repeat:
+ *   2. assign fractions of fragments to CpGs based on scores
+ *   3. sum fractions of reads for each CpG
+ * for each fragment
+ */
 
 class MedipNormalize : public Analysis<float, float>
 {
