@@ -173,6 +173,7 @@ tool(NucHMM)
 
 tool(DipNormalize2)
 
+tool(ReduceResolution)
 # testing
 function(cxx_test name)
   add_executable(${name} "test/${name}.cc")
