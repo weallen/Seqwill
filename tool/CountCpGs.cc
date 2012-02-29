@@ -35,24 +35,24 @@ int main(int argc, char** argv) {
   LoadGenomeInfoFromChr(genome, std::string("mm9"), &g);
   std::vector<std::string> chrnames = g.chr_names();
 
-  Track<unsigned char>::Ptr chr;
-  Track<int>::Ptr out;
+	CpGCounter* counter = new CpGCounter;
+
+	counter->set_out_track_name(std::string("mm9"));
+	counter->set_resolution(res);
   for (std::vector<std::string>::iterator it = chrnames.begin();
        it != chrnames.end(); ++it) {
+    Track<unsigned char>::Ptr chr(new Track<unsigned char>);
     if (it->find(std::string("random")) == std::string::npos) {
-	std::cerr << "Processing chromosome " << *it << std::endl;
-	CpGCounter counter;
-	chr = Track<unsigned char>::Ptr(new Track<unsigned char>);
-	chrio.ReadSubTrack<unsigned char>(std::string("mm9"), *it, *chr);
-	counter.set_input(chr);
-	counter.set_out_track_name(std::string("mm9"));
-	counter.set_out_subtrack_name(*it);
-	counter.set_resolution(res);
-	counter.Compute();
-	out = counter.output();
-	tio.WriteSubTrack<int>(*out);
-	chr.reset();
-	out.reset();
+	    std::cerr << "Processing chromosome " << *it << std::endl;
+	    chrio.ReadSubTrack<unsigned char>(std::string("mm9"), *it, *chr);
+	    counter->set_input(chr);
+	    counter->set_out_subtrack_name(*it);
+	    counter->Compute();
+	    Track<int>::Ptr out = counter->output();
+	    tio.WriteSubTrack<int>(*out);
+	    //chr.reset();
     }
   }
+
+  delete counter;
 }

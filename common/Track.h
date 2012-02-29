@@ -26,7 +26,8 @@ public:
   typedef T DataT;
   typedef boost::shared_ptr<Track<DataT> > Ptr;
   typedef boost::shared_ptr<const Track<DataT> > ConstPtr;
-  typedef std::vector<DataT, Eigen::aligned_allocator<T> > VectorType;
+//  typedef std::vector<DataT, Eigen::aligned_allocator<T> > VectorType;
+  typedef std::vector<DataT> VectorType;
   typedef typename VectorType::const_iterator const_iterator;
   typedef typename VectorType::iterator iterator;
 

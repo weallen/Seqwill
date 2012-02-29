@@ -25,7 +25,7 @@ public:
   
   virtual void Compute() = 0;
 
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+//  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 protected:
   bool Init()
@@ -113,7 +113,7 @@ public:
 
 
 
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+//  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 protected:
   // Set this is the leaf classes
@@ -155,7 +155,7 @@ public:
     DeInit();
   }
 
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+//  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 protected:
   virtual void
