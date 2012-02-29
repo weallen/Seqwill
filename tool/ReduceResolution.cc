@@ -44,7 +44,7 @@ int main(int argc, char** argv) {
         tin.ReadSubTrack(trackname, stname, *track);
 
         Track<float>::Ptr newtrack(new Track<float>);
-        newtrack->set_extends(0, static_cast<int>(ceil(track->stop()/static_cast<float>(res))));
+        newtrack->set_extends(0, static_cast<int>(floor(track->stop()/static_cast<float>(res))));
         newtrack->set_trackname(track->trackname());
         newtrack->set_subtrackname(stname);
         newtrack->set_resolution(track->resolution() * res);
