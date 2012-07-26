@@ -198,7 +198,7 @@ NucPileup::ComputeProcess()
         if (it->second.partner_ref == it->second.ref_id) {
             nfrags++;
             mean_fraglen += (float)abs(it->second.pos - it->second.partner_pos);
-            int pos = (int)floor((float)(it->second.partner_pos + it->second.pos)/2.0);
+            int pos = (int)floor((float)(it->second.partner_pos + it->second.pos + it->second.len)/2.0);
             float temp = output_->get(pos);
             output_->set(pos, temp+1.0);
         }        

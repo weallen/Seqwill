@@ -221,7 +221,9 @@ CpGCounter::ComputeAnalysis()
     unsigned char curr = input_->get(i);
     unsigned char next = input_->get(i+1);
     if ((curr == 'C' && next == 'G')
-        || (curr == 'c' && next == 'g')) {
+        || (curr == 'c' && next == 'g')
+				|| (curr == 'c' && next == 'G')
+				|| (curr == 'C' && next == 'g')) {
       int old = output_->get(curr_bin);
       output_->set(curr_bin, old+1);
     }
